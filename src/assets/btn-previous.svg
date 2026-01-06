@@ -1,0 +1,18 @@
+<svg width="100" height="100" viewBox="0 0 100 100"
+     xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+  <!-- Bar -->
+  <rect x="18" y="20" width="10" height="60" rx="5"/>
+
+  <!-- Triangle -->
+  <path d="
+    M72 20
+    Q70 18 68 20
+    L38 48
+    Q36 50 38 52
+    L68 80
+    Q70 82 72 80
+    Q74 78 74 75
+    V25
+    Q74 22 72 20
+    Z"/>
+</svg>

@@ -36,14 +36,20 @@
 - Shuffle button
 - "Random next" button for song suggestion
 
+## Mini-Player Features
+
+- Load file (button: open "browse file" window)
+- Previous song button
+- Play/pause toggle button
+- Shuffle toggle button
+- Next song button
+- Current position (time, editable)
+- Total duration
+- Position scrubber
+- Volume knob
+
 ## Player Features
 
-- Play/pause button
-- Duration display + current position scrubber
-- Manual position input (text field)
-- Previous/next navigation
-- Shuffle toggle
-- Volume visualization
 - Speed control (scrub + text field)
 - Marker management (add/remove/navigate)
 - Single-point and section markers

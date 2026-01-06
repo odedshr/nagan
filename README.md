@@ -10,4 +10,6 @@ This template should help get you started developing with Tauri in vanilla HTML,
 
 ## Running in `dev` mode
 
+Run `npm install`
+Run `npm run dev`
 Run `npm run tuari build`
