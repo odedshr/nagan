@@ -2,7 +2,7 @@
 
 import jsx from '../jsx.js';
 
-export default () => (<div class="player">
+export default () => (<div class="mini-player">
                 <div class="track-info">
                     <img id="cover" class="cover" src="" alt="Cover Art"/>
                     <div class="text-info">
@@ -19,5 +19,6 @@ export default () => (<div class="player">
                     <button class="player-button" id="playToggle" value="play"><span>Play</span></button>
                     <button class="player-button" id="nextBtn" disabled><span>Next</span></button>
                     <button class="player-button" id="shuffleBtn"><span>Shuffle</span></button>
+                    <input type="number" id="speedInput" class="speed-input" value="100" step="5" min="50" max="200"/>
                 </nav>
-            </div> as HTMLDivElement);
+            </div>  as HTMLDivElement);

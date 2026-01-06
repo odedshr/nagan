@@ -1,0 +1,9 @@
+.song-database-table {
+    width: 100%;
+}
+
+.song-database-table th, .song-database-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+}

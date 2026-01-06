@@ -1,4 +1,5 @@
 import { IPicture } from "music-metadata";
+import { StateTemplate } from "./Context";
 
 export interface Player {
     setMetadata(data: {
@@ -20,3 +21,10 @@ export interface TrackMetadata {
     picture: IPicture[];
     duration: number;
 }
+
+export type State = StateTemplate<{
+    mode: "database" | "playlist" | "notes";
+    current: any;
+}>;
+
+export type Mode = "database" | "playlist" | "notes";

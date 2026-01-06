@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import initSongDatabase from "./song-database/SongDatabase";
 import initPlaylist from "./playlist-manager/Playlist";
 import initPlayer from "./player/player";
+import { Context } from "./Context";
+import { Mode, State } from "./types";
 
 let greetInputEl: HTMLInputElement | null;
 let greetMsgEl: HTMLElement | null;
@@ -15,9 +17,33 @@ async function greet() {
   }
 }
 
+function initNav(state: State) {
+  [...document.getElementsByClassName("nav-button")].forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.mode = (btn as HTMLButtonElement).value as Mode;
+    });
+  });
+}
+
 window.addEventListener("DOMContentLoaded", () => {
-  initSongDatabase(document.getElementById("database-container") as HTMLElement);
-  initPlaylist(document.getElementById("playlist-container") as HTMLElement);
+  const state = Context({ mode: "database", current: null }) as State;
+  state.addListener("mode", (mode:string) => {
+    const container = document.getElementById("container") as HTMLElement;
+    while (container.hasChildNodes()) { container.removeChild(container.lastChild!); }
+    switch (mode) {
+      case "database":
+        initSongDatabase(container);
+        break;
+      case "playlist":
+        initPlaylist(container);
+        break;
+      case "notes":
+        console.log("Switched to Notes view");
+        break;
+    }
+  });
+
+  initNav(state);
   initPlayer(document.getElementById("player-container") as HTMLElement);
 
   greetInputEl = document.querySelector("#greet-input");

@@ -1,0 +1,11 @@
+.playlist-manager {
+  display: grid; 
+  grid-template-columns: 30rem 1fr; 
+  grid-template-rows: 1fr; 
+  gap: 0px 0px; 
+  grid-template-areas: 
+    "list item";
+}
+
+.playlist-list { grid-area: list; }
+.playlist-editor { grid-area: item; }

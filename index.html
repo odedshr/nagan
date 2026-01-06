@@ -9,10 +9,10 @@
   </head>
 
   <body>
-    <main class="container">
+    <main id="container" class="container">
       <section id="database-container"></section>
       <section id="playlist-container"></section>
-      <section id="player-container"></section>
+      <section ></section>
       <section id="old">
         <form class="row" id="greet-form">
           <input id="greet-input" placeholder="Enter a name..." />
@@ -21,5 +21,11 @@
         <p id="greet-msg"></p>
       </section>
     </main>
+    <nav class="nav-buttons">
+      <button id="dbBtn" value="database" type="button" class="nav-button"><span>Database</span></button>
+      <button id="playlistBtn" value="playlist" type="button" class="nav-button"><span>Playlist</span></button>
+      <button id="notesBtn" value="notes" type="button" class="nav-button" disabled><span>Notes</span></button>
+    </nav>
+    <footer id="player-container"></footer>
   </body>
 </html>

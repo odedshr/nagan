@@ -2,8 +2,8 @@
 
 import jsx from '../jsx.js';
 
-export default () => (<div>Song Database Component
-    <table>
+export default () => (<div>
+    <table class="song-database-table">
         <thead>
             <tr>
                 <th>Artwork</th>
