@@ -2241,6 +2241,7 @@ name = "nagan"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dirs",
  "env_logger",
  "log",
  "music-metadata",

@@ -350,3 +350,195 @@ pub async fn refresh_database() -> Result<bool, String> {
     log::warn!("Database refresh not implemented yet");
     Ok(true)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_greet_command() {
+        let result = greet("World").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Hello, World! You've been greeted from Rust!");
+    }
+
+    #[tokio::test]
+    async fn test_greet_with_empty_name() {
+        let result = greet("").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Hello, !"));
+    }
+
+    #[tokio::test]
+    async fn test_greet_with_special_characters() {
+        let result = greet("Test123!@#").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Test123!@#"));
+    }
+
+    #[test]
+    fn test_song_metadata_creation() {
+        let metadata = SongMetadata {
+            title: "Test".to_string(),
+            album: "Album".to_string(),
+            year: Some(2023),
+            track: Some(1),
+            image: None,
+            duration: 180.0,
+            artists: vec!["Artist".to_string()],
+            instruments: None,
+            bpm: Some(120.0),
+            genres: vec!["Rock".to_string()],
+            comment: None,
+            tags: vec![],
+            file_exists: true,
+            times_played: 0,
+        };
+
+        assert_eq!(metadata.title, "Test");
+        assert_eq!(metadata.duration, 180.0);
+        assert_eq!(metadata.artists.len(), 1);
+    }
+
+    #[test]
+    fn test_update_song_payload_creation() {
+        let payload = UpdateSongPayload {
+            id: "song-1".to_string(),
+            metadata: serde_json::json!({"title": "New Title"}),
+            update_id3: Some(true),
+            filename: Some("new.mp3".to_string()),
+        };
+
+        assert_eq!(payload.id, "song-1");
+        assert_eq!(payload.update_id3, Some(true));
+        assert!(payload.filename.is_some());
+    }
+
+    #[test]
+    fn test_bulk_update_songs_payload() {
+        let payload = BulkUpdateSongsPayload {
+            ids: vec!["song-1".to_string(), "song-2".to_string()],
+            updates: serde_json::json!({"album": "New Album"}),
+            update_id3: Some(false),
+        };
+
+        assert_eq!(payload.ids.len(), 2);
+        assert_eq!(payload.update_id3, Some(false));
+    }
+
+    #[test]
+    fn test_add_marker_payload() {
+        let payload = AddMarkerPayload {
+            song_id: "song-1".to_string(),
+            start: 30.5,
+            end: Some(45.2),
+            comment: Some("Chorus".to_string()),
+            color: Some("#FF0000".to_string()),
+        };
+
+        assert_eq!(payload.start, 30.5);
+        assert!(payload.end.is_some());
+        assert!(payload.comment.is_some());
+    }
+
+    #[test]
+    fn test_get_songs_query_with_filters() {
+        let filters = serde_json::json!({
+            "album": "Test Album",
+            "year": 2023
+        });
+
+        let query = GetSongsQuery {
+            filters: Some(filters),
+            sort: Some("title".to_string()),
+            limit: Some(10),
+            offset: Some(0),
+        };
+
+        assert!(query.filters.is_some());
+        assert_eq!(query.sort, Some("title".to_string()));
+        assert_eq!(query.limit, Some(10));
+    }
+
+    #[test]
+    fn test_get_playlists_query() {
+        let query = GetPlaylistsQuery {
+            filters: None,
+            sort: Some("name".to_string()),
+        };
+
+        assert!(query.filters.is_none());
+        assert_eq!(query.sort, Some("name".to_string()));
+    }
+
+    #[test]
+    fn test_song_structure() {
+        let song = Song {
+            id: "test-id".to_string(),
+            url: "/path/song.mp3".to_string(),
+            filename: "song.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Title".to_string(),
+                album: "Album".to_string(),
+                year: Some(2023),
+                track: Some(1),
+                image: None,
+                duration: 180.0,
+                artists: vec!["Artist".to_string()],
+                instruments: Some(vec!["Guitar".to_string()]),
+                bpm: Some(120.0),
+                genres: vec!["Rock".to_string()],
+                comment: Some("Great".to_string()),
+                tags: vec!["favorite".to_string()],
+                file_exists: true,
+                times_played: 5,
+            },
+            available: true,
+        };
+
+        assert_eq!(song.id, "test-id");
+        assert_eq!(song.metadata.artists[0], "Artist");
+        assert!(song.available);
+    }
+
+    #[test]
+    fn test_playlist_structure() {
+        let playlist = Playlist {
+            id: "playlist-1".to_string(),
+            name: "My Playlist".to_string(),
+            tags: vec!["workout".to_string(), "chill".to_string()],
+            total_duration: 3600.0,
+        };
+
+        assert_eq!(playlist.name, "My Playlist");
+        assert_eq!(playlist.tags.len(), 2);
+        assert_eq!(playlist.total_duration, 3600.0);
+    }
+
+    #[test]
+    fn test_marker_structure() {
+        let marker = Marker {
+            id: "marker-1".to_string(),
+            song: "song-1".to_string(),
+            start: 10.0,
+            end: Some(20.0),
+            comment: Some("Intro".to_string()),
+            color: Some("#00FF00".to_string()),
+        };
+
+        assert_eq!(marker.start, 10.0);
+        assert_eq!(marker.end, Some(20.0));
+        assert_eq!(marker.comment.as_ref().unwrap(), "Intro");
+    }
+
+    #[test]
+    fn test_calculate_similarity_response() {
+        let response = CalculateSimilarityResponse {
+            similar: vec![],
+            distances: vec![0.5, 0.7, 0.9],
+        };
+
+        assert_eq!(response.distances.len(), 3);
+        assert_eq!(response.similar.len(), 0);
+    }
+}

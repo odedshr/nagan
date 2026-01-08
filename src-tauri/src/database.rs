@@ -1,4 +1,6 @@
 use sqlx::SqlitePool;
+use sqlx::sqlite::SqliteConnectOptions;
+use std::str::FromStr;
 use crate::models::*;
 use chrono::Utc;
 
@@ -8,7 +10,11 @@ pub struct Database {
 
 impl Database {
     pub async fn new(database_url: &str) -> Result<Self, sqlx::Error> {
-        let pool = SqlitePool::connect(database_url).await?;
+        // Create connection options with create_if_missing set to true
+        let options = SqliteConnectOptions::from_str(database_url)?
+            .create_if_missing(true);
+        
+        let pool = SqlitePool::connect_with(options).await?;
         
         // Run migrations
         sqlx::migrate!("./migrations").run(&pool).await?;
@@ -256,5 +262,329 @@ impl Database {
         .await?;
 
         Ok(marker)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    async fn setup_test_db() -> Database {
+        let db_url = "sqlite::memory:";
+        Database::new(db_url).await.expect("Failed to create test database")
+    }
+
+    #[tokio::test]
+    async fn test_database_creation() {
+        let db = setup_test_db().await;
+        assert!(db.pool.is_closed() == false);
+    }
+
+    #[tokio::test]
+    async fn test_create_and_get_song() {
+        let db = setup_test_db().await;
+        
+        let song = Song {
+            id: "test-song-1".to_string(),
+            url: "/path/to/test.mp3".to_string(),
+            filename: "test.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Test Song".to_string(),
+                album: "Test Album".to_string(),
+                year: Some(2023),
+                track: Some(1),
+                image: None,
+                duration: 180.0,
+                artists: vec!["Test Artist".to_string()],
+                instruments: None,
+                bpm: Some(120.0),
+                genres: vec!["Rock".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        let created = db.create_song(song.clone()).await.unwrap();
+        assert_eq!(created.id, song.id);
+
+        let retrieved = db.get_song_by_id(&song.id).await.unwrap();
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().metadata.title, "Test Song");
+    }
+
+    #[tokio::test]
+    async fn test_get_songs_with_query() {
+        let db = setup_test_db().await;
+        
+        // Create test songs
+        for i in 1..=3 {
+            let song = Song {
+                id: format!("song-{}", i),
+                url: format!("/path/song{}.mp3", i),
+                filename: format!("song{}.mp3", i),
+                metadata: SongMetadata {
+                    title: format!("Song {}", i),
+                    album: "Album".to_string(),
+                    year: Some(2023),
+                    track: Some(i),
+                    image: None,
+                    duration: 180.0 * i as f64,
+                    artists: vec!["Artist".to_string()],
+                    instruments: None,
+                    bpm: Some(120.0),
+                    genres: vec!["Rock".to_string()],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            };
+            db.create_song(song).await.unwrap();
+        }
+
+        let query = GetSongsQuery {
+            filters: None,
+            sort: Some("title".to_string()),
+            limit: Some(10),
+            offset: None,
+        };
+
+        let result = db.get_songs(query).await.unwrap();
+        assert_eq!(result.total, 3);
+        assert_eq!(result.songs.len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_update_song() {
+        let db = setup_test_db().await;
+        
+        let song = Song {
+            id: "update-test".to_string(),
+            url: "/path/test.mp3".to_string(),
+            filename: "test.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Original".to_string(),
+                album: "Album".to_string(),
+                year: Some(2023),
+                track: Some(1),
+                image: None,
+                duration: 180.0,
+                artists: vec!["Artist".to_string()],
+                instruments: None,
+                bpm: Some(120.0),
+                genres: vec![],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        db.create_song(song).await.unwrap();
+
+        let update_payload = UpdateSongPayload {
+            id: "update-test".to_string(),
+            metadata: serde_json::json!({"title": "Updated"}),
+            update_id3: None,
+            filename: None,
+        };
+
+        let updated = db.update_song("update-test", update_payload).await.unwrap();
+        assert!(updated.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_delete_song() {
+        let db = setup_test_db().await;
+        
+        let song = Song {
+            id: "delete-test".to_string(),
+            url: "/path/test.mp3".to_string(),
+            filename: "test.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Delete Me".to_string(),
+                album: "Album".to_string(),
+                year: None,
+                track: None,
+                image: None,
+                duration: 120.0,
+                artists: vec![],
+                instruments: None,
+                bpm: None,
+                genres: vec![],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        db.create_song(song).await.unwrap();
+        let deleted = db.delete_song("delete-test").await.unwrap();
+        assert!(deleted);
+
+        let retrieved = db.get_song_by_id("delete-test").await.unwrap();
+        assert!(retrieved.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_create_and_get_playlist() {
+        let db = setup_test_db().await;
+        
+        let playlist = Playlist {
+            id: "playlist-1".to_string(),
+            name: "Test Playlist".to_string(),
+            tags: vec!["chill".to_string()],
+            total_duration: 1200.0,
+        };
+
+        let created = db.create_playlist(playlist.clone()).await.unwrap();
+        assert_eq!(created.name, "Test Playlist");
+
+        let query = GetPlaylistsQuery {
+            filters: None,
+            sort: None,
+        };
+
+        let playlists = db.get_playlists(query).await.unwrap();
+        assert_eq!(playlists.len(), 1);
+        assert_eq!(playlists[0].name, "Test Playlist");
+    }
+
+    #[tokio::test]
+    async fn test_create_and_get_markers() {
+        let db = setup_test_db().await;
+        
+        // First create a song
+        let song = Song {
+            id: "song-with-markers".to_string(),
+            url: "/path/test.mp3".to_string(),
+            filename: "test.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Song".to_string(),
+                album: "Album".to_string(),
+                year: None,
+                track: None,
+                image: None,
+                duration: 300.0,
+                artists: vec![],
+                instruments: None,
+                bpm: None,
+                genres: vec![],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+        db.create_song(song).await.unwrap();
+
+        // Create markers
+        let marker = Marker {
+            id: "marker-1".to_string(),
+            song: "song-with-markers".to_string(),
+            start: 30.0,
+            end: Some(60.0),
+            comment: Some("Chorus".to_string()),
+            color: Some("#FF0000".to_string()),
+        };
+
+        let created = db.create_marker(marker).await.unwrap();
+        assert_eq!(created.start, 30.0);
+
+        let markers = db.get_markers("song-with-markers").await.unwrap();
+        assert_eq!(markers.len(), 1);
+        assert_eq!(markers[0].comment, Some("Chorus".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_get_songs_with_limit() {
+        let db = setup_test_db().await;
+        
+        // Create 5 songs
+        for i in 1..=5 {
+            let song = Song {
+                id: format!("limit-song-{}", i),
+                url: format!("/path/{}.mp3", i),
+                filename: format!("{}.mp3", i),
+                metadata: SongMetadata {
+                    title: format!("Song {}", i),
+                    album: "Album".to_string(),
+                    year: None,
+                    track: None,
+                    image: None,
+                    duration: 180.0,
+                    artists: vec![],
+                    instruments: None,
+                    bpm: None,
+                    genres: vec![],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            };
+            db.create_song(song).await.unwrap();
+        }
+
+        let query = GetSongsQuery {
+            filters: None,
+            sort: None,
+            limit: Some(3),
+            offset: None,
+        };
+
+        let result = db.get_songs(query).await.unwrap();
+        assert_eq!(result.songs.len(), 3);
+        assert_eq!(result.total, 5);
+    }
+
+    #[tokio::test]
+    async fn test_get_songs_with_offset() {
+        let db = setup_test_db().await;
+        
+        for i in 1..=5 {
+            let song = Song {
+                id: format!("offset-song-{}", i),
+                url: format!("/path/{}.mp3", i),
+                filename: format!("{}.mp3", i),
+                metadata: SongMetadata {
+                    title: format!("Song {}", i),
+                    album: "Album".to_string(),
+                    year: None,
+                    track: None,
+                    image: None,
+                    duration: 180.0,
+                    artists: vec![],
+                    instruments: None,
+                    bpm: None,
+                    genres: vec![],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            };
+            db.create_song(song).await.unwrap();
+        }
+
+        let query = GetSongsQuery {
+            filters: None,
+            sort: None,
+            limit: Some(2),
+            offset: Some(2),
+        };
+
+        let result = db.get_songs(query).await.unwrap();
+        assert_eq!(result.songs.len(), 2);
     }
 }

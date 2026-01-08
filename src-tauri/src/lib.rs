@@ -13,8 +13,22 @@ pub struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
+    // Get the app data directory
+    let app_dir = dirs::data_local_dir()
+        .expect("Failed to get app data directory")
+        .join("nagan");
+    
+    // Create the directory if it doesn't exist
+    std::fs::create_dir_all(&app_dir)
+        .expect("Failed to create app directory");
+    
+    let db_path = app_dir.join("nagan.db");
+    let db_url = format!("sqlite:///{}", db_path.display());
+    
+    println!("Database path: {}", db_url);
+    
     // Initialize database
-    let db = Database::new("sqlite:./nagan.db").await
+    let db = Database::new(&db_url).await
         .expect("Failed to initialize database");
 
     let app_state = AppState {
