@@ -1,7 +1,7 @@
 import { parseBlob } from "music-metadata";
 import PlayerUi from "./Player.ui.js";
 
-import { TrackMetadata } from '../types.ts';
+import { State, TrackMetadata } from '../types.ts';
 
 function browseFile(fileSelectedHandler: (file: File) => void) {
     console.log("browseFile called");
@@ -77,26 +77,23 @@ function prettyTime(seconds: number): string {
 
 function initComponents(loadBtn: HTMLButtonElement,
     playToggleBtn: HTMLButtonElement,
-    progressBar: HTMLInputElement,
-    speedInput: HTMLInputElement) {
+    progressBar: HTMLInputElement) {
       loadBtn.addEventListener("click", () => browseFile(fileSelectedHandler));
       playToggleBtn.addEventListener("click", () => togglePlay(audioToggleHandler));
 
       progressBar.addEventListener("change", () => setProgress(parseFloat(progressBar.value), trackMetaData, positionUpdateHandler));
       progressBar.addEventListener("mousedown", () => progressBar.setAttribute("data-dragging", "true"));
       progressBar.addEventListener("mouseup", () => progressBar.removeAttribute("data-dragging"));
-
-      speedInput.addEventListener("change", () => speedUpdateHandler(parseFloat(speedInput.value) / 100));
 }
 
 const elms = new Map<string, HTMLElement>();
 let fileSelectedHandler: (file: File) => void;
 let audioToggleHandler: (isPlaying: boolean) => void;
 let positionUpdateHandler: (time: number) => void;
-let speedUpdateHandler: (speed: number) => void;
+
 let trackMetaData:TrackMetadata;
 
-export default function initPlayer(container:HTMLElement) {
+export default function initPlayer(state:State, container:HTMLElement) {
   const audio = new Audio();
   fileSelectedHandler = (async (file: File) => {
     const metadata = await parseBlob(file);
@@ -140,20 +137,22 @@ export default function initPlayer(container:HTMLElement) {
     );
   });
 
-  speedUpdateHandler = ((speed: number) => {
-    audio.playbackRate = speed;
-  });
+//   speedUpdateHandler = ((speed: number) => {
+//     audio.playbackRate = speed;
+//   });
 
-  const div: HTMLDivElement = PlayerUi();
+  const div: HTMLDivElement = PlayerUi(state);
   elms.clear();
   div.querySelectorAll<HTMLElement>("[id]").forEach(el => elms.set(el.id, el));
   
   initComponents(
       elms.get("loadBtn") as HTMLButtonElement,
       elms.get("playToggle") as HTMLButtonElement,
-      elms.get("progressBar") as HTMLInputElement,
-      elms.get("speedInput") as HTMLInputElement
+      elms.get("progressBar") as HTMLInputElement
   );
+
+  state.addListener("volume", (value:number) => audio.volume = value / 100);
+  state.addListener("playbackRate", (value:number) => console.log('>>', value )); //audio.playbackRate = value / 100);
 
   container.appendChild(div);
 };

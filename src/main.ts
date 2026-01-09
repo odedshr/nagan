@@ -4,6 +4,7 @@ import initPlaylist from "./playlist-manager/Playlist";
 import initPlayer from "./player/player";
 import { Context } from "./Context";
 import { Mode, State } from "./types";
+import initDragAndDrop from "./drag-and-drop";
 
 let greetInputEl: HTMLInputElement | null;
 let greetMsgEl: HTMLElement | null;
@@ -26,7 +27,7 @@ function initNav(state: State) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  const state = Context({ mode: "database", current: null }) as State;
+  const state = Context({ mode: "database", current: null, playbackRate: 100, volume: 100 }) as State;
   state.addListener("mode", (mode:string) => {
     const container = document.getElementById("container") as HTMLElement;
     while (container.hasChildNodes()) { container.removeChild(container.lastChild!); }
@@ -44,7 +45,8 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   initNav(state);
-  initPlayer(document.getElementById("player-container") as HTMLElement);
+  initPlayer(state, document.getElementById("player-container") as HTMLElement);
+  initDragAndDrop();
 
   greetInputEl = document.querySelector("#greet-input");
   greetMsgEl = document.querySelector("#greet-msg");

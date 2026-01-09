@@ -22,9 +22,13 @@ export interface TrackMetadata {
     duration: number;
 }
 
-export type State = StateTemplate<{
+export type StateBase = {
     mode: "database" | "playlist" | "notes";
     current: any;
-}>;
+    playbackRate: number;
+    volume: number;
+}
+
+export type State = StateTemplate<StateBase>;
 
 export type Mode = "database" | "playlist" | "notes";

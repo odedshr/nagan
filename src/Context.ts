@@ -61,12 +61,16 @@ export function Context<T extends object>(initial: T): StateTemplate<T> {
     return computed.set(prop, fn);;
   };
 
-  proxy.bidi = (prop:string, elm:HTMLElement, attribute = 'value', event = 'input') => {
+  proxy.bidi = (prop:string, elm:HTMLElement, attribute = 'value', event = 'change') => {
     elm.setAttribute(attribute, proxy[prop] || '');
-    elm.addEventListener(event, () => proxy[prop] = elm.getAttribute(attribute));
+    elm.addEventListener(event, (e:Event) => {
+      proxy[prop] = elm[attribute as keyof HTMLElement];
+    });
+    
     proxy.addListener(prop, (newValue:string) => {
       if (elm.getAttribute(attribute) !== newValue) {
-        elm.setAttribute(attribute, newValue || '');
+        //@ts-ignore
+        elm[attribute as keyof HTMLElement] = newValue;
       }
     });
   };
