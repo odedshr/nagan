@@ -1,8 +1,8 @@
-use sqlx::SqlitePool;
-use sqlx::sqlite::SqliteConnectOptions;
-use std::str::FromStr;
 use crate::models::*;
 use chrono::Utc;
+use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::SqlitePool;
+use std::str::FromStr;
 
 pub struct Database {
     pool: SqlitePool,
@@ -11,14 +11,13 @@ pub struct Database {
 impl Database {
     pub async fn new(database_url: &str) -> Result<Self, sqlx::Error> {
         // Create connection options with create_if_missing set to true
-        let options = SqliteConnectOptions::from_str(database_url)?
-            .create_if_missing(true);
-        
+        let options = SqliteConnectOptions::from_str(database_url)?.create_if_missing(true);
+
         let pool = SqlitePool::connect_with(options).await?;
-        
+
         // Run migrations
         sqlx::migrate!("./migrations").run(&pool).await?;
-        
+
         Ok(Database { pool })
     }
 
@@ -58,14 +57,10 @@ impl Database {
         }
 
         // Get total count
-        let total: i64 = sqlx::query_scalar(&count_sql)
-            .fetch_one(&self.pool)
-            .await?;
+        let total: i64 = sqlx::query_scalar(&count_sql).fetch_one(&self.pool).await?;
 
         // Get songs
-        let db_songs: Vec<DbSong> = sqlx::query_as(&sql)
-            .fetch_all(&self.pool)
-            .await?;
+        let db_songs: Vec<DbSong> = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
 
         let songs: Vec<Song> = db_songs.into_iter().map(|s| s.into()).collect();
 
@@ -82,30 +77,32 @@ impl Database {
     }
 
     pub async fn create_song(&self, song: Song) -> Result<Song, sqlx::Error> {
-    let db_song = DbSong {
-        id: song.id.clone(),
-        url: song.url.clone(),
-        filename: song.filename.clone(),
-        title: song.metadata.title.clone(),
-        album: song.metadata.album.clone(),
-        year: song.metadata.year,
-        track: song.metadata.track,
-        image: song.metadata.image.clone(),
-        duration: song.metadata.duration,
-        artists: serde_json::to_string(&song.metadata.artists).unwrap_or_default(),
-        instruments: song.metadata.instruments
-            .as_ref()
-            .map(|i| serde_json::to_string(i).unwrap_or_default()),
-        bpm: song.metadata.bpm,
-        genres: serde_json::to_string(&song.metadata.genres).unwrap_or_default(),
-        comment: song.metadata.comment.clone(),
-        tags: serde_json::to_string(&song.metadata.tags).unwrap_or_default(),
-        file_exists: song.metadata.file_exists,
-        times_played: song.metadata.times_played,
-        available: song.available,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+        let db_song = DbSong {
+            id: song.id.clone(),
+            url: song.url.clone(),
+            filename: song.filename.clone(),
+            title: song.metadata.title.clone(),
+            album: song.metadata.album.clone(),
+            year: song.metadata.year,
+            track: song.metadata.track,
+            image: song.metadata.image.clone(),
+            duration: song.metadata.duration,
+            artists: serde_json::to_string(&song.metadata.artists).unwrap_or_default(),
+            instruments: song
+                .metadata
+                .instruments
+                .as_ref()
+                .map(|i| serde_json::to_string(i).unwrap_or_default()),
+            bpm: song.metadata.bpm,
+            genres: serde_json::to_string(&song.metadata.genres).unwrap_or_default(),
+            comment: song.metadata.comment.clone(),
+            tags: serde_json::to_string(&song.metadata.tags).unwrap_or_default(),
+            file_exists: song.metadata.file_exists,
+            times_played: song.metadata.times_played,
+            available: song.available,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
 
         sqlx::query(
             r#"
@@ -114,7 +111,7 @@ impl Database {
                 artists, instruments, bpm, genres, comment, tags, file_exists,
                 times_played, available, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            "#
+            "#,
         )
         .bind(&db_song.id)
         .bind(&db_song.url)
@@ -142,7 +139,11 @@ impl Database {
         Ok(song)
     }
 
-    pub async fn update_song(&self, id: &str, _updates: UpdateSongPayload) -> Result<Option<Song>, sqlx::Error> {
+    pub async fn update_song(
+        &self,
+        id: &str,
+        _updates: UpdateSongPayload,
+    ) -> Result<Option<Song>, sqlx::Error> {
         // This is a simplified version - in a real implementation, you'd parse the metadata
         // and update specific fields
         sqlx::query("UPDATE songs SET updated_at = ? WHERE id = ?")
@@ -165,7 +166,10 @@ impl Database {
 
     // Playlist Management
 
-    pub async fn get_playlists(&self, query: GetPlaylistsQuery) -> Result<Vec<Playlist>, sqlx::Error> {
+    pub async fn get_playlists(
+        &self,
+        query: GetPlaylistsQuery,
+    ) -> Result<Vec<Playlist>, sqlx::Error> {
         let mut sql = "SELECT * FROM playlists".to_string();
 
         // Add filters if provided
@@ -186,28 +190,26 @@ impl Database {
             sql.push_str(&format!(" ORDER BY {}", sort));
         }
 
-        let db_playlists: Vec<DbPlaylist> = sqlx::query_as(&sql)
-            .fetch_all(&self.pool)
-            .await?;
+        let db_playlists: Vec<DbPlaylist> = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
 
         Ok(db_playlists.into_iter().map(|p| p.into()).collect())
     }
 
     pub async fn create_playlist(&self, playlist: Playlist) -> Result<Playlist, sqlx::Error> {
-    let db_playlist = DbPlaylist {
-        id: playlist.id.clone(),
-        name: playlist.name.clone(),
-        tags: serde_json::to_string(&playlist.tags).unwrap_or_default(),
-        total_duration: playlist.total_duration,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+        let db_playlist = DbPlaylist {
+            id: playlist.id.clone(),
+            name: playlist.name.clone(),
+            tags: serde_json::to_string(&playlist.tags).unwrap_or_default(),
+            total_duration: playlist.total_duration,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
 
         sqlx::query(
             r#"
             INSERT INTO playlists (id, name, tags, total_duration, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
-            "#
+            "#,
         )
         .bind(&db_playlist.id)
         .bind(&db_playlist.name)
@@ -233,22 +235,22 @@ impl Database {
     }
 
     pub async fn create_marker(&self, marker: Marker) -> Result<Marker, sqlx::Error> {
-    let db_marker = DbMarker {
-        id: marker.id.clone(),
-        song_id: marker.song.clone(),
-        start: marker.start,
-        end: marker.end.clone(),
-        comment: marker.comment.clone(),
-        color: marker.color.clone(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+        let db_marker = DbMarker {
+            id: marker.id.clone(),
+            song_id: marker.song.clone(),
+            start: marker.start,
+            end: marker.end.clone(),
+            comment: marker.comment.clone(),
+            color: marker.color.clone(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
 
         sqlx::query(
             r#"
             INSERT INTO markers (id, song_id, start, end, comment, color, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            "#
+            "#,
         )
         .bind(&db_marker.id)
         .bind(&db_marker.song_id)
@@ -271,7 +273,9 @@ mod tests {
 
     async fn setup_test_db() -> Database {
         let db_url = "sqlite::memory:";
-        Database::new(db_url).await.expect("Failed to create test database")
+        Database::new(db_url)
+            .await
+            .expect("Failed to create test database")
     }
 
     #[tokio::test]
@@ -283,7 +287,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_and_get_song() {
         let db = setup_test_db().await;
-        
+
         let song = Song {
             id: "test-song-1".to_string(),
             url: "/path/to/test.mp3".to_string(),
@@ -318,7 +322,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_songs_with_query() {
         let db = setup_test_db().await;
-        
+
         // Create test songs
         for i in 1..=3 {
             let song = Song {
@@ -361,7 +365,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_song() {
         let db = setup_test_db().await;
-        
+
         let song = Song {
             id: "update-test".to_string(),
             url: "/path/test.mp3".to_string(),
@@ -401,7 +405,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_song() {
         let db = setup_test_db().await;
-        
+
         let song = Song {
             id: "delete-test".to_string(),
             url: "/path/test.mp3".to_string(),
@@ -436,7 +440,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_and_get_playlist() {
         let db = setup_test_db().await;
-        
+
         let playlist = Playlist {
             id: "playlist-1".to_string(),
             name: "Test Playlist".to_string(),
@@ -460,7 +464,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_and_get_markers() {
         let db = setup_test_db().await;
-        
+
         // First create a song
         let song = Song {
             id: "song-with-markers".to_string(),
@@ -507,7 +511,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_songs_with_limit() {
         let db = setup_test_db().await;
-        
+
         // Create 5 songs
         for i in 1..=5 {
             let song = Song {
@@ -550,7 +554,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_songs_with_offset() {
         let db = setup_test_db().await;
-        
+
         for i in 1..=5 {
             let song = Song {
                 id: format!("offset-song-{}", i),

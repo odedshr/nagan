@@ -37,6 +37,20 @@ body {
     "nav player";
 }
 
+.drag-active::after {
+  content: "Drop files to add to playlist";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2rem 4rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 2rem;
+  border-radius: 8px;
+  z-index: 1000;
+}
+
 .container {
   grid-area: main;
   /* margin: 0;

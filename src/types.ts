@@ -15,13 +15,6 @@ export interface Player {
     getDivElement(): HTMLDivElement;
 }
 
-export interface TrackMetadata {
-    title: string;
-    artist: string;
-    picture: IPicture[];
-    duration: number;
-}
-
 export type Mode = "database" | "playlist" | "notes";
 // Core Data Models
 export interface SongMetadata {
@@ -31,14 +24,15 @@ export interface SongMetadata {
     track?: number;
     image?: string;
     duration: number;
-    artists: string[];
+    artists: string | string[];
     instruments?: string[];
     bpm?: number;
     genres: string[];
     comment?: string;
     tags: string[];
-    fileExists: boolean;
-    timesPlayed: number;
+    file_exists: boolean;
+    times_played: number;
+    picture: IPicture[];
 }
 
 export interface Song {
@@ -143,11 +137,42 @@ export interface CalculateSimilarityResponse {
     distances: number[];
 }
 
+export interface BackendService {
+    getSongs(query: GetSongsQuery): Promise<GetSongsResponse>;
+    addSong(filePath: string, metadata: SongMetadata): Promise<Song>;
+    // updateSong(payload: UpdateSongPayload): Promise<Song>;
+    // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
+    // getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
+    // updatePlaylist(payload: UpdatePlaylistPayload): Promise<Playlist>;
+    // getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
+    // addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void>;
+    // reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<void>;
+    // addMarker(payload: AddMarkerPayload): Promise<Marker>;
+    // updateMarker(payload: UpdateMarkerPayload): Promise<Marker>;
+    // calculateSimilarity(songId: string, topN: number): Promise<CalculateSimilarityResponse>
+}
+
+export interface TauriFile extends File {
+    path: string;
+}
+
+export type FileDropEvent = CustomEvent<{
+    type: 'files-dropped';
+    files: File[];
+}>;
+
+export type FileLoadedEvent = CustomEvent<{
+    type: 'file-loaded';
+    file: File;
+    metadata: SongMetadata;
+}> ;
+
 export type StateBase = {
     mode: "database" | "playlist" | "notes";
     current: any;
     playbackRate: number;
     volume: number;
+    lastEvent?: CustomEvent;
 }
 
 export type State = StateTemplate<StateBase>;

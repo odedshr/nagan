@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use chrono::{DateTime, Utc};
 
 // Core Data Models
 
@@ -62,7 +62,7 @@ pub struct DbSong {
     pub track: Option<i32>,
     pub image: Option<String>,
     pub duration: f64,
-    pub artists: String, // JSON string
+    pub artists: String,             // JSON string
     pub instruments: Option<String>, // JSON string
     pub bpm: Option<f32>,
     pub genres: String, // JSON string
@@ -221,7 +221,8 @@ impl From<DbSong> for Song {
                 image: db_song.image,
                 duration: db_song.duration,
                 artists: serde_json::from_str(&db_song.artists).unwrap_or_default(),
-                instruments: db_song.instruments
+                instruments: db_song
+                    .instruments
                     .map(|s| serde_json::from_str(&s).unwrap_or_default()),
                 bpm: db_song.bpm,
                 genres: serde_json::from_str(&db_song.genres).unwrap_or_default(),
@@ -411,7 +412,7 @@ mod tests {
 
         let json = serde_json::to_string(&metadata).unwrap();
         let deserialized: SongMetadata = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.title, metadata.title);
         assert_eq!(deserialized.duration, metadata.duration);
     }

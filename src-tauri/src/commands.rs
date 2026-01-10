@@ -1,9 +1,9 @@
+use serde_json;
 use tauri::State;
 use uuid::Uuid;
-use serde_json;
 
-use crate::models::*;
 use crate::database::Database;
+use crate::models::*;
 use crate::AppState;
 
 // Keep original greet command for compatibility
@@ -20,38 +20,19 @@ pub async fn get_songs(
     state: State<'_, AppState>,
 ) -> Result<GetSongsResponse, String> {
     let db: &Database = &*state.db.lock().await;
-    db.get_songs(query).await.map_err(|e: sqlx::Error| e.to_string())
+    db.get_songs(query)
+        .await
+        .map_err(|e: sqlx::Error| e.to_string())
 }
 
 #[tauri::command]
-pub async fn add_song(
-    file_path: String,
-    state: State<'_, AppState>,
-) -> Result<Song, String> {
+pub async fn add_song(file_path: String, metadata: SongMetadata,state: State<'_, AppState>) -> Result<Song, String> {
     let song_id = Uuid::new_v4().to_string();
     let filename = std::path::Path::new(&file_path)
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("unknown")
         .to_string();
-
-    // Extract metadata (simplified version)
-    let metadata = SongMetadata {
-        title: filename.clone(),
-        album: "Unknown Album".to_string(),
-        year: None,
-        track: None,
-        image: None,
-        duration: 0.0,
-        artists: vec!["Unknown Artist".to_string()],
-        instruments: None,
-        bpm: None,
-        genres: vec![],
-        comment: None,
-        tags: vec![],
-        file_exists: true,
-        times_played: 0,
-    };
 
     let song = Song {
         id: song_id,
@@ -62,7 +43,9 @@ pub async fn add_song(
     };
 
     let db = state.db.lock().await;
-    db.create_song(song.clone()).await.map_err(|e| e.to_string())?;
+    db.create_song(song.clone())
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(song)
 }
 
@@ -72,7 +55,9 @@ pub async fn update_song(
     state: State<'_, AppState>,
 ) -> Result<Option<Song>, String> {
     let db = state.db.lock().await;
-    db.update_song(&payload.id.clone(), payload).await.map_err(|e| e.to_string())
+    db.update_song(&payload.id.clone(), payload)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -82,13 +67,13 @@ pub async fn delete_song(
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
     let db = state.db.lock().await;
-    
+
     // If delete_file is true, we would need to implement file deletion logic
     if delete_file.unwrap_or(false) {
         // TODO: Implement actual file deletion
         log::warn!("File deletion not implemented yet");
     }
-    
+
     db.delete_song(&id).await.map_err(|e| e.to_string())
 }
 
@@ -99,7 +84,7 @@ pub async fn bulk_update_songs(
 ) -> Result<i32, String> {
     let mut updated_count = 0;
     let db = state.db.lock().await;
-    
+
     for song_id in payload.ids {
         let update_payload = UpdateSongPayload {
             id: song_id.clone(),
@@ -107,12 +92,12 @@ pub async fn bulk_update_songs(
             update_id3: payload.update_id3,
             filename: None,
         };
-        
+
         if db.update_song(&song_id, update_payload).await.is_ok() {
             updated_count += 1;
         }
     }
-    
+
     Ok(updated_count)
 }
 
@@ -142,7 +127,9 @@ pub async fn create_playlist(
     };
 
     let db = state.db.lock().await;
-    db.create_playlist(playlist.clone()).await.map_err(|e| e.to_string())?;
+    db.create_playlist(playlist.clone())
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(playlist)
 }
 
@@ -154,8 +141,11 @@ pub async fn load_song(
     state: State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
     let db = state.db.lock().await;
-    let song = db.get_song_by_id(&song_id).await.map_err(|e| e.to_string())?;
-    
+    let song = db
+        .get_song_by_id(&song_id)
+        .await
+        .map_err(|e| e.to_string())?;
+
     if let Some(song) = song {
         Ok(serde_json::json!({
             "metadata": song.metadata,
@@ -193,7 +183,9 @@ pub async fn add_marker(
     };
 
     let db = state.db.lock().await;
-    db.create_marker(marker.clone()).await.map_err(|e| e.to_string())?;
+    db.create_marker(marker.clone())
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(marker)
 }
 
@@ -217,7 +209,7 @@ pub async fn export_songs() -> Result<bool, String> {
 pub async fn extract_metadata() -> Result<SongMetadata, String> {
     // TODO: Implement actual metadata extraction using music-metadata crate
     log::warn!("Metadata extraction not implemented yet");
-    
+
     Ok(SongMetadata {
         title: "Extracted Title".to_string(),
         album: "Extracted Album".to_string(),
@@ -359,7 +351,10 @@ mod tests {
     async fn test_greet_command() {
         let result = greet("World").await;
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "Hello, World! You've been greeted from Rust!");
+        assert_eq!(
+            result.unwrap(),
+            "Hello, World! You've been greeted from Rust!"
+        );
     }
 
     #[tokio::test]

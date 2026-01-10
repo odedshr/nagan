@@ -1,13 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
-import initSongDatabase from "./song-database/SongDatabase";
+import SongDatabase from "./song-database/SongDatabase";
 import initPlaylist from "./playlist-manager/Playlist";
 import initPlayer from "./player/player";
 import { Context } from "./Context";
-import { Mode, State } from "./types";
-import initDragAndDrop from "./drag-and-drop";
+import { BackendService, Mode, State } from "./types";
+import isTauri from "./is-tauri";
 
 let greetInputEl: HTMLInputElement | null;
 let greetMsgEl: HTMLElement | null;
+
+
 
 async function greet() {
   if (greetMsgEl && greetInputEl) {
@@ -26,14 +28,25 @@ function initNav(state: State) {
   });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+async function getBackendService() {
+  const backendServiceModule =  await import(
+    isTauri() ? "./backend/tauri.backend.ts" : "./backend/web.backend.ts"
+  );
+  return new backendServiceModule.default() as BackendService;
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
   const state = Context({ mode: "database", current: null, playbackRate: 100, volume: 100 }) as State;
-  state.addListener("mode", (mode:string) => {
+
+  const backendService:BackendService = await getBackendService()
+  const songDatabase = SongDatabase(state, backendService);
+
+  state.addListener("mode", async (mode:string) => {
     const container = document.getElementById("container") as HTMLElement;
     while (container.hasChildNodes()) { container.removeChild(container.lastChild!); }
     switch (mode) {
       case "database":
-        initSongDatabase(container);
+        container.appendChild(songDatabase);
         break;
       case "playlist":
         initPlaylist(container);
@@ -46,7 +59,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   initNav(state);
   initPlayer(state, document.getElementById("player-container") as HTMLElement);
-  initDragAndDrop();
+  
+  const dragAndDropModule = isTauri() ? await import("./drag-and-drop.tauri.ts") : await import("./drag-and-drop.ts")
+  dragAndDropModule.default(state);
+  
 
   greetInputEl = document.querySelector("#greet-input");
   greetMsgEl = document.querySelector("#greet-msg");

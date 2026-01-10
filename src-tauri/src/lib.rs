@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-mod models;
-mod database;
 mod commands;
+mod database;
+mod models;
 
 use database::Database;
 
@@ -17,18 +17,18 @@ pub async fn run() {
     let app_dir = dirs::data_local_dir()
         .expect("Failed to get app data directory")
         .join("nagan");
-    
+
     // Create the directory if it doesn't exist
-    std::fs::create_dir_all(&app_dir)
-        .expect("Failed to create app directory");
-    
+    std::fs::create_dir_all(&app_dir).expect("Failed to create app directory");
+
     let db_path = app_dir.join("nagan.db");
     let db_url = format!("sqlite:///{}", db_path.display());
-    
+
     println!("Database path: {}", db_url);
-    
+
     // Initialize database
-    let db = Database::new(&db_url).await
+    let db = Database::new(&db_url)
+        .await
         .expect("Failed to initialize database");
 
     let app_state = AppState {
@@ -36,6 +36,8 @@ pub async fn run() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![

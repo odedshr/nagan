@@ -1,20 +1,16 @@
-import { parseBlob } from "music-metadata";
 import PlayerUi from "./Player.ui.js";
 
-import { State, TrackMetadata } from '../types.ts';
+import { SongMetadata, State, } from '../types.ts';
+import isTauri from "../is-tauri.ts";
+import extractSongMetadata from "./extract-song-metadata.ts";
 
-function browseFile(fileSelectedHandler: (file: File) => void) {
-    console.log("browseFile called");
-    const fileSelect = document.createElement('input');
-    fileSelect.type = 'file';
-    fileSelect.accept = 'audio/*';
-    fileSelect.style.display = 'none';
-    fileSelect.addEventListener("change", async () => {
-        if (fileSelect.files !== null && fileSelect.files.length > 0) {
-            fileSelectedHandler(fileSelect.files[0])
-        }
-    });
-    fileSelect.click(); // Programmatically open the file dialog
+async function browseFile(fileSelectedHandler: (file: File) => void) {
+    const files = await (await import(
+            isTauri() ? "./select-file.tauri.ts" : "./select-file.ts")
+        ).default();
+    if (files.length > 0) {
+        fileSelectedHandler(files[0]);
+    }
 }
 
 function togglePlay(audioToggleHandler: (isPlaying: boolean) => void) {
@@ -30,7 +26,7 @@ function togglePlay(audioToggleHandler: (isPlaying: boolean) => void) {
     }
 }
 
-function setMetadata(data: TrackMetadata,
+function setMetadata(data: SongMetadata,
     titleEl: HTMLSpanElement,
     artistEl: HTMLSpanElement,
     coverEl: HTMLImageElement,
@@ -38,8 +34,8 @@ function setMetadata(data: TrackMetadata,
     positionEl: HTMLInputElement,
     progressBar: HTMLInputElement) {
         trackMetaData = data;
-        titleEl.textContent = data.title || "Unknown Title";
-        artistEl.textContent = data.artist || "Unknown Artist";
+        titleEl.textContent = data.title;
+        artistEl.textContent = Array.isArray(data.artists) ? data.artists.join(", ") : data.artists || "Unknown Artist";
         const cover = data.picture && data.picture.length > 0 ? data.picture[0] : null;
         if (cover) {
             const blob = new Blob([new Uint8Array(cover.data)], { type: cover.format });
@@ -64,7 +60,7 @@ function setCurrentTime(time: number, positionEl: HTMLInputElement, progressBar:
     }
 }
 
-function setProgress(newValue:number, trackMetaData: TrackMetadata, positionUpdateHandler: (time: number) => void) {
+function setProgress(newValue:number, trackMetaData: SongMetadata, positionUpdateHandler: (time: number) => void) {
     const newTime = (newValue / 100) * trackMetaData.duration;
     positionUpdateHandler(newTime);
 }
@@ -91,19 +87,20 @@ let fileSelectedHandler: (file: File) => void;
 let audioToggleHandler: (isPlaying: boolean) => void;
 let positionUpdateHandler: (time: number) => void;
 
-let trackMetaData:TrackMetadata;
+let trackMetaData:SongMetadata;
 
 export default function initPlayer(state:State, container:HTMLElement) {
-  const audio = new Audio();
-  fileSelectedHandler = (async (file: File) => {
-    const metadata = await parseBlob(file);
+    const audio = new Audio();
+    // when the audio is playing, log the current time every second
+    audio.addEventListener("timeupdate", () => setCurrentTime(
+        audio.currentTime,
+        elms.get("position") as HTMLInputElement,
+        elms.get("progressBar") as HTMLInputElement));
+
+    fileSelectedHandler = (async (file: File) => {
+    const metadata = await extractSongMetadata(file);
     
-    setMetadata({
-        title: metadata.common.title || "Unknown Title",
-        artist: metadata.common.artist || "Unknown Artist",
-        picture: metadata.common.picture || [],
-        duration: metadata.format.duration || 0,
-      },
+    setMetadata(metadata,
         elms.get("title") as HTMLSpanElement,
         elms.get("artist") as HTMLSpanElement,
         elms.get("cover") as HTMLImageElement,
@@ -114,11 +111,7 @@ export default function initPlayer(state:State, container:HTMLElement) {
 
     // load file to audio element or player here
     audio.src = URL.createObjectURL(file);
-    // when the audio is playing, log the current time every second
-    audio.addEventListener("timeupdate", () => setCurrentTime(
-        audio.currentTime,
-        elms.get("position") as HTMLInputElement,
-        elms.get("progressBar") as HTMLInputElement));
+    state.lastEvent = new CustomEvent('file-loaded', { detail: { file, metadata } });
   });
 
   audioToggleHandler = ((isPlaying: boolean) => {

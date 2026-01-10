@@ -1,3 +1,5 @@
+import { listen } from '@tauri-apps/api/event'
+
 import { State } from "./types";
 
 function isAudioFile(file: File): boolean {
@@ -43,21 +45,38 @@ function handleFileDrop(state: State, event: DragEvent) {
 }
 
 export default function initDragAndDrop(state:State) {
-  document.body.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    document.body.classList.add('drag-active');
-  });
+  // document.body.addEventListener('dragover', (event) => {
+  //   event.preventDefault();
+  //   document.body.classList.add('drag-active');
+  // });
   
-  document.body.addEventListener('dragleave', (event) => {
-    // Only remove class if we're leaving the body itself, not child elements
-    // if (event.target === document.body) {
-      document.body.classList.remove('drag-active');
-    // }
+  // document.body.addEventListener('dragleave', (event) => {
+  //   // Only remove class if we're leaving the body itself, not child elements
+  //   // if (event.target === document.body) {
+  //     document.body.classList.remove('drag-active');
+  //   // }
+  // });
+
+  // document.body.addEventListener('dragend', () => {
+  //   document.body.classList.remove('drag-active');
+  // });
+  
+  // document.body.addEventListener('drop', handleFileDrop.bind(null,state));
+
+  listen<string[]>("tauri://file-drop", (event) => {
+    alert("File drop event received");
+    console.log("Dropped files:", event.payload);
+
+    event.payload.forEach((path) => {
+      console.log("Full path:", path);
+    });
   });
 
-  document.body.addEventListener('dragend', () => {
-    document.body.classList.remove('drag-active');
+  listen("tauri://file-drop-hover", () => {
+    console.log("File hovering over window");
   });
-  
-  document.body.addEventListener('drop', handleFileDrop.bind(null,state));
+
+  listen("tauri://file-drop-cancelled", () => {
+    console.log("File drag cancelled");
+  });
 }
