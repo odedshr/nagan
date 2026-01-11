@@ -5,15 +5,19 @@ import { State } from '../types.js';
 import Knob from './knob.js';
 
 export default (state:State) => (<div class="mini-player">
-    <img id="cover" class="cover" src="" alt="Cover Art"/>
+    <div class="cover-container">
+        <img id="cover" class="cover" src="" alt="Cover Art"/>
+    </div>
     <div class="track-info">
         <div class="text-info">
-            <span id="title" class="title">Title</span>
-            <span id="artist" class="artist">Artist</span>
-            <input id="position" type="time" class="position" value="00:00"/>
-            <span id="duration" class="duration">00:00</span>
+            <div id="title" class="track-title"></div>
+            <div id="artist" class="track-artist"></div>
         </div>
         <input disabled id="progressBar" type="range" class="progress-bar" min="0" max="100" value="0" />
+        <div class="time-controls">
+            <input id="position" type="text" class="position" value="00:00"/>
+            <span id="duration" class="duration">00:00</span>
+        </div>
     </div>
     <nav class="player-controls">
         <button class="player-button" id="loadBtn"><span>Load</span></button>

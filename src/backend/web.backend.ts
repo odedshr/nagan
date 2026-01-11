@@ -3,10 +3,23 @@ import { BackendService, GetSongsQuery, GetSongsResponse, Song, SongMetadata } f
 
 export default class WebBackendService implements BackendService {
   getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
-    throw new Error("Method not implemented.");
+    console.error('getSongs not implemented in WebBackendService');
+    return Promise.resolve({ songs: [], total: 0 });
   }
-  
+
   async addSong(filePath: string, metadata: SongMetadata): Promise<Song> {
-    throw Error('not implemented yet: addSong');
+    console.error('not implemented yet: addSong');
+    return Promise.resolve({
+      id: '0',
+      title: metadata.title,
+      artists: metadata.artists,
+      album: metadata.album,
+      duration: metadata.duration,
+      file_path: filePath,
+      file_exists: true,
+      times_played: 0,
+      genres: metadata.genres,
+      tags: metadata.tags,
+    } as unknown as Song);
   }
 }

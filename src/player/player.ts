@@ -51,12 +51,14 @@ function setMetadata(data: SongMetadata,
         progressBar.disabled = false;
     }
 
-function setCurrentTime(time: number, positionEl: HTMLInputElement, progressBar: HTMLInputElement) {
-    positionEl.value = prettyTime(time);
-    
+function setCurrentTime(time: number, positionEl: HTMLInputElement, progressBar: HTMLInputElement) {  
+    progressBar.setAttribute("style", `--progress: ${ (time / trackMetaData.duration) * 100 }%`);
     if (!progressBar.hasAttribute("data-dragging") && trackMetaData.duration) {
         const progress = (time / trackMetaData.duration) * 100;
         progressBar.value = progress.toString();
+    }
+    if (document.activeElement !== positionEl) {
+        positionEl.value = prettyTime(time);
     }
 }
 
@@ -71,15 +73,34 @@ function prettyTime(seconds: number): string {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-function initComponents(loadBtn: HTMLButtonElement,
+const VALID_TIME_REGEX = /^(?:\d+|(?:\d+:[0-5]\d)|(?:\d+:[0-5]\d:[0-5]\d))$/;
+
+function validatePositionInput(value: string, duration: number, positionUpdateHandler: (time: number) => void) {
+    if (!VALID_TIME_REGEX.test(value)) {
+        return false;
+    }
+
+    let totalSeconds =  value.split(':')
+        .map(Number)
+        .reduce((acc, part) => acc * 60 + part, 0);
+    
+    if (totalSeconds <= duration) {
+        positionUpdateHandler(totalSeconds);
+    }
+}
+
+function initComponents(
+    loadBtn: HTMLButtonElement,
     playToggleBtn: HTMLButtonElement,
-    progressBar: HTMLInputElement) {
+    progressBar: HTMLInputElement,
+    positionEl: HTMLInputElement) {
       loadBtn.addEventListener("click", () => browseFile(fileSelectedHandler));
       playToggleBtn.addEventListener("click", () => togglePlay(audioToggleHandler));
 
       progressBar.addEventListener("change", () => setProgress(parseFloat(progressBar.value), trackMetaData, positionUpdateHandler));
       progressBar.addEventListener("mousedown", () => progressBar.setAttribute("data-dragging", "true"));
       progressBar.addEventListener("mouseup", () => progressBar.removeAttribute("data-dragging"));
+      positionEl.addEventListener("change", () => validatePositionInput(positionEl.value, trackMetaData.duration, positionUpdateHandler));
 }
 
 const elms = new Map<string, HTMLElement>();
@@ -141,7 +162,8 @@ export default function initPlayer(state:State, container:HTMLElement) {
   initComponents(
       elms.get("loadBtn") as HTMLButtonElement,
       elms.get("playToggle") as HTMLButtonElement,
-      elms.get("progressBar") as HTMLInputElement
+      elms.get("progressBar") as HTMLInputElement,
+      elms.get("position") as HTMLInputElement
   );
 
   state.addListener("volume", (value:number) => audio.volume = value / 100);
