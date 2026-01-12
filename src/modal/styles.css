@@ -1,0 +1,153 @@
+/* Modal Backdrop */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: background-color 0.2s steps(8);
+}
+
+.modal-backdrop.modal-open {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-backdrop.modal-closing {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+/* Modal Dialog */
+.modal-dialog {
+  background-color: var(--background-color);
+  border: 0.1rem solid var(--text-color);
+  box-shadow: 
+    4px 4px 0 rgba(0, 0, 0, 0.5),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.3),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+  padding: 20px;
+  min-width: 300px;
+  max-width: 500px;
+  transform: scale(0.7);
+  opacity: 0;
+  transition: transform 0.2s steps(5), opacity 0.2s steps(5);
+  image-rendering: pixelated;
+  font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+}
+
+.modal-open .modal-dialog {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-closing .modal-dialog {
+  transform: scale(0.7);
+  opacity: 0;
+}
+
+/* Modal Message */
+.modal-message {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-color);
+}
+
+/* Modal Input */
+.modal-input {
+    background-color: var(--background-color);
+    border: 0.1rem solid var(--text-color);
+    box-sizing: border-box;
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    outline: none;
+    padding: 6px 8px;
+    width: 100%;
+}
+
+.modal-input:focus {
+    border-color: var(--highlight-color, #0066ff);
+    box-shadow: 
+        inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+        0 0 0 2px var(--highlight-color, #0066ff);
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-button {
+    background-color: var(--background-color);
+    border: 0.1rem solid var(--text-color);
+    box-sizing: border-box;
+    box-shadow: 
+        2px 2px 0 rgba(0, 0, 0, 0.3),
+        inset -1px -1px 0 rgba(0, 0, 0, 0.2),
+        inset 1px 1px 0 rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    cursor: pointer;
+    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+    font-size: 1.4rem;
+    min-width: 8rem;
+    padding: 0.8rem 1.8rem;
+    outline: none;
+    transition: transform 0.05s;
+}
+
+.modal-button:hover {
+  background-color: var(--hover-color, #e8e8e8);
+}
+
+.modal-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 
+    1px 1px 0 rgba(0, 0, 0, 0.3),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.2),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.modal-button:focus {
+    border-style: double;
+    border-width: 0.3rem;
+    padding: 0.6rem 1.6rem;
+}
+
+.modal-ok {
+  font-weight: bold;
+  border-width: 0.2rem;
+  padding: 0.7rem 1.7rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modal-dialog {
+    box-shadow: 
+      4px 4px 0 rgba(0, 0, 0, 0.8),
+      inset -1px -1px 0 rgba(0, 0, 0, 0.5),
+      inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .modal-input {
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-input:focus {
+    box-shadow: 
+      inset 2px 2px 0 rgba(0, 0, 0, 0.5),
+      0 0 0 2px var(--highlight-color, #3399ff);
+  }
+
+  .modal-button:hover {
+    background-color: var(--hover-color, #333333);
+  }
+}

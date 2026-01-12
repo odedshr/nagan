@@ -9,3 +9,18 @@
 
 .playlist-list { grid-area: list; }
 .playlist-editor { grid-area: item; }
+
+.playlists {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.playlist-item {
+  padding: 1rem;
+  border-bottom: 0.1rem solid var(--text-color);
+  cursor: pointer;
+  font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+  font-size: 1.4rem;
+  color: var(--text-color);
+}

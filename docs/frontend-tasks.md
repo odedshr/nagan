@@ -11,14 +11,14 @@
 
 - [✅] Create player UI component with basic controls (play/pause, next/prev)
 - [✅] Implement audio playback using Web Audio API or HTML5 Audio
-- [ ] Add position scrubber and time display
-- [ ] Add volume control
+- [✅] Add position scrubber and time display
+- [✅] Add volume control
 - [ ] Wire up player to accept songs from playlist
 
 ## Phase 3: Song Database - Read (Week 2)
 
-- [ ] Create basic table component for displaying songs
-- [ ] Implement table data rendering from backend
+- [✅] Create basic table component for displaying songs
+- [✅] Implement table data rendering from backend
 - [ ] Add basic filtering (search by title/artist)
 - [ ] Add basic sorting (by column headers)
 

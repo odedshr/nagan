@@ -1,18 +1,22 @@
 @import './player/styles.css';
 @import './song-database/styles.css';
 @import './playlist-manager/styles.css';
+@import './modal/styles.css';
 
 :root {
   --hover-bg-color:#f0f0f0;
   --active-bg-color: #ccc;
+  --background-color: #f6f6f6;
+  --text-color: #0f0f0f;
+  --highlight-color: #396cd8;
   
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 62.5%;
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: var(--text-color);
+  background-color: var(--background-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

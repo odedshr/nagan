@@ -1,4 +1,8 @@
 .song-database-table {
+    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+    font-size: 1.2rem;
+    image-rendering: pixelated;
+    line-height: 1.2;
     width: 100%;
 }
 

@@ -1,8 +1,10 @@
 /// <reference path="../JSX.d.ts" />
 
 import jsx from '../jsx.js';
+import { Song } from '../types.js';
+import SongDatabaseTableBody from './SongDatabaseTableBody.js';
 
-export default () => (<div>
+export default (songs:Song[]) => (<div class="song-database-container">
     <table class="song-database-table">
         <thead>
             <tr>
@@ -21,8 +23,6 @@ export default () => (<div>
                 <th>Tag Format</th>
             </tr>
         </thead>
-        <tbody>
-            
-        </tbody>
+        {SongDatabaseTableBody(songs)}
     </table>
 </div>  as HTMLDivElement);

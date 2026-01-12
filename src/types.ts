@@ -140,9 +140,10 @@ export interface CalculateSimilarityResponse {
 export interface BackendService {
     getSongs(query: GetSongsQuery): Promise<GetSongsResponse>;
     addSong(filePath: string, metadata: SongMetadata): Promise<Song>;
+    getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
+    createPlaylist(name: string): Promise<Playlist>;
     // updateSong(payload: UpdateSongPayload): Promise<Song>;
     // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
-    // getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
     // updatePlaylist(payload: UpdatePlaylistPayload): Promise<Playlist>;
     // getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
     // addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void>;
@@ -169,10 +170,13 @@ export type FileLoadedEvent = CustomEvent<{
 
 export type StateBase = {
     mode: "database" | "playlist" | "notes";
-    current: any;
+    currentTrack: any;
     playbackRate: number;
     volume: number;
     lastEvent?: CustomEvent;
+    db: Song[];
+    playlists: Playlist[];
+    currentPlaylistId?: string;
 }
 
 export type State = StateTemplate<StateBase>;

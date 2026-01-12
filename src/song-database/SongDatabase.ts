@@ -1,5 +1,12 @@
-import { BackendService, FileDropEvent, FileLoadedEvent, State, TauriFile } from '../types.ts';
+import { BackendService, FileDropEvent, FileLoadedEvent, Song, State, TauriFile } from '../types.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
+import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
+
+function refreshSongs(state:State, backendService:BackendService) {
+    backendService.getSongs({}).then(response => state.db = response.songs).catch(error => {
+        console.error("Error fetching songs:", error);
+    });
+}
 
 export default function SongDatabase(
     state:State,
@@ -11,6 +18,7 @@ export default function SongDatabase(
                         const { file, metadata } = (event as FileLoadedEvent).detail;
                         const song = await backendService.addSong(file.name, metadata);
                         console.log(`✅ Added song:`, song);
+                        refreshSongs(state, backendService);
                         break;
                     case 'files-dropped':
                         const files = (event as FileDropEvent).detail.files as File[];
@@ -28,10 +36,11 @@ export default function SongDatabase(
             }
         });
 
-        backendService.getSongs({}).then(response => {
-            console.log("Songs in database:", response.songs);
-        }).catch(error => {
-            console.error("Error fetching songs:", error);
-        });
-        return SongDatabaseUI();
+        const elm = SongDatabaseUI(state.db)
+        state.addListener('db', 
+            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[]))
+        );
+        refreshSongs(state, backendService);
+
+        return elm;
 }
