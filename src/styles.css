@@ -1,7 +1,7 @@
 @import './player/styles.css';
 @import './song-database/styles.css';
 @import './playlist-manager/styles.css';
-@import './modal/styles.css';
+@import './ui-components/styles.css';
 
 :root {
   --hover-bg-color:#f0f0f0;

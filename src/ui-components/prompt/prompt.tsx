@@ -1,14 +1,14 @@
-/// <reference path="../JSX.d.ts" />
+/// <reference path="../../JSX.d.ts" />
 
-import jsx from '../jsx.js';
+import jsx from '../../jsx.js';
 
-interface ModalProps {
+interface PromptProps {
   message: string;
   defaultValue?: string;
   onSubmit: (value: string | null) => void;
 }
 
-export default function Modal(props: ModalProps): HTMLDivElement {
+export default function Prompt(props: PromptProps): HTMLDialogElement {
   const { message, defaultValue = '', onSubmit } = props;
 
   let form:HTMLFormElement;
@@ -34,38 +34,36 @@ export default function Modal(props: ModalProps): HTMLDivElement {
   };
 
   const modal = (
-    <div class="modal-backdrop">
-      <dialog class="modal-dialog">
-        <form method="dialog" onsubmit={handleSubmit}>
-            <div class="modal-message">{message}</div>
-            <input
-                type="text"
-                class="modal-input"
-                value={defaultValue}
-                onkeydown={handleKeyDown}
-                required
-            />
-            <div class="modal-buttons">
-            <button class="modal-button modal-cancel" onclick={handleCancel}>
-                Cancel
-            </button>
-            <button class="modal-button modal-ok">
-                OK
-            </button>
-            </div>
-        </form>
-      </dialog>
-    </div>
-  ) as HTMLDivElement;
+    <dialog class="modal-dialog">
+      <form method="dialog" onsubmit={handleSubmit}>
+          <div class="modal-message">{message}</div>
+          <input
+              type="text"
+              class="modal-input"
+              value={defaultValue}
+              onkeydown={handleKeyDown}
+              required
+          />
+          <div class="modal-buttons">
+          <button class="modal-button modal-cancel" onclick={handleCancel}>
+              Cancel
+          </button>
+          <button class="modal-button modal-ok">
+              OK
+          </button>
+          </div>
+      </form>
+    </dialog>
+  ) as HTMLDialogElement;
 
     // Prevent clicks on backdrop from closing (only buttons should close)
-  const dialog = modal.querySelector('.modal-dialog') as HTMLDialogElement;
-  dialog.addEventListener('click', (e) => e.stopPropagation());
+  // const dialog = modal.querySelector('.modal-dialog') as HTMLDialogElement;
+  // modal.addEventListener('click', (e) => e.stopPropagation());
   
   form = modal.querySelector('form') as HTMLFormElement;
 
   // Click on backdrop cancels
-  modal.addEventListener('click', handleCancel);
+  // modal.addEventListener('click', handleCancel);
   
   // Trap focus within modal
   modal.addEventListener('keydown', (e) => {

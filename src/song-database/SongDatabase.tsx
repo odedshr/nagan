@@ -4,7 +4,9 @@ import jsx from '../jsx.js';
 import { Song } from '../types.js';
 import SongDatabaseTableBody from './SongDatabaseTableBody.js';
 
-export default (songs:Song[]) => (<div class="song-database-container">
+export default (songs:Song[],
+    onSongSelected:(song:Song)=>void,
+    onAddToPlaylist:(song:Song)=>void) => (<div class="song-database-container">
     <table class="song-database-table">
         <thead>
             <tr>
@@ -20,9 +22,9 @@ export default (songs:Song[]) => (<div class="song-database-container">
                 <th>Tracks Total</th>
                 <th>Comment</th>
                 <th>File Name</th>
-                <th>Tag Format</th>
+                <th>Actions</th>
             </tr>
         </thead>
-        {SongDatabaseTableBody(songs)}
+        {SongDatabaseTableBody(songs, onSongSelected, onAddToPlaylist)}
     </table>
 </div>  as HTMLDivElement);

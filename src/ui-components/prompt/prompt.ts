@@ -1,4 +1,4 @@
-import Modal from './modal.tsx';
+import Prompt from './prompt.tsx';
 
 /**
  * Show a retro-styled modal prompt asking for text input
@@ -11,7 +11,7 @@ export function showPrompt(
   defaultValue?: string
 ): Promise<string | null> {
     return new Promise((resolve) => {
-      const modal = Modal({
+      const modal = Prompt({
           message,
           defaultValue,
           onSubmit: (value) => {
@@ -25,12 +25,12 @@ export function showPrompt(
                 }, 200);
             },
         });
-        
+
     document.body.appendChild(modal);
     (modal.querySelector('.modal-input')! as HTMLInputElement).focus();
 
     // Trigger opening animation
-    modal.querySelector('dialog')?.showModal();
+    modal.showModal();
     requestAnimationFrame(() => modal.classList.add('modal-open'));
   });
 }

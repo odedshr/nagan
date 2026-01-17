@@ -250,24 +250,61 @@ pub async fn update_playlist() -> Result<Option<Playlist>, String> {
 }
 
 #[tauri::command]
-pub async fn delete_playlist() -> Result<bool, String> {
-    // TODO: Implement playlist deletion
-    log::warn!("Playlist deletion not implemented yet");
-    Ok(true)
+pub async fn delete_playlist(
+    id: String,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let db = state.db.lock().await;
+    db.delete_playlist(&id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn get_playlist_songs() -> Result<Vec<Song>, String> {
-    // TODO: Implement getting songs from playlist
-    log::warn!("Get playlist songs not implemented yet");
-    Ok(vec![])
+pub async fn get_playlist_songs(
+    query: GetPlaylistSongsQuery,
+    state: State<'_, AppState>,
+) -> Result<Vec<Song>, String> {
+    let db = state.db.lock().await;
+    db.get_playlist_songs(&query.playlist_id, query.sort.as_deref())
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn add_song_to_playlist() -> Result<bool, String> {
-    // TODO: Implement adding song to playlist
-    log::warn!("Add song to playlist not implemented yet");
-    Ok(true)
+pub async fn add_song_to_playlist(
+    payload: AddSongToPlaylistPayload,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let db = state.db.lock().await;
+
+    // Get the current max position in the playlist
+    let max_position = db
+        .get_max_playlist_position(&payload.playlist_id)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Calculate the actual position to insert at
+    let actual_position = match payload.position {
+        // If position is None, undefined, or negative, append to the end
+        None => max_position + 1,
+        Some(pos) if pos < 0 => max_position + 1,
+        // If position is greater than max, append to the end
+        Some(pos) if pos > max_position + 1 => max_position + 1,
+        // Otherwise, use the specified position and shift existing items
+        Some(pos) => {
+            // Shift existing songs at and after this position
+            db.shift_playlist_positions(&payload.playlist_id, pos)
+                .await
+                .map_err(|e| e.to_string())?;
+            pos
+        }
+    };
+
+    // Generate a new ID for the playlist_song entry
+    let entry_id = Uuid::new_v4().to_string();
+
+    db.add_song_to_playlist(&entry_id, &payload.playlist_id, &payload.song_id, actual_position)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

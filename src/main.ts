@@ -27,8 +27,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     playbackRate: 100,
     volume: 100,
     db: [],
-    playlists: []
+    playlists: [],
+    currentPlaylistId: null,
+    currentPlaylist: null,
+    playlistSongs: [],
   }) as State;
+  state.compute("currentPlaylist",
+    (state) => state.playlists
+      .find(pl => pl.id === state.currentPlaylistId) || null);
 
   const backendService:BackendService = await getBackendService()
   const songDatabase = SongDatabase(state, backendService);

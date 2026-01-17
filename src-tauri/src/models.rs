@@ -155,6 +155,7 @@ pub struct UpdatePlaylistPayload {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetPlaylistSongsQuery {
     pub playlist_id: String,
     pub sort: Option<String>,
@@ -162,6 +163,7 @@ pub struct GetPlaylistSongsQuery {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddSongToPlaylistPayload {
     pub playlist_id: String,
     pub song_id: String,

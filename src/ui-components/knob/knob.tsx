@@ -1,7 +1,7 @@
-/// <reference path="../JSX.d.ts" />
+/// <reference path="../../JSX.d.ts" />
 
-import jsx from '../jsx.js';
-import { State, StateBase } from '../types.js';
+import jsx from '../../jsx.js';
+import { State, StateBase } from '../../types.js';
 
 let startX = 0;
 let currentX = 0;

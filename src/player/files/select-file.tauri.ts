@@ -1,5 +1,5 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { readFile } from "@tauri-apps/plugin-fs";
+import loadFile from './load-file.tauri';
 
 export default async function selectFile(): Promise<File[]> {
     return new Promise (async resolve => {
@@ -11,10 +11,7 @@ export default async function selectFile(): Promise<File[]> {
             }]
         });
         if (filePathnames) {
-            const files = filePathnames?.map(async (path:string) => {
-                const bytes = await readFile(path);
-                return new File([bytes], path);
-            });
+            const files = filePathnames?.map(loadFile);
             resolve(await Promise.all(files));
         } else {
             resolve([]);

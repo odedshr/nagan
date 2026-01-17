@@ -223,6 +223,98 @@ impl Database {
         Ok(playlist)
     }
 
+    pub async fn delete_playlist(&self, id: &str) -> Result<bool, sqlx::Error> {
+        // First, delete all playlist_songs entries for this playlist
+        sqlx::query("DELETE FROM playlist_songs WHERE playlist_id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        // Then delete the playlist itself
+        let result = sqlx::query("DELETE FROM playlists WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn get_max_playlist_position(&self, playlist_id: &str) -> Result<i32, sqlx::Error> {
+        let result: Option<(i32,)> = sqlx::query_as(
+            "SELECT COALESCE(MAX(position), -1) FROM playlist_songs WHERE playlist_id = ?"
+        )
+        .bind(playlist_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(|(pos,)| pos).unwrap_or(-1))
+    }
+
+    pub async fn shift_playlist_positions(
+        &self,
+        playlist_id: &str,
+        from_position: i32,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            "UPDATE playlist_songs SET position = position + 1 WHERE playlist_id = ? AND position >= ?"
+        )
+        .bind(playlist_id)
+        .bind(from_position)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn add_song_to_playlist(
+        &self,
+        id: &str,
+        playlist_id: &str,
+        song_id: &str,
+        position: i32,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query(
+            r#"
+            INSERT INTO playlist_songs (id, playlist_id, song_id, position, added_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            "#,
+        )
+        .bind(id)
+        .bind(playlist_id)
+        .bind(song_id)
+        .bind(position)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(true)
+    }
+
+    pub async fn get_playlist_songs(
+        &self,
+        playlist_id: &str,
+        sort: Option<&str>,
+    ) -> Result<Vec<Song>, sqlx::Error> {
+        let mut sql = r#"
+            SELECT s.* FROM songs s
+            INNER JOIN playlist_songs ps ON s.id = ps.song_id
+            WHERE ps.playlist_id = ?
+        "#.to_string();
+
+        // Add sorting - default to position order
+        if let Some(sort_field) = sort {
+            sql.push_str(&format!(" ORDER BY s.{}", sort_field));
+        } else {
+            sql.push_str(" ORDER BY ps.position");
+        }
+
+        let db_songs: Vec<DbSong> = sqlx::query_as(&sql)
+            .bind(playlist_id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(db_songs.into_iter().map(|s| s.into()).collect())
+    }
+
     // Marker Management
 
     pub async fn get_markers(&self, song_id: &str) -> Result<Vec<Marker>, sqlx::Error> {

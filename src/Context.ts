@@ -1,6 +1,6 @@
 type StateHelpers<T> = {
   addListener<K extends keyof T>(key: K, fn: (value: T[K]) => void): void;
-  computed<K extends string>(key: K, fn: (state: T) => any): void;
+  compute<K extends string>(key: K, fn: (state: T) => any): void;
   bidi(
     prop: keyof T,
     elm: HTMLElement,
@@ -13,7 +13,7 @@ export type StateTemplate<T> = T & StateHelpers<T>;
 
 export function Context<T extends object>(initial: T): StateTemplate<T> {
   const listeners = new Map<string, Set<Function>>();
-  const computed = new Map();
+  const computed = new Map<string, Function>();
 
   const notify = (key:string, value:any) => {
     if (listeners.has(key)) {
@@ -24,7 +24,8 @@ export function Context<T extends object>(initial: T): StateTemplate<T> {
   const handler = {
     get(target:any, prop:string, receiver:unknown) {
       if (computed.has(prop)) {
-        return computed.get(prop)(receiver); // compute dynamically
+        const fn = computed.get(prop);
+        return fn ? fn(receiver) : undefined; // compute dynamically
       }
       return Reflect.get(target, prop, receiver);
     },

@@ -9,6 +9,20 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$AUDIO/**" },
+        { "path": "$HOME/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "**" }
+      ]
+    },
+    "fs:allow-read-text-file",
+    "fs:allow-exists",
+    "fs:allow-stat"
   ]
 }

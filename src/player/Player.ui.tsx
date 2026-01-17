@@ -2,7 +2,7 @@
 
 import jsx from '../jsx.js';
 import { State } from '../types.js';
-import Knob from './knob.js';
+import Knob from '../ui-components/knob/knob.jsx';
 
 export default (state:State) => (<div class="mini-player">
     <div class="cover-container">

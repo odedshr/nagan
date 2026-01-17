@@ -36,9 +36,23 @@ export default function SongDatabase(
             }
         });
 
-        const elm = SongDatabaseUI(state.db)
+        const onSongSelected = (song:Song) => {
+            state.currentTrack = song;
+        };
+
+        const onAddToPlaylist = async (song:Song) => {
+            if (!!state.currentPlaylistId) {
+                await backendService.addSongToPlaylist({ playlistId: state.currentPlaylistId, songId: song.id });
+                console.log(`Song "${song.metadata.title}" added to playlist.`);
+            } else {
+                console.error('No playlist selected. Cannot add song to playlist.');
+            }
+        };
+
+        const elm = SongDatabaseUI(state.db, onSongSelected, onAddToPlaylist);
+        
         state.addListener('db', 
-            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[]))
+            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[], onSongSelected, onAddToPlaylist))
         );
         refreshSongs(state, backendService);
 

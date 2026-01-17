@@ -98,13 +98,13 @@ export interface UpdatePlaylistPayload {
 }
 
 export interface GetPlaylistSongsQuery {
-    playlist_id: string;
+    playlistId: string;
     sort?: string;
 }
 
 export interface AddSongToPlaylistPayload {
-    playlist_id: string;
-    song_id: string;
+    playlistId: string;
+    songId: string;
     position?: number;
 }
 
@@ -142,11 +142,12 @@ export interface BackendService {
     addSong(filePath: string, metadata: SongMetadata): Promise<Song>;
     getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
     createPlaylist(name: string): Promise<Playlist>;
+    deletePlaylist(playlistId: string): Promise<void>;
+    addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void>;
+    getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
     // updateSong(payload: UpdateSongPayload): Promise<Song>;
     // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
     // updatePlaylist(payload: UpdatePlaylistPayload): Promise<Playlist>;
-    // getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
-    // addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void>;
     // reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<void>;
     // addMarker(payload: AddMarkerPayload): Promise<Marker>;
     // updateMarker(payload: UpdateMarkerPayload): Promise<Marker>;
@@ -170,13 +171,16 @@ export type FileLoadedEvent = CustomEvent<{
 
 export type StateBase = {
     mode: "database" | "playlist" | "notes";
-    currentTrack: any;
+    currentTrack: Song | null;
     playbackRate: number;
     volume: number;
     lastEvent?: CustomEvent;
     db: Song[];
     playlists: Playlist[];
-    currentPlaylistId?: string;
+    currentPlaylistId: string | null;
+    // computed items:
+    currentPlaylist: Playlist | null;
+    playlistSongs: Song[];
 }
 
 export type State = StateTemplate<StateBase>;

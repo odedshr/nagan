@@ -1,13 +1,12 @@
 import PlayerUi from "./Player.ui.js";
 
-import { SongMetadata, State, } from '../types.ts';
-import isTauri from "../is-tauri.ts";
+import { Song, SongMetadata, State, } from '../types.ts';
+import selectFile from "./files/select-file.ts";
 import extractSongMetadata from "./extract-song-metadata.ts";
+import loadFile from "./files/load-file.ts";
 
 async function browseFile(fileSelectedHandler: (file: File) => void) {
-    const files = await (await import(
-            isTauri() ? "./select-file.tauri.ts" : "./select-file.ts")
-        ).default();
+    const files = await selectFile();
     if (files.length > 0) {
         fileSelectedHandler(files[0]);
     }
@@ -26,13 +25,13 @@ function togglePlay(audioToggleHandler: (isPlaying: boolean) => void) {
     }
 }
 
-function setMetadata(data: SongMetadata,
-    titleEl: HTMLSpanElement,
-    artistEl: HTMLSpanElement,
-    coverEl: HTMLImageElement,
-    durationEl: HTMLSpanElement,
-    positionEl: HTMLInputElement,
-    progressBar: HTMLInputElement) {
+function displaySongMetaData(data: SongMetadata) {
+    const titleEl = elms.get("title") as HTMLSpanElement;
+    const artistEl = elms.get("artist") as HTMLSpanElement;
+    const coverEl = elms.get("cover") as HTMLImageElement;
+    const durationEl = elms.get("duration") as HTMLSpanElement;
+    const positionEl = elms.get("position") as HTMLInputElement;
+    const progressBar = elms.get("progressBar") as HTMLInputElement;
         trackMetaData = data;
         titleEl.textContent = data.title;
         artistEl.textContent = Array.isArray(data.artists) ? data.artists.join(", ") : data.artists || "Unknown Artist";
@@ -121,14 +120,7 @@ export default function initPlayer(state:State, container:HTMLElement) {
     fileSelectedHandler = (async (file: File) => {
     const metadata = await extractSongMetadata(file);
     
-    setMetadata(metadata,
-        elms.get("title") as HTMLSpanElement,
-        elms.get("artist") as HTMLSpanElement,
-        elms.get("cover") as HTMLImageElement,
-        elms.get("duration") as HTMLSpanElement,
-        elms.get("position") as HTMLInputElement,
-        elms.get("progressBar") as HTMLInputElement
-    )
+    displaySongMetaData(metadata);
 
     // load file to audio element or player here
     audio.src = URL.createObjectURL(file);
@@ -168,6 +160,19 @@ export default function initPlayer(state:State, container:HTMLElement) {
 
   state.addListener("volume", (value:number) => audio.volume = value / 100);
   state.addListener("playbackRate", (value:number) => console.log('>>', value )); //audio.playbackRate = value / 100);
+  state.addListener("currentTrack", async (song:Song|null) => {
+    if (song) {
+      console.log("Playing song:", song.url);
+      audio.src = URL.createObjectURL(await loadFile(song.url));
+      console.log("Song metadata:", song.metadata);
+      displaySongMetaData(song.metadata);
+    //   audio.play();
+      console.log('playing');
+    //   const playToggleBtn = elms.get("playToggle") as HTMLButtonElement;
+    //   playToggleBtn.value = "pause";
+    //   playToggleBtn.querySelector("span")!.textContent = "Pause";
+    }
+  });
 
   container.appendChild(div);
 };

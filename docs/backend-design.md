@@ -89,6 +89,10 @@ The backend exposes Tauri commands for data retrieval and sending, enabling fron
 - **add_song_to_playlist**
     (payload: { playlist_id: string, song_id: string, position?: number }) -> boolean
     Add song to playlist at position, return success.
+    If position is undefined, add to the end of the list;
+    If position is negative, add from the end of the list (so -1 would be last item, -2 would be an item before the last);
+    If position value > playlist.length, add to end of list;
+    If position is negative but smaller than negative playlist.length, add as first position.
 - **remove_song_from_playlist**
     (payload: { playlist_id: string, song_id: string }) -> boolean
     Remove song from playlist, return success.

@@ -1,0 +1,77 @@
+.knob-container {
+    align-items: center;
+    display: inline-flex;
+    flex-direction: column;
+}
+
+
+.knob-input {
+    background-color: #333;
+    box-shadow: none;
+    color: red;
+    font-family: "ClockDigits", "Futura", "Arial";
+    font-size: 1.5rem;
+    text-align: center;
+    padding:0.5rem;
+    margin-bottom: 1rem;
+    width: 5rem;
+}
+
+.knob {
+    --w: 5rem;
+    --w2: 0.5rem;
+    /* --posx: calc(cos(var(--angle) + 135deg ) * (var(--w) / 2.4)); */
+    /* --posy: calc(sin(var(--angle) + 135deg) * (var(--w) / 2.4)); */
+    --notch-offset: 180deg;
+    --posx : calc(sin(-1 * var(--angle) - var(--notch-offset)) * (var(--w) * 0.4));
+    --posy : calc(cos(var(--angle) + var(--notch-offset)) * (var(--w) * 0.4));
+    border-radius: 50%;
+    box-sizing: border-box;
+    box-shadow: 0 0 0.5rem 0.2rem #000;
+    cursor: grab;
+    position: relative;
+    height: var(--w);
+    width: var(--w);
+
+    &:not(:active) {
+        &::before { transition: transform 0.25s; }
+        &::after { transition: transform 0.25s; }
+    }
+
+    &::before {
+        background: rgba(173, 133, 133, 0.7);
+        background: repeating-conic-gradient(#888 0%, #ddd 15%, #999 33%, #eee 40%, #aaa 50%);
+        border: 0.1rem solid #aaa;
+        border-radius: 50%;
+        box-sizing: border-box;
+        content: "";
+        position: absolute;
+        top: calc(50% - var(--w) / 2 - var(--w2) / 4);
+        left: calc(50% - var(--w) / 2 - var(--w2) / 4);
+        height: var(--w);
+        opacity: var(--opacityExp);
+        transform: rotate(var(--angle));
+        width: var(--w);
+    }
+
+    &::after {
+        background: radial-gradient(closest-side, #333, rgba(0, 0, 0, 0.5));
+        border: 0.2rem solid #444;
+        border-radius: 50%;
+        content: "";
+        display: block;
+        position: absolute;
+        top: calc(50% - var(--w2));
+        left: calc(50% - var(--w2));
+        transform: translate(var(--posx), var(--posy));
+        height: var(--w2);
+        width: var(--w2);
+    }
+}
+
+@font-face {
+	font-family: 'ClockDigits';
+    src: local('☺'), url('assets/fonts/E1234-G3KXD.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
