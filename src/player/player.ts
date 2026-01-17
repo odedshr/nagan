@@ -159,7 +159,7 @@ export default function initPlayer(state:State, container:HTMLElement) {
   );
 
   state.addListener("volume", (value:number) => audio.volume = value / 100);
-  state.addListener("playbackRate", (value:number) => console.log('>>', value )); //audio.playbackRate = value / 100);
+  state.addListener("playbackRate", (value:number) => audio.playbackRate = value / 100);
   state.addListener("currentTrack", async (song:Song|null) => {
     if (song) {
       console.log("Playing song:", song.url);

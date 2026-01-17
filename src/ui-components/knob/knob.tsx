@@ -9,44 +9,6 @@ let lastRot = 140;
 
 let maxRot = 140;
 let speed = 1.5;
-let knobElm: HTMLInputElement | null = null;
-
-function onPointerDown(event: PointerEvent) {
-    knobElm = event.currentTarget as HTMLInputElement;
-    document.addEventListener('pointermove', OnPointerMove);
-    document.addEventListener('pointerup', OnPointerUp);
-
-    startX = event.clientX;
-}
-
-function OnPointerMove(event: PointerEvent) {
-    if (!knobElm) {
-        return;
-    }
-
-    let delta = startX - event.clientX;
-  
-    currentX = lastRot + delta * speed;
-
-    if (currentX > maxRot) {
-        currentX = maxRot;
-    }       
-    if (currentX < -maxRot) {
-        currentX = -maxRot;
-    }
-
-    knobElm.style = `--angle:${currentX}deg`;
-    const value = (currentX + maxRot) / (maxRot * 2) * 100;
-    knobElm.setAttribute('value', `${value}`);
-    knobElm.value = `${value}`;
-}
-
-function OnPointerUp() {
-  lastRot = currentX;
-  
-  document.removeEventListener('pointermove', OnPointerMove);
-  document.removeEventListener('pointerup', OnPointerUp);
-}
 
 function snapToStep (value: number,
   min: number,
@@ -72,30 +34,60 @@ function mapRange(value: number, inMin: number, inMax: number, outMin: number, o
 }
 export default (label:string, state:State, propName:keyof StateBase, min:number,max:number, step:number) => {
     const initKnobValue = mapRange(state[propName] as number, min, max, -maxRot, maxRot);
-    const elm = (<div class="knob-container">
+
+    const onPointerDown = (event: PointerEvent) => {
+        startX = event.clientX;
+        document.addEventListener('pointermove', OnPointerMove);
+        document.addEventListener('pointerup', OnPointerUp);
+    };
+
+    const elm = (<div class="knob-container" style={`--angle:${initKnobValue}deg`}>
         <input type="number" id={`knob-input-${propName}`} class="knob-input" value={state[propName]} min={min} max={max} step={step} />
         <input type="range" id={`knob-${propName}`} class="knob"
             value={state[propName]} min={min} max={max} step={step}
-            onpointerdown={onPointerDown} 
-            style={`--angle:${initKnobValue}deg`}></input>
+            onpointerdown={onPointerDown}>
+            </input>
+        <div class="knob-indicator" onpointerdown={onPointerDown}></div>
         <label for={`knob-input-${propName}`}>{label}</label>
     </div> as HTMLDivElement);
     const inputElm = elm.querySelector('.knob-input') as HTMLInputElement;
     const knobElm = elm.querySelector('.knob') as HTMLInputElement;
 
+    const OnPointerMove = (event: PointerEvent) => {
+        let delta = startX - event.clientX;
+    
+        currentX = Math.min(Math.max(lastRot + delta * speed, -maxRot), maxRot);
+
+        elm.style = `--angle:${currentX}deg`;
+
+        const value = snapToStep((currentX + maxRot) / (maxRot * 2) * 100, min, max, step);
+        knobElm.setAttribute('value', `${value}`);
+        knobElm.value = `${value}`;
+        
+        (state[propName] as number) = value;        
+    };
+
+    const OnPointerUp = () => {
+        elm.blur();
+        lastRot = currentX;
+        
+        document.removeEventListener('pointermove', OnPointerMove);
+        document.removeEventListener('pointerup', OnPointerUp);
+    };
+
     state.bidi(propName as keyof StateBase, inputElm, 'value', 'input');
-    state.addListener(propName as keyof StateBase, (newValue:number) => {
-        knobElm.value = `${(newValue - min) / (max - min) * 100}`;
+    state.addListener(propName as keyof StateBase, (newValue) => {
+        const numericValue = Number(newValue);
+        knobElm.value = `${(numericValue - min) / (max - min) * 100}`;
         knobElm.setAttribute('value', knobElm.value);
 
-        const angle = (newValue - min) / (max - min) * (maxRot * 2) - maxRot;
-        knobElm.style = `--angle:${angle}deg`;
+        // const angle = (numericValue - min) / (max - min) * (maxRot * 2) - maxRot;
+        // elm.style = `--angle:${angle}deg`;
     });
 
     knobElm.addEventListener('change', () => { 
         const value = snapToStep(+(knobElm.getAttribute('value') || '0'), min, max, step);
-        console.log('KNOB CHANGE', propName, value);
-        state[propName] = value;
+        (state[propName] as number) = value;
     });
 
 return elm;

@@ -1,7 +1,16 @@
 .knob-container {
+    --w: 5rem;
+    --w2: 0.5rem;
+    /* --posx: calc(cos(var(--angle) + 135deg ) * (var(--w) / 2.4)); */
+    /* --posy: calc(sin(var(--angle) + 135deg) * (var(--w) / 2.4)); */
+    --notch-offset: 180deg;
+    --posx : calc(sin(-1 * var(--angle) - var(--notch-offset)) * (var(--w) * 0.4));
+    --posy : calc(cos(var(--angle) + var(--notch-offset)) * (var(--w) * 0.4));
+
     align-items: center;
     display: inline-flex;
     flex-direction: column;
+    position: relative;
 }
 
 
@@ -18,13 +27,7 @@
 }
 
 .knob {
-    --w: 5rem;
-    --w2: 0.5rem;
-    /* --posx: calc(cos(var(--angle) + 135deg ) * (var(--w) / 2.4)); */
-    /* --posy: calc(sin(var(--angle) + 135deg) * (var(--w) / 2.4)); */
-    --notch-offset: 180deg;
-    --posx : calc(sin(-1 * var(--angle) - var(--notch-offset)) * (var(--w) * 0.4));
-    --posy : calc(cos(var(--angle) + var(--notch-offset)) * (var(--w) * 0.4));
+    visibility: hidden;
     border-radius: 50%;
     box-sizing: border-box;
     box-shadow: 0 0 0.5rem 0.2rem #000;
@@ -38,13 +41,18 @@
         &::after { transition: transform 0.25s; }
     }
 
+}
+
+.knob-indicator {
     &::before {
         background: rgba(173, 133, 133, 0.7);
         background: repeating-conic-gradient(#888 0%, #ddd 15%, #999 33%, #eee 40%, #aaa 50%);
         border: 0.1rem solid #aaa;
         border-radius: 50%;
+        box-shadow: 0 0 0.5rem 0.2rem #000;
         box-sizing: border-box;
         content: "";
+        cursor: grab;
         position: absolute;
         top: calc(50% - var(--w) / 2 - var(--w2) / 4);
         left: calc(50% - var(--w) / 2 - var(--w2) / 4);

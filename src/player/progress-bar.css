@@ -30,20 +30,23 @@
         height: 0.6rem;
         background: #9BAE8F;           /* LCD green */
         border: 0.1rem solid #1b1b1b;
+        overflow: hidden;
     }
 
     &::-webkit-slider-thumb {
         border: none;
         cursor: pointer;
         height: 1rem;
-        background: #1b1b1b;
+        background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><polygon points='0,0 0,8 8,0' fill='%231b1b1b'/><polygon points='0,16 8,16 0,8' fill='%231b1b1b'/><rect x='4' y='4' width='8' height='8' fill='%239BAE8F' stroke='%231b1b1b' stroke-width='1' transform='rotate(45 8 8)'/></svg>");
+        background-size: 0.6rem 0.6rem;
+        background-repeat: no-repeat;
         -webkit-appearance: none;
-        transform: translateY(-25%) rotate(45deg);
+        transform: translateY(-12.5%);
         width: 1rem;
         /* -webkit-appearance: none;
         width: 0;                      /* invisible thumb
         height: 0; */
-        /* box-shadow: -9999px 0 0 9999px #1b1b1b; */
+        box-shadow: -9999px 0 0 9999px #1b1b1b;
     }
 
     /* ───────── Firefox ───────── */

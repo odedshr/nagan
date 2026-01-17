@@ -315,6 +315,77 @@ impl Database {
         Ok(db_songs.into_iter().map(|s| s.into()).collect())
     }
 
+    pub async fn remove_song_from_playlist_by_song_id(
+        &self,
+        playlist_id: &str,
+        song_id: &str,
+    ) -> Result<bool, sqlx::Error> {
+        // Get all positions of the song being removed (in descending order to avoid shifting issues)
+        let positions: Vec<(i32,)> = sqlx::query_as(
+            "SELECT position FROM playlist_songs WHERE playlist_id = ? AND song_id = ? ORDER BY position DESC"
+        )
+        .bind(playlist_id)
+        .bind(song_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        if positions.is_empty() {
+            return Ok(false);
+        }
+
+        // Delete all instances of the song from the playlist
+        sqlx::query(
+            "DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?"
+        )
+        .bind(playlist_id)
+        .bind(song_id)
+        .execute(&self.pool)
+        .await?;
+
+        // Shift positions for each removed song (process from highest to lowest position)
+        for (removed_position,) in positions {
+            sqlx::query(
+                "UPDATE playlist_songs SET position = position - 1 WHERE playlist_id = ? AND position > ?"
+            )
+            .bind(playlist_id)
+            .bind(removed_position)
+            .execute(&self.pool)
+            .await?;
+        }
+
+        Ok(true)
+    }
+
+    pub async fn remove_song_from_playlist_by_position(
+        &self,
+        playlist_id: &str,
+        position: i32,
+    ) -> Result<bool, sqlx::Error> {
+        // Delete the song at the specified position
+        let result = sqlx::query(
+            "DELETE FROM playlist_songs WHERE playlist_id = ? AND position = ?"
+        )
+        .bind(playlist_id)
+        .bind(position)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(false);
+        }
+
+        // Shift positions of songs after the removed position
+        sqlx::query(
+            "UPDATE playlist_songs SET position = position - 1 WHERE playlist_id = ? AND position > ?"
+        )
+        .bind(playlist_id)
+        .bind(position)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(true)
+    }
+
     // Marker Management
 
     pub async fn get_markers(&self, song_id: &str) -> Result<Vec<Marker>, sqlx::Error> {

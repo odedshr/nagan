@@ -1,9 +1,13 @@
 
-import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, Song, SongMetadata } from "../types";
+import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, RemoveSongFromPlaylistPayload, Song, SongMetadata } from "../types";
 
 export default class WebBackendService implements BackendService {
+  removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean> {
+    console.error("Method not implemented.");
+    return Promise.resolve(false);
+  }
   getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]> {
-      console.error("Method not implemented.");
+    console.error("Method not implemented.");
     return Promise.resolve([]);
   }
   deletePlaylist(playlistId: string): Promise<void> {

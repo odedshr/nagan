@@ -13,7 +13,7 @@
 - [✅] Implement audio playback using Web Audio API or HTML5 Audio
 - [✅] Add position scrubber and time display
 - [✅] Add volume control
-- [ ] Wire up player to accept songs from playlist
+- [✅] Wire up player to accept songs from playlist
 
 ## Phase 3: Song Database - Read (Week 2)
 

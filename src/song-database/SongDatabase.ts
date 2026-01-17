@@ -43,7 +43,7 @@ export default function SongDatabase(
         const onAddToPlaylist = async (song:Song) => {
             if (!!state.currentPlaylistId) {
                 await backendService.addSongToPlaylist({ playlistId: state.currentPlaylistId, songId: song.id });
-                console.log(`Song "${song.metadata.title}" added to playlist.`);
+                state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId });
             } else {
                 console.error('No playlist selected. Cannot add song to playlist.');
             }

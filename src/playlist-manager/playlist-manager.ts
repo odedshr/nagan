@@ -34,6 +34,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     const onPlaylistSelected = (playlist: Playlist) => {
         state.currentPlaylistId = playlist.id;
     }
+
     const onPlaylistDeleted = async (playlist: Playlist) => {
         if (await showConfirm(`Are you sure you want to delete the playlist "${playlist.name}"?`, "Delete", "Cancel")) {
             try {
@@ -47,6 +48,14 @@ export default function PlaylistManager(state:State, backendService: BackendServ
         }
     };
 
+    const onSongSelected = (song: any) => { state.currentTrack = song; };
+
+    const onSongRemoved = async (song: any) => {
+        const position = state.playlistSongs.indexOf(song);
+        console.log(await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position }));
+        state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    };
+
     const elm = PlaylistUi(state.playlists, state.currentPlaylist, state.playlistSongs, onPlaylistAdded, onPlaylistSelected, onPlaylistDeleted);
 
     state.addListener('playlists',
@@ -58,7 +67,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     state.addListener('currentPlaylistId', 
         async () => {
             elm.querySelector('.playlist-editor')!.replaceWith(
-                PlaylistEditor(state.currentPlaylist, [])
+                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved)
             )
             state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
         });
@@ -66,7 +75,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     state.addListener('playlistSongs',
         () => {
             elm.querySelector('.playlist-songs')!.replaceWith(
-                PlaylistSongs(state.playlistSongs)
+                PlaylistSongs(state.playlistSongs, onSongSelected , onSongRemoved)
             )
             // if no current song, set to first song in playlist
             if (!state.currentTrack) {

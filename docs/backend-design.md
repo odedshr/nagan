@@ -94,8 +94,12 @@ The backend exposes Tauri commands for data retrieval and sending, enabling fron
     If position value > playlist.length, add to end of list;
     If position is negative but smaller than negative playlist.length, add as first position.
 - **remove_song_from_playlist**
-    (payload: { playlist_id: string, song_id: string }) -> boolean
+    (payload: { playlist_id: string, song_id?: string, position?: number }) -> boolean
     Remove song from playlist, return success.
+    if both song_id and position not provided, return false
+    if song_id provided, remove all instances of the song from the playlist
+    if only position provided, delete the song that is in that position
+    if song_id and position provided, delete the song_id from that position only if indeed it matches
 - **reorder_playlist_songs**
     (payload: { playlist_id: string, song_ids: string[] }) -> boolean
     Update song order in playlist, return success.

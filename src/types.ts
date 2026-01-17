@@ -1,3 +1,4 @@
+import { RemoveSongFromPlaylistPayload } from './types';
 import { IPicture } from "music-metadata";
 import { StateTemplate } from "./Context";
 
@@ -108,6 +109,12 @@ export interface AddSongToPlaylistPayload {
     position?: number;
 }
 
+export interface RemoveSongFromPlaylistPayload {
+    playlistId: string;
+    songId?: string;
+    position?: number;
+}
+
 export interface ReorderPlaylistSongsPayload {
     playlist_id: string;
     song_ids: string[];
@@ -144,6 +151,7 @@ export interface BackendService {
     createPlaylist(name: string): Promise<Playlist>;
     deletePlaylist(playlistId: string): Promise<void>;
     addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void>;
+    removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean>;
     getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
     // updateSong(payload: UpdateSongPayload): Promise<Song>;
     // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, Song, SongMetadata } from "../types";
+import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, RemoveSongFromPlaylistPayload, RemoveSongFromPlaylistPayload, Song, SongMetadata } from "../types";
 
 export default class TauriBackendService implements BackendService {
   // Playlist related methods
@@ -20,8 +20,11 @@ export default class TauriBackendService implements BackendService {
   }
 
   async addSongToPlaylist(payload: AddSongToPlaylistPayload): Promise<void> {
-    console.log("Adding song to playlist via TauriBackendService:", payload);
     await invoke<void>("add_song_to_playlist", { payload });
+  }
+
+  async removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean> {
+    return await invoke<boolean>("remove_song_from_playlist", { payload });
   }
 
   // Song related methods

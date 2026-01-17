@@ -1,0 +1,14 @@
+<svg width="16" height="16" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <polygon points='0,0 0,8 8,0' fill='#1b1b1b'/>
+  <polygon points='0,16 8,16 0,8' fill='#1b1b1b'/>
+  <rect
+    x="4"
+    y="4"
+    width="8"
+    height="8"
+    fill="#9BAE8F"
+    stroke="#1b1b1b"
+    stroke-width="1"
+    transform="rotate(45 8 8)"
+  />
+</svg>

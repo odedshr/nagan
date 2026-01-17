@@ -170,6 +170,14 @@ pub struct AddSongToPlaylistPayload {
     pub position: Option<i32>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoveSongFromPlaylistPayload {
+    pub playlist_id: String,
+    pub song_id: Option<String>,
+    pub position: Option<i32>,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ReorderPlaylistSongsPayload {

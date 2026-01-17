@@ -308,10 +308,34 @@ pub async fn add_song_to_playlist(
 }
 
 #[tauri::command]
-pub async fn remove_song_from_playlist() -> Result<bool, String> {
-    // TODO: Implement removing song from playlist
-    log::warn!("Remove song from playlist not implemented yet");
-    Ok(true)
+pub async fn remove_song_from_playlist(
+    payload: RemoveSongFromPlaylistPayload,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    // If both song_id and position are not provided, return false
+    if payload.song_id.is_none() && payload.position.is_none() {
+        return Ok(false);
+    }
+
+    let db = state.db.lock().await;
+
+    // If song_id is provided, remove all instances of the song
+    if let Some(song_id) = &payload.song_id {
+        return db
+            .remove_song_from_playlist_by_song_id(&payload.playlist_id, song_id)
+            .await
+            .map_err(|e| e.to_string());
+    }
+
+    // If position is provided, remove the song at that position
+    if let Some(position) = payload.position {
+        return db
+            .remove_song_from_playlist_by_position(&payload.playlist_id, position)
+            .await
+            .map_err(|e| e.to_string());
+    }
+
+    Ok(false)
 }
 
 #[tauri::command]
