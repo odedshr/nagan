@@ -51,8 +51,8 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     const onSongSelected = (song: any) => { state.currentTrack = song; };
 
     const onSongRemoved = async (song: any) => {
-        const position = state.playlistSongs.indexOf(song);
-        console.log(await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position }));
+        const position = state.playlistSongs.indexOf(song) + 1; //position starts from 1
+        await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position })
         state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
     };
 
