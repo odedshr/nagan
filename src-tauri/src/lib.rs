@@ -3,6 +3,7 @@ use tokio::sync::Mutex;
 
 mod commands;
 mod database;
+mod id3;
 mod models;
 
 use database::Database;
@@ -51,6 +52,8 @@ pub async fn run() {
             commands::export_songs,
             commands::extract_metadata,
             commands::update_id3_tags,
+            commands::bulk_update_id3_tags,
+            commands::read_id3_tags,
             commands::rename_file,
             commands::get_playlists,
             commands::create_playlist,

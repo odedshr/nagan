@@ -3,6 +3,7 @@ use tauri::State;
 use uuid::Uuid;
 
 use crate::database::Database;
+use crate::id3::Id3Manager;
 use crate::models::*;
 use crate::AppState;
 
@@ -31,7 +32,7 @@ pub async fn add_song(file_path: String, metadata: SongMetadata,state: State<'_,
     add_song_inner(&db, file_path, metadata).await
 }
 
-async fn add_song_inner(
+pub(crate) async fn add_song_inner(
     db: &Database,
     file_path: String,
     metadata: SongMetadata,
@@ -99,19 +100,84 @@ pub async fn bulk_update_songs(
     payload: BulkUpdateSongsPayload,
     state: State<'_, AppState>,
 ) -> Result<i32, String> {
-    let mut updated_count = 0;
     let db = state.db.lock().await;
+    bulk_update_songs_inner(payload, &db).await
+}
 
-    for song_id in payload.ids {
-        let update_payload = UpdateSongPayload {
-            id: song_id.clone(),
-            metadata: payload.updates.clone(),
-            update_id3: payload.update_id3,
-            filename: None,
-        };
+pub(crate) async fn bulk_update_songs_inner(
+    payload: BulkUpdateSongsPayload,
+    db: &Database,
+) -> Result<i32, String> {
+    let mut updated_count = 0;
+    let id3_manager = Id3Manager::new();
 
-        if db.update_song(&song_id, update_payload).await.is_ok() {
-            updated_count += 1;
+    // First, get all songs to be updated
+    let mut file_operations = Vec::new();
+
+    for song_id in &payload.ids {
+        if let Ok(Some(song)) = db.get_song_by_id(song_id).await {
+            // Create updated metadata by merging current with updates
+            let mut updated_metadata = song.metadata;
+
+            if let Some(updates_obj) = payload.updates.as_object() {
+                if let Some(title) = updates_obj.get("title").and_then(|v| v.as_str()) {
+                    updated_metadata.title = title.to_string();
+                }
+                if let Some(album) = updates_obj.get("album").and_then(|v| v.as_str()) {
+                    updated_metadata.album = album.to_string();
+                }
+                if let Some(year) = updates_obj.get("year").and_then(|v| v.as_i64()) {
+                    updated_metadata.year = Some(year as i32);
+                }
+                if let Some(track) = updates_obj.get("track").and_then(|v| v.as_i64()) {
+                    updated_metadata.track = Some(track as i32);
+                }
+                if let Some(bpm) = updates_obj.get("bpm").and_then(|v| v.as_f64()) {
+                    updated_metadata.bpm = Some(bpm as f32);
+                }
+                if let Some(artists) = updates_obj.get("artists").and_then(|v| v.as_array()) {
+                    updated_metadata.artists = artists
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                }
+                if let Some(genres) = updates_obj.get("genres").and_then(|v| v.as_array()) {
+                    updated_metadata.genres = genres
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                }
+                if let Some(comment) = updates_obj.get("comment").and_then(|v| v.as_str()) {
+                    updated_metadata.comment = Some(comment.to_string());
+                }
+            }
+
+            // Add to file operations if ID3 update is requested
+            if payload.update_id3.unwrap_or(false) {
+                file_operations.push((song.url.clone(), updated_metadata.clone()));
+            }
+
+            // Update database
+            let update_payload = UpdateSongPayload {
+                id: song_id.clone(),
+                metadata: serde_json::to_value(&updated_metadata).unwrap_or_default(),
+                update_id3: payload.update_id3,
+                filename: None,
+            };
+
+            if db.update_song(song_id, update_payload).await.is_ok() {
+                updated_count += 1;
+            }
+        }
+    }
+
+    // Perform bulk ID3 updates if requested
+    if !file_operations.is_empty() {
+        if let Err(e) = id3_manager.bulk_write_metadata(file_operations) {
+            log::error!("Bulk ID3 update failed: {}", e);
+            // Note: We don't return error here since DB updates might have succeeded
         }
     }
 
@@ -223,33 +289,49 @@ pub async fn export_songs() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn extract_metadata() -> Result<SongMetadata, String> {
-    // TODO: Implement actual metadata extraction using music-metadata crate
-    log::warn!("Metadata extraction not implemented yet");
-
-    Ok(SongMetadata {
-        title: "Extracted Title".to_string(),
-        album: "Extracted Album".to_string(),
-        year: Some(2023),
-        track: Some(1),
-        image: None,
-        duration: 180.0,
-        artists: vec!["Extracted Artist".to_string()],
-        instruments: None,
-        bpm: Some(120.0),
-        genres: vec!["Pop".to_string()],
-        comment: None,
-        tags: vec![],
-        file_exists: true,
-        times_played: 0,
-    })
+pub async fn extract_metadata(file_path: String) -> Result<SongMetadata, String> {
+    let id3_manager = Id3Manager::new();
+    id3_manager
+        .read_metadata(&file_path)
+        .map_err(|e| format!("Failed to extract metadata: {}", e))
 }
 
 #[tauri::command]
-pub async fn update_id3_tags() -> Result<bool, String> {
-    // TODO: Implement ID3 tag updating
-    log::warn!("ID3 tag updating not implemented yet");
+pub async fn update_id3_tags(file_path: String, metadata: SongMetadata) -> Result<bool, String> {
+    let id3_manager = Id3Manager::new();
+    id3_manager
+        .write_metadata(&file_path, &metadata)
+        .map_err(|e| format!("Failed to update ID3 tags: {}", e))?;
     Ok(true)
+}
+
+#[tauri::command]
+pub async fn bulk_update_id3_tags(
+    operations: Vec<(String, SongMetadata)>,
+) -> Result<Vec<(String, Result<(), String>)>, String> {
+    let id3_manager = Id3Manager::new();
+
+    let results = id3_manager
+        .bulk_write_metadata(operations)
+        .map_err(|e| format!("Bulk ID3 update failed: {}", e))?;
+
+    let converted_results: Vec<(String, Result<(), String>)> = results
+        .into_iter()
+        .map(|(path, result)| {
+            let converted_result = result.map_err(|e| e.to_string());
+            (path, converted_result)
+        })
+        .collect();
+
+    Ok(converted_results)
+}
+
+#[tauri::command]
+pub async fn read_id3_tags(file_path: String) -> Result<SongMetadata, String> {
+    let id3_manager = Id3Manager::new();
+    id3_manager
+        .read_metadata(&file_path)
+        .map_err(|e| format!("Failed to read ID3 tags: {}", e))
 }
 
 #[tauri::command]
