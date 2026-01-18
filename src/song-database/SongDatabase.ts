@@ -1,4 +1,5 @@
 import { BackendService, FileDropEvent, FileLoadedEvent, Song, State, TauriFile } from '../types.ts';
+import { showConfirm } from '../ui-components/confirm/confirm.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 
@@ -49,10 +50,21 @@ export default function SongDatabase(
             }
         };
 
-        const elm = SongDatabaseUI(state.db, onSongSelected, onAddToPlaylist);
+        const onRemoveSong = async (song:Song) => {
+            if (await showConfirm(`Are you sure you want to delete the song: ${song.filename}? This action cannot be undone.`)) {
+                const success = await backendService.deleteSong(song.id);
+                if (success) {
+                    refreshSongs(state, backendService);
+                } else {
+                    console.error(`❌ Failed to delete song: ${song.id}`);
+                }
+            }
+        };
+
+        const elm = SongDatabaseUI(state.db, onSongSelected, onAddToPlaylist, onRemoveSong);
         
         state.addListener('db', 
-            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[], onSongSelected, onAddToPlaylist))
+            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[], onSongSelected, onAddToPlaylist, onRemoveSong))
         );
         refreshSongs(state, backendService);
 

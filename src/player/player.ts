@@ -4,6 +4,7 @@ import { Song, SongMetadata, State, } from '../types.ts';
 import selectFile from "./files/select-file.ts";
 import extractSongMetadata from "./extract-song-metadata.ts";
 import loadFile from "./files/load-file.ts";
+import { prettyTime } from "../formatters.ts";
 
 async function browseFile(fileSelectedHandler: (file: File) => void) {
     const files = await selectFile();
@@ -64,12 +65,6 @@ function setCurrentTime(time: number, positionEl: HTMLInputElement, progressBar:
 function setProgress(newValue:number, trackMetaData: SongMetadata, positionUpdateHandler: (time: number) => void) {
     const newTime = (newValue / 100) * trackMetaData.duration;
     positionUpdateHandler(newTime);
-}
-
-function prettyTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 const VALID_TIME_REGEX = /^(?:\d+|(?:\d+:[0-5]\d)|(?:\d+:[0-5]\d:[0-5]\d))$/;

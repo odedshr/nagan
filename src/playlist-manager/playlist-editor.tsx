@@ -7,12 +7,14 @@ import playlistSongs from './playlist-songs.js';
 export default (playlist:Playlist|null,
   songs: Song[],
   onSelected:(song: Song) => void,
-  onRemoved:(song: Song) => void) => (
+  onRemoved:(song: Song) => void,
+  onReordered:(oldPosition: number, newPosition: number) => void) => (
     <article class="playlist-editor">
       <h2 id="playlist-name">{playlist?.name || "Select a playlist"}</h2>
       <table id="songs-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Artist</th>
             <th>Title</th>
             <th>Album</th>
@@ -20,6 +22,6 @@ export default (playlist:Playlist|null,
             <th>Actions</th>
           </tr>
         </thead>
-        {playlistSongs(songs, onSelected, onRemoved)}
+        {playlistSongs(songs, onSelected, onRemoved, onReordered)}
       </table>
     </article> as HTMLElement);

@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, RemoveSongFromPlaylistPayload, RemoveSongFromPlaylistPayload, Song, SongMetadata } from "../types";
+import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, RemoveSongFromPlaylistPayload, ReorderPlaylistSongsPayload } from "./backend";
+import { Playlist, Song, SongMetadata } from "../types";
 
 export default class TauriBackendService implements BackendService {
   // Playlist related methods
@@ -27,6 +28,10 @@ export default class TauriBackendService implements BackendService {
     return await invoke<boolean>("remove_song_from_playlist", { payload });
   }
 
+  async reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<boolean> {
+    return invoke<boolean>("reorder_playlist_songs", { payload });
+  }
+
   // Song related methods
   async getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
     return await invoke<GetSongsResponse>("get_songs", { query });
@@ -34,5 +39,9 @@ export default class TauriBackendService implements BackendService {
   
   async addSong(filePath: string, metadata: SongMetadata): Promise<Song> {
     return await invoke<Song>("add_song", { filePath, metadata });
+  }
+
+  deleteSong(id: string): Promise<boolean> {
+    return invoke<boolean>("delete_song", { id });
   }
 }

@@ -356,10 +356,14 @@ pub async fn remove_song_from_playlist(
 }
 
 #[tauri::command]
-pub async fn reorder_playlist_songs() -> Result<bool, String> {
-    // TODO: Implement reordering playlist songs
-    log::warn!("Reorder playlist songs not implemented yet");
-    Ok(true)
+pub async fn reorder_playlist_songs(
+    payload: ReorderPlaylistSongsPayload,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let db = state.db.lock().await;
+    db.reorder_playlist_songs(&payload.playlist_id, &payload.song_ids)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

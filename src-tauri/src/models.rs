@@ -180,6 +180,7 @@ pub struct RemoveSongFromPlaylistPayload {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReorderPlaylistSongsPayload {
     pub playlist_id: String,
     pub song_ids: Vec<String>,
