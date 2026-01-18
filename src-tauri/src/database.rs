@@ -76,6 +76,15 @@ impl Database {
         Ok(db_song.map(|s| s.into()))
     }
 
+    pub async fn get_song_by_url(&self, url: &str) -> Result<Option<Song>, sqlx::Error> {
+        let db_song: Option<DbSong> = sqlx::query_as("SELECT * FROM songs WHERE url = ?")
+            .bind(url)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(db_song.map(|s| s.into()))
+    }
+
     pub async fn create_song(&self, song: Song) -> Result<Song, sqlx::Error> {
         let db_song = DbSong {
             id: song.id.clone(),
@@ -480,6 +489,48 @@ mod tests {
         let retrieved = db.get_song_by_id(&song.id).await.unwrap();
         assert!(retrieved.is_some());
         assert_eq!(retrieved.unwrap().metadata.title, "Test Song");
+    }
+
+    #[tokio::test]
+    async fn test_get_song_by_url_found() {
+        let db = setup_test_db().await;
+
+        let song = Song {
+            id: "test-song-url".to_string(),
+            url: "/path/to/test-url.mp3".to_string(),
+            filename: "test-url.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "URL Song".to_string(),
+                album: "Test Album".to_string(),
+                year: Some(2023),
+                track: Some(1),
+                image: None,
+                duration: 180.0,
+                artists: vec!["Test Artist".to_string()],
+                instruments: None,
+                bpm: Some(120.0),
+                genres: vec!["Rock".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        db.create_song(song.clone()).await.unwrap();
+
+        let retrieved = db.get_song_by_url(&song.url).await.unwrap();
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().id, song.id);
+    }
+
+    #[tokio::test]
+    async fn test_get_song_by_url_not_found() {
+        let db = setup_test_db().await;
+
+        let retrieved = db.get_song_by_url("/path/to/missing.mp3").await.unwrap();
+        assert!(retrieved.is_none());
     }
 
     #[tokio::test]

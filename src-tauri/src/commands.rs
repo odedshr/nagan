@@ -27,6 +27,24 @@ pub async fn get_songs(
 
 #[tauri::command]
 pub async fn add_song(file_path: String, metadata: SongMetadata,state: State<'_, AppState>) -> Result<Song, String> {
+    let db = state.db.lock().await;
+    add_song_inner(&db, file_path, metadata).await
+}
+
+async fn add_song_inner(
+    db: &Database,
+    file_path: String,
+    metadata: SongMetadata,
+) -> Result<Song, String> {
+    if db
+        .get_song_by_url(&file_path)
+        .await
+        .map_err(|e| e.to_string())?
+        .is_some()
+    {
+        return Err("Song with the same file_path already exists".to_string());
+    }
+
     let song_id = Uuid::new_v4().to_string();
     let filename = std::path::Path::new(&file_path)
         .file_name()
@@ -42,7 +60,6 @@ pub async fn add_song(file_path: String, metadata: SongMetadata,state: State<'_,
         available: true,
     };
 
-    let db = state.db.lock().await;
     db.create_song(song.clone())
         .await
         .map_err(|e| e.to_string())?;
@@ -407,6 +424,11 @@ pub async fn refresh_database() -> Result<bool, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    async fn setup_test_db() -> Database {
+        Database::new("sqlite::memory:")
+            .await
+            .expect("Failed to create test database")
+    }
 
     #[tokio::test]
     async fn test_greet_command() {
@@ -596,5 +618,35 @@ mod tests {
 
         assert_eq!(response.distances.len(), 3);
         assert_eq!(response.similar.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_add_song_duplicate_file_path() {
+        let db = setup_test_db().await;
+
+        let metadata = SongMetadata {
+            title: "Test Song".to_string(),
+            album: "Test Album".to_string(),
+            year: Some(2023),
+            track: Some(1),
+            image: None,
+            duration: 180.0,
+            artists: vec!["Artist".to_string()],
+            instruments: None,
+            bpm: Some(120.0),
+            genres: vec!["Rock".to_string()],
+            comment: None,
+            tags: vec![],
+            file_exists: true,
+            times_played: 0,
+        };
+
+        let file_path = "/music/test-song.mp3".to_string();
+
+        let first = add_song_inner(&db, file_path.clone(), metadata.clone()).await;
+        assert!(first.is_ok());
+
+        let duplicate = add_song_inner(&db, file_path, metadata).await;
+        assert!(duplicate.is_err());
     }
 }
