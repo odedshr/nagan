@@ -13,12 +13,12 @@ export default (playlists: Playlist[],
   onPlaylistDeleted: (playlist: Playlist) => void,
   onSongSelected: (song: Song) => void,
   onSongRemoved: (song: Song) => void,
-  onReordered: (oldPosition: number, newPosition: number) => void) => (
+  onReordered: (oldPosition: number, newPosition: number) => void,
+  onOrderBy: (column?: string, asc?: boolean) => void) => (
     <div class="playlist-manager">
       <aside class="playlist-list">
-        <input id="search" type="text" placeholder="Search playlists" />
-        <button id="add-playlist" onclick={onPlaylistAdded}>+</button>
+        <button id="add-playlist" onclick={onPlaylistAdded}>Add Playlist</button>
           {PlaylistList(playlists, onPlaylistSelected, onPlaylistDeleted)}
       </aside>
-      {PlaylistEditor(currentPlaylist, songs, onSongSelected, onSongRemoved, onReordered)}
+      {PlaylistEditor(currentPlaylist, songs, onSongSelected, onSongRemoved, onReordered, onOrderBy)}
     </div> as HTMLDivElement);

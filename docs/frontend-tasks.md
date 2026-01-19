@@ -45,7 +45,7 @@
 
 ## Phase 7: Enhanced Playback (Week 4)
 
-- [ ] Add shuffle functionality to player
+- [✅] Add shuffle functionality to player
 - [ ] Implement "Next in Playlist" logic
 - [ ] Add autoplay (continue to next song)
 - [ ] Save/restore playback position

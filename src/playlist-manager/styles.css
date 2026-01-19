@@ -3,11 +3,15 @@
   grid-template-columns: 30rem 1fr; 
   grid-template-rows: 1fr; 
   gap: 0px 0px; 
+  height: 100%;
   grid-template-areas: 
     "list item";
 }
 
-.playlist-list { grid-area: list; }
+.playlist-list {
+  border-right: 0.1rem solid var(--border-color);
+  grid-area: list;
+}
 .playlist-editor { grid-area: item; }
 
 .playlists {
@@ -17,12 +21,25 @@
 }
 
 .playlist-item {
-  padding: 1rem;
+  align-items: center;
   border-bottom: 0.1rem solid var(--text-color);
   cursor: pointer;
+  display: flex;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
   font-size: 1.4rem;
-  color: var(--text-color);
+  padding: 1rem;
+  
+  & a {
+    flex: 1 1 auto;
+    text-decoration: none;
+    color: var(--text-color);
+  }
+}
+
+.delete-playlist {
+  flex: 0 0 auto;
+  padding: 0.5rem;
+  margin: 0;
 }
 
 /* Drag and drop styles for playlist songs */

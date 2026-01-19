@@ -2,9 +2,10 @@ import PlayerUi from "./Player.ui.js";
 
 import { Song, SongMetadata, State, } from '../types.ts';
 import selectFile from "./files/select-file.ts";
-import extractSongMetadata from "./extract-song-metadata.ts";
+// import extractSongMetadata from "./extract-song-metadata.ts";
 import loadFile from "./files/load-file.ts";
 import { prettyTime } from "../formatters.ts";
+import { BackendService } from "../backend/backend.ts";
 
 async function browseFile(fileSelectedHandler: (file: File) => void) {
     const files = await selectFile();
@@ -104,7 +105,7 @@ let positionUpdateHandler: (time: number) => void;
 
 let trackMetaData:SongMetadata;
 
-export default function initPlayer(state:State, container:HTMLElement) {
+export default function initPlayer(state:State, backendService: BackendService,container:HTMLElement) {
     const audio = new Audio();
     // when the audio is playing, log the current time every second
     audio.addEventListener("timeupdate", () => setCurrentTime(
@@ -113,14 +114,21 @@ export default function initPlayer(state:State, container:HTMLElement) {
         elms.get("progressBar") as HTMLInputElement));
 
     fileSelectedHandler = (async (file: File) => {
-    const metadata = await extractSongMetadata(file);
-    
-    displaySongMetaData(metadata);
+        let song:Song;
+        try {
+            song = await backendService.addSong(file.name);
+        } catch (error) {
+            state.lastEvent = new CustomEvent('notification', {detail:{type:'error',message: error}});
+            return;
+        }
 
-    // load file to audio element or player here
-    audio.src = URL.createObjectURL(file);
-    state.lastEvent = new CustomEvent('file-loaded', { detail: { file, metadata } });
-  });
+    
+        displaySongMetaData(song.metadata);
+
+        // load file to audio element or player here
+        audio.src = URL.createObjectURL(file);
+        state.lastEvent = new CustomEvent('file-loaded', { detail: { file } });
+    });
 
   audioToggleHandler = ((isPlaying: boolean) => {
     if (isPlaying) {

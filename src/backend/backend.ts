@@ -1,3 +1,4 @@
+import isTauri from "../is-tauri";
 import { Playlist, Song, SongMetadata } from "../types";
 
 export interface GetSongsQuery {
@@ -85,7 +86,7 @@ export interface CalculateSimilarityResponse {
 
 export interface BackendService {
     getSongs(query: GetSongsQuery): Promise<GetSongsResponse>;
-    addSong(filePath: string, metadata: SongMetadata): Promise<Song>;
+    addSong(filePath: string): Promise<Song>;
     deleteSong(songId: string): Promise<boolean>;
     getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
     createPlaylist(name: string): Promise<Playlist>;
@@ -101,4 +102,11 @@ export interface BackendService {
     // addMarker(payload: AddMarkerPayload): Promise<Marker>;
     // updateMarker(payload: UpdateMarkerPayload): Promise<Marker>;
     // calculateSimilarity(songId: string, topN: number): Promise<CalculateSimilarityResponse>
+}
+
+export async function getBackendService() {
+  const backendServiceModule =  await import(
+    isTauri() ? "./tauri.backend.ts" : "./web.backend.ts"
+  );
+  return new backendServiceModule.default() as BackendService;
 }

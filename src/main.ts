@@ -2,8 +2,10 @@ import SongDatabase from "./song-database/SongDatabase";
 import PlaylistManager from "./playlist-manager/playlist-manager";
 import initPlayer from "./player/player";
 import { Context } from "./Context";
-import { BackendService, Mode, State } from "./types";
+import { Mode, State } from "./types";
 import isTauri from "./is-tauri";
+import { BackendService, getBackendService } from "./backend/backend";
+import initNotifications from "./ui-components/notification/notification";
 
 function initNav(state: State) {
   [...document.getElementsByClassName("nav-button")].forEach((btn) => {
@@ -11,13 +13,6 @@ function initNav(state: State) {
       state.mode = (btn as HTMLButtonElement).value as Mode;
     });
   });
-}
-
-async function getBackendService() {
-  const backendServiceModule =  await import(
-    isTauri() ? "./backend/tauri.backend.ts" : "./backend/web.backend.ts"
-  );
-  return new backendServiceModule.default() as BackendService;
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -58,8 +53,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   initNav(state);
-  initPlayer(state, document.getElementById("player-container") as HTMLElement);
-  
+  initPlayer(state, backendService, document.getElementById("player-container") as HTMLElement);
+  initNotifications(state, document.getElementById("notifications") as HTMLUListElement);
+
   (await import(
     isTauri() ? "./drag-and-drop.tauri.ts" : "./drag-and-drop.ts"
   )).default(state);

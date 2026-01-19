@@ -1,10 +1,11 @@
 import { showPrompt } from '../ui-components/prompt/prompt.ts';
 import { showConfirm } from '../ui-components/confirm/confirm.ts';
-import { BackendService, State, Playlist } from '../types.ts';
+import { State, Playlist } from '../types.ts';
 import PlaylistList from './Playlist-list.tsx';
 import PlaylistUi from './PlaylistManager.tsx';
 import PlaylistEditor from './playlist-editor.tsx';
 import PlaylistSongs from './playlist-songs.tsx';
+import { BackendService } from '../backend/backend.ts';
 
 async function refreshPlaylists(state:State, backendService:BackendService) {
     try {

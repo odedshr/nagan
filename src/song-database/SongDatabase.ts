@@ -1,4 +1,5 @@
-import { BackendService, FileDropEvent, FileLoadedEvent, Song, State, TauriFile } from '../types.ts';
+import { BackendService } from '../backend/backend.ts';
+import { FileDropEvent, FileLoadedEvent, Song, State, TauriFile } from '../types.ts';
 import { showConfirm } from '../ui-components/confirm/confirm.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
@@ -16,9 +17,8 @@ export default function SongDatabase(
             if (event) {
                 switch (event.type) {
                     case 'file-loaded':
-                        const { file, metadata } = (event as FileLoadedEvent).detail;
-                        const song = await backendService.addSong(file.name, metadata);
-                        console.log(`✅ Added song:`, song);
+                        // const { file, metadata } = (event as FileLoadedEvent).detail;
+                        // const song = await backendService.addSong(file.name, metadata);
                         refreshSongs(state, backendService);
                         break;
                     case 'files-dropped':

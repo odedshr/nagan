@@ -41,8 +41,8 @@ export default class TauriBackendService implements BackendService {
     return await invoke<GetSongsResponse>("get_songs", { query });
   }
   
-  async addSong(filePath: string, metadata: SongMetadata): Promise<Song> {
-    return await invoke<Song>("add_song", { filePath, metadata });
+  async addSong(filePath: string): Promise<Song> {
+    return await invoke<Song>("add_song", { filePath });
   }
 
   deleteSong(id: string): Promise<boolean> {
