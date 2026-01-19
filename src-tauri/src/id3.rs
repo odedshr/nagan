@@ -254,11 +254,11 @@ impl Id3Manager {
 mod tests {
     use super::*;
     use crate::commands::{
-        add_song_inner, bulk_update_id3_tags, bulk_update_songs_inner, extract_metadata,
+        bulk_update_id3_tags, bulk_update_songs_inner, extract_metadata,
         read_id3_tags, update_id3_tags,
     };
     use crate::database::Database;
-    use crate::models::{BulkUpdateSongsPayload, SongMetadata};
+    use crate::models::{BulkUpdateSongsPayload, Song, SongMetadata};
     use serde_json;
 
     fn create_test_metadata() -> SongMetadata {
@@ -456,9 +456,15 @@ mod tests {
         let metadata = create_test_metadata();
         let file_path = "/test/path/song1.mp3".to_string();
 
-        let song = add_song_inner(&db, file_path.clone(), metadata.clone())
-            .await
-            .unwrap();
+        let song = Song {
+            id: "song-1".to_string(),
+            url: file_path.clone(),
+            filename: "song1.mp3".to_string(),
+            metadata: metadata.clone(),
+            available: true,
+        };
+
+        db.create_song(song.clone()).await.unwrap();
 
         let payload = BulkUpdateSongsPayload {
             ids: vec![song.id.clone()],

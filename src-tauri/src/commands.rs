@@ -27,16 +27,13 @@ pub async fn get_songs(
 }
 
 #[tauri::command]
-pub async fn add_song(file_path: String, metadata: SongMetadata,state: State<'_, AppState>) -> Result<Song, String> {
+pub async fn add_song(file_path: String, state: State<'_, AppState>) -> Result<Song, String> {
     let db = state.db.lock().await;
-    add_song_inner(&db, file_path, metadata).await
-}
+    let id3_manager = Id3Manager::new();
+    let metadata = id3_manager
+        .read_metadata(&file_path)
+        .map_err(|e| format!("Failed to extract metadata: {}", e))?;
 
-pub(crate) async fn add_song_inner(
-    db: &Database,
-    file_path: String,
-    metadata: SongMetadata,
-) -> Result<Song, String> {
     if db
         .get_song_by_url(&file_path)
         .await
@@ -514,10 +511,35 @@ pub async fn refresh_database() -> Result<bool, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
     async fn setup_test_db() -> Database {
         Database::new("sqlite::memory:")
             .await
             .expect("Failed to create test database")
+    }
+
+    fn state_from_app_state(app_state: &'static AppState) -> State<'static, AppState> {
+        // SAFETY: In tests, we leak the AppState to obtain a 'static reference,
+        // and tauri::State is a transparent wrapper around &T. This avoids
+        // relying on tauri internals or test helpers not available here.
+        unsafe { std::mem::transmute::<&AppState, State<'static, AppState>>(app_state) }
+    }
+
+    async fn add_song_for_test(
+        db: Arc<Mutex<Database>>,
+        file_path: String,
+        metadata: SongMetadata,
+    ) -> Result<Song, String> {
+        std::fs::File::create(&file_path).map_err(|e| e.to_string())?;
+        let id3_manager = Id3Manager::new();
+        id3_manager
+            .write_metadata(&file_path, &metadata)
+            .map_err(|e| e.to_string())?;
+
+        let app_state = Box::leak(Box::new(AppState { db: db.clone() }));
+        let state = state_from_app_state(app_state);
+        add_song(file_path, state).await
     }
 
     #[tokio::test]
@@ -712,7 +734,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_add_song_duplicate_file_path() {
-        let db = setup_test_db().await;
+        let db = Arc::new(Mutex::new(setup_test_db().await));
 
         let metadata = SongMetadata {
             title: "Test Song".to_string(),
@@ -731,12 +753,16 @@ mod tests {
             times_played: 0,
         };
 
-        let file_path = "/music/test-song.mp3".to_string();
+        let file_path = std::env::temp_dir()
+            .join(format!("nagan-test-{}.mp3", Uuid::new_v4()))
+            .to_string_lossy()
+            .to_string();
 
-        let first = add_song_inner(&db, file_path.clone(), metadata.clone()).await;
+        let first = add_song_for_test(db.clone(), file_path.clone(), metadata.clone()).await;
         assert!(first.is_ok());
 
-        let duplicate = add_song_inner(&db, file_path, metadata).await;
+        let duplicate = add_song_for_test(db.clone(), file_path, metadata).await;
         assert!(duplicate.is_err());
     }
+
 }
