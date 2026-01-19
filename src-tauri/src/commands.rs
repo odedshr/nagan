@@ -367,10 +367,14 @@ pub async fn reorder_playlist_songs(
 }
 
 #[tauri::command]
-pub async fn shuffle_playlist() -> Result<Vec<String>, String> {
-    // TODO: Implement playlist shuffling
-    log::warn!("Shuffle playlist not implemented yet");
-    Ok(vec![])
+pub async fn shuffle_playlist(
+    playlist_id: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    let db = state.db.lock().await;
+    db.shuffle_playlist_songs(&playlist_id)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

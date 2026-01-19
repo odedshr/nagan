@@ -8,15 +8,17 @@ export default (playlist:Playlist|null,
   songs: Song[],
   onSelected:(song: Song) => void,
   onRemoved:(song: Song) => void,
-  onReordered:(oldPosition: number, newPosition: number) => void) => (
+  onReordered:(oldPosition: number, newPosition: number) => void,
+  onOrderBy: (column?:string, asec?:boolean) => void) => (
     <article class="playlist-editor">
       <h2 id="playlist-name">{playlist?.name || "Select a playlist"}</h2>
+      <button onclick={() => onOrderBy()}>shuffle</button>
       <table id="songs-table">
         <thead>
           <tr>
             <th>#</th>
-            <th>Artist</th>
-            <th>Title</th>
+            <th onclick={() => onOrderBy("artist", true)}>Artist</th>
+            <th onclick={() => onOrderBy("title", true)}>Title</th>
             <th>Album</th>
             <th>Duration</th>
             <th>Actions</th>

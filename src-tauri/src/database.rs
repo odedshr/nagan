@@ -429,6 +429,35 @@ impl Database {
         Ok(true)
     }
 
+    pub async fn shuffle_playlist_songs(
+        &self,
+        playlist_id: &str,
+    ) -> Result<Vec<String>, sqlx::Error> {
+        use rand::seq::SliceRandom;
+
+        // Get all song IDs in the playlist ordered by position
+        let song_ids: Vec<(String,)> = sqlx::query_as(
+            "SELECT song_id FROM playlist_songs WHERE playlist_id = ? ORDER BY position"
+        )
+        .bind(playlist_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut song_ids: Vec<String> = song_ids.into_iter().map(|(id,)| id).collect();
+
+        if song_ids.is_empty() {
+            return Ok(song_ids);
+        }
+
+        // Shuffle the song IDs using a thread-safe RNG
+        song_ids.shuffle(&mut rand::rng());
+
+        // Reorder using the existing method
+        self.reorder_playlist_songs(playlist_id, &song_ids).await?;
+
+        Ok(song_ids)
+    }
+
     // Marker Management
 
     pub async fn get_markers(&self, song_id: &str) -> Result<Vec<Marker>, sqlx::Error> {

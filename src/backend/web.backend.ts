@@ -34,6 +34,11 @@ export default class WebBackendService implements BackendService {
     return Promise.resolve(false);
   }
 
+  shufflePlaylist(playlistId: string): Promise<boolean> {
+    console.error("Method not implemented.");
+    return Promise.resolve(false);
+  }
+
   getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
     console.error('getSongs not implemented in WebBackendService');
     return Promise.resolve({ songs: [], total: 0 });

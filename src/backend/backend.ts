@@ -94,6 +94,7 @@ export interface BackendService {
     removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean>;
     getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
     reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<boolean>;
+    shufflePlaylist(playlistId: string): Promise<boolean>;
     // updateSong(payload: UpdateSongPayload): Promise<Song>;
     // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
     // updatePlaylist(payload: UpdatePlaylistPayload): Promise<Playlist>;

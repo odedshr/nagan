@@ -63,6 +63,13 @@ export default function PlaylistManager(state:State, backendService: BackendServ
         state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
     }
 
+    const onOrderBy = async (column?:string, asec?:boolean) => {
+        if (!column) {
+            await backendService.shufflePlaylist(state.currentPlaylistId!);
+        }
+        state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    };
+
     const elm = PlaylistUi(state.playlists, state.currentPlaylist, state.playlistSongs,
         onPlaylistAdded,
         onPlaylistSelected,
@@ -80,7 +87,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     state.addListener('currentPlaylistId', 
         async () => {
             elm.querySelector('.playlist-editor')!.replaceWith(
-                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved, onReorder)
+                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved, onReorder, onOrderBy)
             )
             state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
         });

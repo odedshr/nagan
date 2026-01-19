@@ -32,6 +32,10 @@ export default class TauriBackendService implements BackendService {
     return invoke<boolean>("reorder_playlist_songs", { payload });
   }
 
+  shufflePlaylist(playlistId: string): Promise<boolean> {
+    return invoke<boolean>("shuffle_playlist", { playlistId });
+  }
+
   // Song related methods
   async getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
     return await invoke<GetSongsResponse>("get_songs", { query });
