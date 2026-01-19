@@ -1,5 +1,6 @@
 
-import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, Playlist, RemoveSongFromPlaylistPayload, Song, SongMetadata } from "../types";
+import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, RemoveSongFromPlaylistPayload, ReorderPlaylistSongsPayload } from "./backend";
+import { Playlist, Song, SongMetadata } from "../types";
 
 export default class WebBackendService implements BackendService {
   removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean> {
@@ -27,6 +28,17 @@ export default class WebBackendService implements BackendService {
     console.error("Method not implemented.");
     return Promise.resolve();
   }
+  
+  reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<boolean> {
+    console.error("Method not implemented.");
+    return Promise.resolve(false);
+  }
+
+  shufflePlaylist(playlistId: string): Promise<boolean> {
+    console.error("Method not implemented.");
+    return Promise.resolve(false);
+  }
+
   getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
     console.error('getSongs not implemented in WebBackendService');
     return Promise.resolve({ songs: [], total: 0 });
@@ -46,5 +58,9 @@ export default class WebBackendService implements BackendService {
       genres: metadata.genres,
       tags: metadata.tags,
     } as unknown as Song);
+  }
+
+  deleteSong(songId: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
   }
 }

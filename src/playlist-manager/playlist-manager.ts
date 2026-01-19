@@ -20,7 +20,8 @@ async function refreshPlaylists(state:State, backendService:BackendService) {
 
 export default function PlaylistManager(state:State, backendService: BackendService) {
     const onPlaylistAdded = async () => {
-                const playlistName = await showPrompt("Enter playlist name:");
+        console.log("Add playlist");
+        const playlistName = await showPrompt("Enter playlist name:");
         if (playlistName) {
             try {
                 await backendService.createPlaylist(playlistName);
@@ -38,9 +39,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     const onPlaylistDeleted = async (playlist: Playlist) => {
         if (await showConfirm(`Are you sure you want to delete the playlist "${playlist.name}"?`, "Delete", "Cancel")) {
             try {
-                console.log(`Deleting playlist: ${playlist.name} (ID: ${playlist.id})`);
                 await backendService.deletePlaylist(playlist.id);
-                console.log(`Playlist deleted: ${playlist.name} (ID: ${playlist.id})`);
                 refreshPlaylists(state, backendService);
             } catch (error) {
                 console.error("Error deleting playlist:", error);
@@ -51,12 +50,33 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     const onSongSelected = (song: any) => { state.currentTrack = song; };
 
     const onSongRemoved = async (song: any) => {
-        const position = state.playlistSongs.indexOf(song);
-        console.log(await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position }));
+        const position = state.playlistSongs.indexOf(song) + 1; //position starts from 1
+        await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position })
         state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
     };
 
-    const elm = PlaylistUi(state.playlists, state.currentPlaylist, state.playlistSongs, onPlaylistAdded, onPlaylistSelected, onPlaylistDeleted);
+    const onReorder = async (oldPosition: number, newPosition: number) => {
+        const songIds = state.playlistSongs.map(s => s.id);
+        const [movedSongId] = songIds.splice(oldPosition, 1);
+        songIds.splice(newPosition, 0, movedSongId);
+        await backendService.reorderPlaylistSongs({ playlistId: state.currentPlaylistId!, songIds: songIds })
+        state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    }
+
+    const onOrderBy = async (column?:string, asec?:boolean) => {
+        if (!column) {
+            await backendService.shufflePlaylist(state.currentPlaylistId!);
+        }
+        state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    };
+
+    const elm = PlaylistUi(state.playlists, state.currentPlaylist, state.playlistSongs,
+        onPlaylistAdded,
+        onPlaylistSelected,
+        onPlaylistDeleted,
+        onSongSelected,
+        onSongRemoved,
+        onReorder);
 
     state.addListener('playlists',
         () => elm.querySelector('.playlists')!.replaceWith(
@@ -67,7 +87,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     state.addListener('currentPlaylistId', 
         async () => {
             elm.querySelector('.playlist-editor')!.replaceWith(
-                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved)
+                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved, onReorder, onOrderBy)
             )
             state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
         });
@@ -75,7 +95,7 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     state.addListener('playlistSongs',
         () => {
             elm.querySelector('.playlist-songs')!.replaceWith(
-                PlaylistSongs(state.playlistSongs, onSongSelected , onSongRemoved)
+                PlaylistSongs(state.playlistSongs, onSongSelected , onSongRemoved, onReorder)
             )
             // if no current song, set to first song in playlist
             if (!state.currentTrack) {

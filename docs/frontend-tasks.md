@@ -24,23 +24,23 @@
 
 ## Phase 4: Playlist Manager - Basic (Week 2-3)
 
-- [ ] Create playlist table view
-- [ ] Implement "Create New Playlist" functionality
-- [ ] Implement "Select Playlist" functionality
-- [ ] Display selected playlist songs in editor view
+- [✅] Create playlist table view
+- [✅] Implement "Create New Playlist" functionality
+- [✅] Implement "Select Playlist" functionality
+- [✅] Display selected playlist songs in editor view
 
 ## Phase 5: Playlist Editor - [ ] Basic (Week 3)
 
-- [ ] Display songs in selected playlist as table
-- [ ] Implement drag-and-drop reordering within playlist
-- [ ] Add "Remove from Playlist" button
-- [ ] Connect playlist to player (play selected song)
+- [✅] Display songs in selected playlist as table
+- [✅] Implement drag-and-drop reordering within playlist
+- [✅] Add "Remove from Playlist" button
+- [✅] Connect playlist to player (play selected song)
 
 ## Phase 6: Song Database - [ ] Write (Week 3-4)
 
 - [ ] Implement file upload (drag-and-drop or browse)
 - [ ] Show upload progress and confirmation
-- [ ] Implement "Remove Song" with confirmation dialog
+- [✅] Implement "Remove Song" with confirmation dialog
 - [ ] Add "Refresh" button to reload table
 
 ## Phase 7: Enhanced Playback (Week 4)

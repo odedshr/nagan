@@ -28,6 +28,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "uuid", 
 tokio = { version = "1", features = ["full"] }
 id3 = "1.14"
 lofty = "0.21"
+rand = "0.9"
 music-metadata = "0.2"
 log = "0.4"
 env_logger = "0.10"

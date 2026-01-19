@@ -395,6 +395,69 @@ impl Database {
         Ok(true)
     }
 
+    pub async fn reorder_playlist_songs(
+        &self,
+        playlist_id: &str,
+        song_ids: &[String],
+    ) -> Result<bool, sqlx::Error> {
+        // First, set all positions to negative temporary values to avoid UNIQUE constraint conflicts
+        for (index, song_id) in song_ids.iter().enumerate() {
+            let temp_position = -(index as i32) - 1; // -1, -2, -3, etc.
+            sqlx::query(
+                "UPDATE playlist_songs SET position = ? WHERE playlist_id = ? AND song_id = ?"
+            )
+            .bind(temp_position)
+            .bind(playlist_id)
+            .bind(song_id)
+            .execute(&self.pool)
+            .await?;
+        }
+
+        // Then, set the actual new positions
+        for (index, song_id) in song_ids.iter().enumerate() {
+            let position = index as i32;
+            sqlx::query(
+                "UPDATE playlist_songs SET position = ? WHERE playlist_id = ? AND song_id = ?"
+            )
+            .bind(position)
+            .bind(playlist_id)
+            .bind(song_id)
+            .execute(&self.pool)
+            .await?;
+        }
+
+        Ok(true)
+    }
+
+    pub async fn shuffle_playlist_songs(
+        &self,
+        playlist_id: &str,
+    ) -> Result<Vec<String>, sqlx::Error> {
+        use rand::seq::SliceRandom;
+
+        // Get all song IDs in the playlist ordered by position
+        let song_ids: Vec<(String,)> = sqlx::query_as(
+            "SELECT song_id FROM playlist_songs WHERE playlist_id = ? ORDER BY position"
+        )
+        .bind(playlist_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut song_ids: Vec<String> = song_ids.into_iter().map(|(id,)| id).collect();
+
+        if song_ids.is_empty() {
+            return Ok(song_ids);
+        }
+
+        // Shuffle the song IDs using a thread-safe RNG
+        song_ids.shuffle(&mut rand::rng());
+
+        // Reorder using the existing method
+        self.reorder_playlist_songs(playlist_id, &song_ids).await?;
+
+        Ok(song_ids)
+    }
+
     // Marker Management
 
     pub async fn get_markers(&self, song_id: &str) -> Result<Vec<Marker>, sqlx::Error> {

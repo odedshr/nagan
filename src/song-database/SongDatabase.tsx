@@ -6,7 +6,8 @@ import SongDatabaseTableBody from './SongDatabaseTableBody.js';
 
 export default (songs:Song[],
     onSongSelected:(song:Song)=>void,
-    onAddToPlaylist:(song:Song)=>void) => (<div class="song-database-container">
+    onAddToPlaylist:(song:Song)=>void,
+    onRemoveSong:(song:Song)=>void) => (<div class="song-database-container">
     <table class="song-database-table">
         <thead>
             <tr>
@@ -25,6 +26,6 @@ export default (songs:Song[],
                 <th>Actions</th>
             </tr>
         </thead>
-        {SongDatabaseTableBody(songs, onSongSelected, onAddToPlaylist)}
+        {SongDatabaseTableBody(songs, onSongSelected, onAddToPlaylist, onRemoveSong)}
     </table>
 </div>  as HTMLDivElement);

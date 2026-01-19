@@ -24,3 +24,30 @@
   font-size: 1.4rem;
   color: var(--text-color);
 }
+
+/* Drag and drop styles for playlist songs */
+.playlist-songs .drag-handle {
+  cursor: grab;
+  user-select: none;
+  width: 2rem;
+  text-align: center;
+  color: var(--text-color-muted, #888);
+}
+
+.playlist-songs .drag-handle:hover {
+  color: var(--text-color, #333);
+}
+
+.playlist-songs .drag-handle:active {
+  cursor: grabbing;
+}
+
+.playlist-songs tr.dragging {
+  opacity: 0.5;
+  background-color: var(--highlight-color, #e0e0e0);
+}
+
+.playlist-songs tr.drag-over {
+  border-top: 2px solid var(--accent-color, #007bff);
+  background-color: var(--drag-over-color, rgba(0, 123, 255, 0.1));
+}
