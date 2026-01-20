@@ -1,11 +1,10 @@
-import { IPicture } from "music-metadata";
 import { StateTemplate } from "./Context";
 
 export interface Player {
     setMetadata(data: {
         title: string;
         artist: string;
-        picture: IPicture[];
+        image?: string;
         duration: number;
     }): void;
     setCurrentTime(time: number): void;
@@ -32,7 +31,6 @@ export interface SongMetadata {
     tags: string[];
     file_exists: boolean;
     times_played: number;
-    picture: IPicture[];
 }
 
 export interface Song {

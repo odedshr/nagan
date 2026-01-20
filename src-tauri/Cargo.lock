@@ -2285,6 +2285,7 @@ checksum = "c18fe1d9ff4b01c4ff72a7b453b159333299a80a03b238a2ea16e7f97c741795"
 name = "nagan"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "dirs",
  "env_logger",

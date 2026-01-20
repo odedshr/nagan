@@ -1,13 +1,16 @@
 import { BackendService } from '../backend/backend.ts';
-import { FileDropEvent, FileLoadedEvent, Song, State, TauriFile } from '../types.ts';
+import { FileDropEvent, Song, State, TauriFile } from '../types.ts';
 import { showConfirm } from '../ui-components/confirm/confirm.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 
-function refreshSongs(state:State, backendService:BackendService) {
-    backendService.getSongs({}).then(response => state.db = response.songs).catch(error => {
+async function refreshSongs(state:State, backendService:BackendService) {
+    try {
+        const response = await backendService.getSongs({});
+        state.db = response.songs;
+    } catch (error) {
         console.error("Error fetching songs:", error);
-    });
+    }
 }
 
 export default function SongDatabase(

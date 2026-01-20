@@ -8,10 +8,8 @@ import { prettyTime } from "../formatters.ts";
 import { BackendService } from "../backend/backend.ts";
 
 async function browseFile(fileSelectedHandler: (file: File) => void) {
-    const files = await selectFile();
-    if (files.length > 0) {
-        fileSelectedHandler(files[0]);
-    }
+    const files = await selectFile() || [];
+    files.forEach(fileSelectedHandler);
 }
 
 function togglePlay(audioToggleHandler: (isPlaying: boolean) => void) {
@@ -37,11 +35,8 @@ function displaySongMetaData(data: SongMetadata) {
         trackMetaData = data;
         titleEl.textContent = data.title;
         artistEl.textContent = Array.isArray(data.artists) ? data.artists.join(", ") : data.artists || "Unknown Artist";
-        const cover = data.picture && data.picture.length > 0 ? data.picture[0] : null;
-        if (cover) {
-            const blob = new Blob([new Uint8Array(cover.data)], { type: cover.format });
-            const url = URL.createObjectURL(blob);
-            coverEl.src = url;
+        if (data.image) {
+            coverEl.src = data.image;
         } else {
             coverEl.src = "";
         }
@@ -121,7 +116,6 @@ export default function initPlayer(state:State, backendService: BackendService,c
             state.lastEvent = new CustomEvent('notification', {detail:{type:'error',message: error}});
             return;
         }
-
     
         displaySongMetaData(song.metadata);
 

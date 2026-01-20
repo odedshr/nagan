@@ -1,8 +1,10 @@
 use crate::models::SongMetadata;
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use id3::frame::{Comment, Content};
 use id3::{Frame, Tag, TagLike};
 use lofty::config::WriteOptions;
 use lofty::file::{AudioFile, TaggedFileExt};
+use lofty::picture::PictureType;
 use lofty::tag::Accessor;
 use std::fs::File;
 use std::path::Path;
@@ -71,12 +73,26 @@ impl Id3Manager {
         let comment = tag.and_then(|t| t.comment()).map(|c| c.to_string());
         let bpm = None;
 
+        // Extract cover art image
+        let image = tag.and_then(|t| {
+            // Try to get front cover first, then any picture
+            t.pictures()
+                .iter()
+                .find(|p| p.pic_type() == PictureType::CoverFront)
+                .or_else(|| t.pictures().first())
+                .map(|pic| {
+                    let mime_type = pic.mime_type().map(|m| m.to_string()).unwrap_or_else(|| "image/jpeg".to_string());
+                    let base64_data = BASE64.encode(pic.data());
+                    format!("data:{};base64,{}", mime_type, base64_data)
+                })
+        });
+
         Ok(SongMetadata {
             title,
             album,
             year,
             track,
-            image: None,
+            image,
             duration: properties.duration().as_secs_f64(),
             artists,
             instruments: None,
@@ -114,6 +130,15 @@ impl Id3Manager {
         // ID3 crate doesn't have BPM support directly
         let bpm = None;
 
+        // Extract cover art image
+        let image = tag.pictures()
+            .find(|p| p.picture_type == id3::frame::PictureType::CoverFront)
+            .or_else(|| tag.pictures().next())
+            .map(|pic| {
+                let base64_data = BASE64.encode(&pic.data);
+                format!("data:{};base64,{}", pic.mime_type, base64_data)
+            });
+
         // Extract duration from file properties (id3 crate doesn't provide this)
         let duration = self.get_file_duration(file_path)?;
 
@@ -122,7 +147,7 @@ impl Id3Manager {
             album,
             year,
             track,
-            image: None,
+            image,
             duration,
             artists,
             instruments: None,
