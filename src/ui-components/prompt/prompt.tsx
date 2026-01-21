@@ -45,10 +45,10 @@ export default function Prompt(props: PromptProps): HTMLDialogElement {
               required
           />
           <div class="modal-buttons">
-          <button class="modal-button modal-cancel" onclick={handleCancel}>
+          <button class="std-button" onclick={handleCancel}>
               Cancel
           </button>
-          <button class="modal-button modal-ok">
+          <button class="std-button primary-btn">
               OK
           </button>
           </div>

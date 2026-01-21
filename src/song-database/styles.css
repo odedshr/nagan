@@ -4,7 +4,28 @@
     image-rendering: pixelated;
     line-height: 1.2;
     width: 100%;
+
+    & thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    & thead th {
+        padding: 3px;
+        background: white;
+    
+        &.buttons-row {
+            padding: 0.5rem 0.5rem;
+            text-align: left;
+
+            button {
+                margin-right: 0.5rem;
+            }
+        }
+    }
 }
+
 
 .song-database-table th, .song-database-table td {
     padding: 0.5rem;

@@ -56,13 +56,9 @@ body {
 }
 
 .container {
+  border-bottom: 0.1rem solid var(--border-color);
   grid-area: main;
-  /* margin: 0;
-  padding-top: 10vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center; */
+  overflow: auto;
 }
 
 

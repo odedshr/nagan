@@ -67,8 +67,9 @@ export default function SongDatabase(
         const elm = SongDatabaseUI(state.db, onSongSelected, onAddToPlaylist, onRemoveSong);
         
         state.addListener('db', 
-            (songs:Song[]) => elm.querySelector('tbody')!.replaceWith(SongDatabaseTableBody(songs as Song[], onSongSelected, onAddToPlaylist, onRemoveSong))
+            () => elm.replaceWith(SongDatabaseUI(state.db, onSongSelected, onAddToPlaylist, onRemoveSong))
         );
+        
         refreshSongs(state, backendService);
 
         return elm;

@@ -3,25 +3,28 @@
 import jsx from '../jsx.js';
 import { Song } from '../types.js';
 
-export default (songs:Song[], 
-    onSongSelected:(song:Song)=>void,
+export default (songs:Song[],
+    onToggleSong:(song:Song, checked:boolean)=>void,
+    onPlaySong:(song:Song)=>void,
     onAddToPlaylist:(song:Song)=>void,
     onRemoveSong:(song:Song)=>void) => (<tbody>
         {songs.map(song => {
-            const select = ()=>onSongSelected(song);
+            const play = ()=>onPlaySong(song);
+            const onChangeToggle = (e:Event)=>onToggleSong(song,(e.target as HTMLInputElement).checked);
             return (<tr>
-            <td onclick={select}>{song.metadata.image ? <img src={song.metadata.image} alt="Artwork" class="artwork-thumbnail"/> : 'N/A'}</td>
-            <td onclick={select}>{song.metadata.title}</td>
-            <td onclick={select}>{song.metadata.artists}</td>
-            <td onclick={select}>{song.metadata.album}</td>
-            <td onclick={select}>{song.metadata.genres.join(', ')}</td>
-            <td onclick={select}>{song.metadata.year || 'N/A'}</td>
-            <td onclick={select}></td>
-            <td onclick={select}>{Math.floor(song.metadata.duration / 60)}:{('0' + Math.floor(song.metadata.duration % 60)).slice(-2)}</td>
-            <td onclick={select}>{song.metadata.track}</td>
-            <td onclick={select}></td>
-            <td onclick={select}>{song.metadata.comment ? song.metadata.comment : 'N/A'}</td>
-            <td onclick={select}>{song.url}</td>
+            <td><input type="checkbox" class="select-song-checkbox" value={song.id} onchange={onChangeToggle}/></td>
+            <td onclick={play}>{song.metadata.image ? <img src={song.metadata.image} alt="Artwork" class="artwork-thumbnail"/> : 'N/A'}</td>
+            <td onclick={play}>{song.metadata.title}</td>
+            <td onclick={play}>{song.metadata.artists}</td>
+            <td onclick={play}>{song.metadata.album}</td>
+            <td onclick={play}>{song.metadata.genres.join(', ')}</td>
+            <td onclick={play}>{song.metadata.year || 'N/A'}</td>
+            <td onclick={play}></td>
+            <td onclick={play}>{Math.floor(song.metadata.duration / 60)}:{('0' + Math.floor(song.metadata.duration % 60)).slice(-2)}</td>
+            <td onclick={play}>{song.metadata.track}</td>
+            <td onclick={play}></td>
+            <td onclick={play}>{song.metadata.comment ? song.metadata.comment : 'N/A'}</td>
+            <td onclick={play}>{song.url}</td>
             <td>
                 <a href="#" onclick={() => onAddToPlaylist(song)}>[+]</a>
                 <a href="#" onclick={() => onRemoveSong(song)}>[D]</a>

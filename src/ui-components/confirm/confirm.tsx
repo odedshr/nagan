@@ -23,10 +23,10 @@ export default function Prompt(props: PromptProps): HTMLDialogElement {
       <form method="dialog" onsubmit={handleSubmit}>
           <div class="modal-message">{message}</div>
           <div class="modal-buttons">
-            <button class="modal-button modal-cancel" data-value="false">
+            <button class="std-button" data-value="false">
                 {no}
             </button>
-            <button class="modal-button modal-ok" data-value="true">
+            <button class="std-button primary-btn" data-value="true">
                 {yes}
             </button>
           </div>
