@@ -1,6 +1,7 @@
 # Task 1: Implement Queue System
 
 ## Overview
+
 Implement a queue system in the application state that allows queuing songs, sections (song segments), and playlists for continuous playback with repeat functionality.
 
 ---
