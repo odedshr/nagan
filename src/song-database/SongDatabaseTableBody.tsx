@@ -5,14 +5,12 @@ import { Song } from '../types.js';
 
 export default (songs:Song[],
     onToggleSong:(song:Song, checked:boolean)=>void,
-    onPlaySong:(song:Song)=>void,
-    onAddToPlaylist:(song:Song)=>void,
-    onRemoveSong:(song:Song)=>void) => (<tbody>
+    onPlaySong:(song:Song)=>void) => (<tbody>
         {songs.map(song => {
             const play = ()=>onPlaySong(song);
             const onChangeToggle = (e:Event)=>onToggleSong(song,(e.target as HTMLInputElement).checked);
             return (<tr>
-            <td><input type="checkbox" class="select-song-checkbox" value={song.id} onchange={onChangeToggle}/></td>
+            <td><input type="checkbox" class="select-song-checkbox" name="selected-song" value={song.id} onchange={onChangeToggle}/></td>
             <td onclick={play}>{song.metadata.image ? <img src={song.metadata.image} alt="Artwork" class="artwork-thumbnail"/> : 'N/A'}</td>
             <td onclick={play}>{song.metadata.title}</td>
             <td onclick={play}>{song.metadata.artists}</td>
@@ -25,10 +23,6 @@ export default (songs:Song[],
             <td onclick={play}></td>
             <td onclick={play}>{song.metadata.comment ? song.metadata.comment : 'N/A'}</td>
             <td onclick={play}>{song.url}</td>
-            <td>
-                <a href="#" onclick={() => onAddToPlaylist(song)}>[+]</a>
-                <a href="#" onclick={() => onRemoveSong(song)}>[D]</a>
-            </td>  
         </tr>);
         })}
     </tbody> as HTMLTableSectionElement);

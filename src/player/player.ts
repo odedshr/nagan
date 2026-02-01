@@ -1,29 +1,10 @@
 import PlayerUi from "./Player.ui.js";
 
-import { Song, SongMetadata, State, } from '../types.ts';
-import selectFile from "./files/select-file.ts";
-// import extractSongMetadata from "./extract-song-metadata.ts";
-import loadFile from "./files/load-file.ts";
+import { Song, SongMetadata, State, Section } from '../types.ts';
+
+import loadFile from "../song-database/files/load-file.ts";
 import { prettyTime } from "../formatters.ts";
-import { BackendService } from "../backend/backend.ts";
-
-async function browseFile(fileSelectedHandler: (file: File) => void) {
-    const files = await selectFile() || [];
-    files.forEach(fileSelectedHandler);
-}
-
-function togglePlay(audioToggleHandler: (isPlaying: boolean) => void) {
-    const audioToggleBtn = document.getElementById("playToggle") as HTMLButtonElement;
-    if (audioToggleBtn.value === "play") {
-        audioToggleBtn.value = "pause";
-        audioToggleBtn.querySelector("span")!.textContent = "Pause";
-        audioToggleHandler(true);
-    } else {
-        audioToggleBtn.value = "play";
-        audioToggleBtn.querySelector("span")!.textContent = "Play";
-        audioToggleHandler(false);
-    }
-}
+import { dequeue, enqueueSong, enqueuePlaylist } from '../queue/queue-manager.ts';
 
 function displaySongMetaData(data: SongMetadata) {
     const titleEl = elms.get("title") as HTMLSpanElement;
@@ -80,13 +61,8 @@ function validatePositionInput(value: string, duration: number, positionUpdateHa
 }
 
 function initComponents(
-    loadBtn: HTMLButtonElement,
-    playToggleBtn: HTMLButtonElement,
     progressBar: HTMLInputElement,
     positionEl: HTMLInputElement) {
-      loadBtn.addEventListener("click", () => browseFile(fileSelectedHandler));
-      playToggleBtn.addEventListener("click", () => togglePlay(audioToggleHandler));
-
       progressBar.addEventListener("change", () => setProgress(parseFloat(progressBar.value), trackMetaData, positionUpdateHandler));
       progressBar.addEventListener("mousedown", () => progressBar.setAttribute("data-dragging", "true"));
       progressBar.addEventListener("mouseup", () => progressBar.removeAttribute("data-dragging"));
@@ -94,43 +70,22 @@ function initComponents(
 }
 
 const elms = new Map<string, HTMLElement>();
-let fileSelectedHandler: (file: File) => void;
-let audioToggleHandler: (isPlaying: boolean) => void;
 let positionUpdateHandler: (time: number) => void;
 
 let trackMetaData:SongMetadata;
 
-export default function initPlayer(state:State, backendService: BackendService,container:HTMLElement) {
+export default function Player(state:State) {
     const audio = new Audio();
+    let sectionEndTimeHandler: (() => void) | null = null;
+
     // when the audio is playing, log the current time every second
     audio.addEventListener("timeupdate", () => setCurrentTime(
         audio.currentTime,
         elms.get("position") as HTMLInputElement,
         elms.get("progressBar") as HTMLInputElement));
 
-    fileSelectedHandler = (async (file: File) => {
-        let song:Song;
-        try {
-            song = await backendService.addSong(file.name);
-        } catch (error) {
-            state.lastEvent = new CustomEvent('notification', {detail:{type:'error',message: error}});
-            return;
-        }
-    
-        displaySongMetaData(song.metadata);
-
-        // load file to audio element or player here
-        audio.src = URL.createObjectURL(file);
-        state.lastEvent = new CustomEvent('file-loaded', { detail: { file } });
-    });
-
-  audioToggleHandler = ((isPlaying: boolean) => {
-    if (isPlaying) {
-      audio.play();
-    } else {
-      audio.pause();
-    }
-  });
+    // Handle song ended event
+    audio.addEventListener("ended", () => handleSongEnded(state, audio));
 
   positionUpdateHandler = ((time: number) => {
     audio.currentTime = time;
@@ -142,19 +97,54 @@ export default function initPlayer(state:State, backendService: BackendService,c
 
 //   speedUpdateHandler = ((speed: number) => {
 //     audio.playbackRate = speed;
-//   });
 
-  const div: HTMLDivElement = PlayerUi(state);
+  const form: HTMLFormElement = PlayerUi(state);
   elms.clear();
-  div.querySelectorAll<HTMLElement>("[id]").forEach(el => elms.set(el.id, el));
+  form.querySelectorAll<HTMLElement>("[id]").forEach(el => elms.set(el.id, el));
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    switch ((e.submitter as HTMLButtonElement).id) {
+      case "playToggle":
+        try {
+          if (audio.paused) {
+            if (!state.currentTrack) {
+              handleSongEnded(state, audio);
+            } else {
+              audio.play();
+            }
+          } else {
+            audio.pause();
+          }
+        } catch (error) {
+          console.error("Error toggling playback:", error);
+        }
+        break;
+      case "nextBtn":
+        handleSongEnded(state, audio);
+        break;
+    }
+    return false;
+  }
   
   initComponents(
-      elms.get("loadBtn") as HTMLButtonElement,
-      elms.get("playToggle") as HTMLButtonElement,
       elms.get("progressBar") as HTMLInputElement,
       elms.get("position") as HTMLInputElement
   );
 
+    // Handle audio start/stop play
+  const playToggleBtn = form.querySelector("#playToggle") as HTMLButtonElement;
+  audio.addEventListener("play", () => { playToggleBtn.value = "pause"; });
+  audio.addEventListener("pause", () => { playToggleBtn.value = "play"; });
+  
+  state.addListener("lastEvent", (event?:CustomEvent) => {
+    if (event) {
+      switch (event.type) {
+        case "next-song":
+          handleSongEnded(state, audio);
+          break;
+      }
+    }
+  });
   state.addListener("volume", (value:number) => audio.volume = value / 100);
   state.addListener("playbackRate", (value:number) => audio.playbackRate = value / 100);
   state.addListener("currentTrack", async (song:Song|null) => {
@@ -163,13 +153,131 @@ export default function initPlayer(state:State, backendService: BackendService,c
       audio.src = URL.createObjectURL(await loadFile(song.url));
       console.log("Song metadata:", song.metadata);
       displaySongMetaData(song.metadata);
-    //   audio.play();
-      console.log('playing');
-    //   const playToggleBtn = elms.get("playToggle") as HTMLButtonElement;
-    //   playToggleBtn.value = "pause";
-    //   playToggleBtn.querySelector("span")!.textContent = "Pause";
+      audio.play();
+      const playToggleBtn = elms.get("playToggle") as HTMLButtonElement;
+      playToggleBtn.value = "pause";
+      playToggleBtn.querySelector("span")!.textContent = "Pause";
     }
   });
 
-  container.appendChild(div);
-};
+  // Handle section playback
+  state.addListener("currentSection", (section: Section | null) => {
+    // Remove previous section end time handler if exists
+    if (sectionEndTimeHandler) {
+      audio.removeEventListener('timeupdate', sectionEndTimeHandler);
+      sectionEndTimeHandler = null;
+    }
+
+    if (section) {
+      audio.currentTime = section.startTime;
+      
+      // Set up timeupdate handler to stop at endTime
+      sectionEndTimeHandler = () => {
+        if (audio.currentTime >= section.endTime) {
+          audio.removeEventListener('timeupdate', sectionEndTimeHandler!);
+          sectionEndTimeHandler = null;
+          // Trigger ended event logic
+          audio.dispatchEvent(new Event('ended'));
+        }
+      };
+      audio.addEventListener('timeupdate', sectionEndTimeHandler);
+    }
+  });
+
+  state.addListener("queue", (queue) => {
+    (form.querySelector("#nextBtn")! as HTMLButtonElement).disabled = queue.length === 0;
+  });
+
+  return form;
+}
+
+function handleSongEnded(state: State, audio: HTMLAudioElement): void {
+  const repeat = state.repeat;
+  const currentTrack = state.currentTrack;
+  const currentSection = state.currentSection;
+
+  // Handle section repeat
+  if (repeat === 'section' && currentSection) {
+    // Replay the current section
+    audio.currentTime = currentSection.startTime;
+    audio.play();
+    return;
+  }
+
+  // Handle song repeat
+  if (repeat === 'song' && currentTrack) {
+    // Replay the same song
+    audio.currentTime = 0;
+    audio.play();
+    return;
+  }
+
+  // Try to play next item from queue
+  if (state.queue.length > 0) {
+    playNextFromQueue(state, audio);
+    return;
+  }
+
+  // Queue is empty - check playlist
+  if (state.currentPlaylistId && state.playlistSongs.length > 0) {
+    const currentIndex = state.playlistSongs.findIndex(s => s.id === currentTrack?.id);
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < state.playlistSongs.length) {
+      // Play next song from playlist
+      state.currentSection = null;
+      state.currentTrack = state.playlistSongs[nextIndex];
+      return;
+    }
+
+    // End of playlist
+    if (repeat === 'playlist') {
+      // Re-queue entire playlist and play first song
+      enqueuePlaylist(state, state.currentPlaylist!);
+      playNextFromQueue(state, audio);
+      return;
+    }
+  }
+
+  // No more songs - stop playback
+  stopPlayback(state);
+}
+
+function playNextFromQueue(state: State, audio: HTMLAudioElement): void {
+  const nextItem = dequeue(state);
+  if (!nextItem) return;
+
+  switch (nextItem.type) {
+    case 'song':
+      state.currentSection = null;
+      state.currentTrack = nextItem.song;
+      break;
+    
+    case 'section':
+      state.currentSection = nextItem;
+      state.currentTrack = nextItem.song;
+      // Note: startTime will be applied via state listener
+      break;
+    
+    case 'playlist':
+      // This shouldn't happen if we expand playlists on enqueue
+      // But handle it by enqueueing all songs
+      if (state.playlistSongs.length > 0) {
+        state.playlistSongs.forEach(song => enqueueSong(state, song));
+        playNextFromQueue(state, audio);
+      }
+      break;
+  }
+}
+
+function stopPlayback(state: State): void {
+  // Reset play button to "play" state
+  const audioToggleBtn = document.getElementById("playToggle") as HTMLButtonElement;
+  if (audioToggleBtn) {
+    audioToggleBtn.value = "play";
+    const span = audioToggleBtn.querySelector("span");
+    if (span) span.textContent = "Play";
+  }
+  state.currentTrack = null;
+  state.currentSection = null;
+}

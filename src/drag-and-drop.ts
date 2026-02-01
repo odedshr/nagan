@@ -48,12 +48,12 @@ export default function initDragAndDrop(state:State) {
     document.body.classList.add('drag-active');
   });
   
-  document.body.addEventListener('dragleave', (event) => {
-    // Only remove class if we're leaving the body itself, not child elements
-    // if (event.target === document.body) {
-      document.body.classList.remove('drag-active');
-    // }
-  });
+  // document.body.addEventListener('dragleave', (event) => {
+  //   // Only remove class if we're leaving the body itself, not child elements
+  //   // if (event.target === document.body) {
+  //     document.body.classList.remove('drag-active');
+  //   // }
+  // });
 
   document.body.addEventListener('dragend', () => {
     document.body.classList.remove('drag-active');

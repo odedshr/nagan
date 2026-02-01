@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { AddSongToPlaylistPayload, BackendService, GetPlaylistSongsQuery, GetPlaylistsQuery, GetSongsQuery, GetSongsResponse, RemoveSongFromPlaylistPayload, ReorderPlaylistSongsPayload } from "./backend";
-import { Playlist, Song, SongMetadata } from "../types";
+import { Playlist, Song } from "../types";
 
 export default class TauriBackendService implements BackendService {
   // Playlist related methods

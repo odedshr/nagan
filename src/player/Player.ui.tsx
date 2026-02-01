@@ -3,8 +3,9 @@
 import jsx from '../jsx.js';
 import { State } from '../types.js';
 import Knob from '../ui-components/knob/knob.jsx';
+import RepeatControl from '../queue/repeat-control.js';
 
-export default (state:State) => (<div class="mini-player">
+export default (state:State) => (<form class="mini-player">
     <div class="cover-container">
         <img id="cover" class="cover" src="" alt="Cover Art"/>
     </div>
@@ -20,14 +21,14 @@ export default (state:State) => (<div class="mini-player">
         </div>
     </div>
     <nav class="player-controls">
-        <button class="player-button" id="loadBtn"><span>Load</span></button>
         <button class="player-button" id="previousBtn" disabled><span>Previous</span></button>
-        <button class="player-button" id="playToggle" value="play"><span>Play</span></button>
+        <button class="player-button" id="playToggle" value="play"><span></span></button>
         <button class="player-button" id="nextBtn" disabled><span>Next</span></button>
+        {RepeatControl(state)}
         <button class="player-button" id="shuffleBtn"><span>Shuffle</span></button>
     </nav>
     <div class="knobs">
         {Knob("Playback Rate", state, 'playbackRate', 50, 200, 5)}
         {Knob("Volume", state, 'volume', 0, 100, 5)}
     </div>
-    </div>  as HTMLDivElement);
+    </form>  as HTMLFormElement);

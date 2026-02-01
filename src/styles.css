@@ -2,6 +2,7 @@
 @import './song-database/styles.css';
 @import './playlist-manager/styles.css';
 @import './ui-components/styles.css';
+@import './queue/styles.css';
 
 :root {
   --hover-bg-color:#f0f0f0;
@@ -55,6 +56,10 @@ body {
   z-index: 1000;
 }
 
+#container {
+  &[data-mode="database"] #playlist-manager,
+  &[data-mode="playlist"] #song-database { display: none; }
+}
 .container {
   border-bottom: 0.1rem solid var(--border-color);
   grid-area: main;

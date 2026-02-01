@@ -1,3 +1,4 @@
+import { QueueItem, Song } from './../types';
 import { showPrompt } from '../ui-components/prompt/prompt.ts';
 import { showConfirm } from '../ui-components/confirm/confirm.ts';
 import { State, Playlist } from '../types.ts';
@@ -9,19 +10,18 @@ import { BackendService } from '../backend/backend.ts';
 
 async function refreshPlaylists(state:State, backendService:BackendService) {
     try {
-        const playlists = await backendService.getPlaylists({});
-        state.playlists = playlists;
-        if (playlists.length > 0 && (!state.currentPlaylistId || !playlists.find(p => p.id === state.currentPlaylistId))) {
-            state.currentPlaylistId = playlists[0].id;
-        }
+        state.playlists = await backendService.getPlaylists({});
     } catch (error) {
         console.error("Error fetching playlists:", error);
     }
 }
 
+function songListToQueueItems(songs: Song[]):QueueItem[] {
+    return songs.map(song => ({ type: 'song', song } as QueueItem));
+}
+
 export default function PlaylistManager(state:State, backendService: BackendService) {
-    const onPlaylistAdded = async () => {
-        console.log("Add playlist");
+    const addPlaylist = async () => {
         const playlistName = await showPrompt("Enter playlist name:");
         if (playlistName) {
             try {
@@ -33,8 +33,8 @@ export default function PlaylistManager(state:State, backendService: BackendServ
         }
     };
 
-    const onPlaylistSelected = (playlist: Playlist) => {
-        state.currentPlaylistId = playlist.id;
+    const onPlaylistSelected = (playlist: Playlist|null) => {
+        state.currentPlaylistId = playlist ? playlist.id : null;
     }
 
     const onPlaylistDeleted = async (playlist: Playlist) => {
@@ -50,10 +50,15 @@ export default function PlaylistManager(state:State, backendService: BackendServ
 
     const onSongSelected = (song: any) => { state.currentTrack = song; };
 
-    const onSongRemoved = async (song: any) => {
-        const position = state.playlistSongs.indexOf(song) + 1; //position starts from 1
-        await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position })
-        state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    const removeSong = async (position:number) => {
+        if (!state.currentPlaylistId) {
+            // remove from queue
+            state.queue = state.queue.filter((_, i) => i !== position);
+            return;
+        } else {
+            await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!,position: position +1 })
+            state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+        }
     };
 
     const onReorder = async (oldPosition: number, newPosition: number) => {
@@ -68,35 +73,71 @@ export default function PlaylistManager(state:State, backendService: BackendServ
         if (!column) {
             await backendService.shufflePlaylist(state.currentPlaylistId!);
         }
+        console.log(`Ordering by ${column} ${asec ? 'asc' : 'desc'}`);
         state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
     };
 
-    const elm = PlaylistUi(state.playlists, state.currentPlaylist, state.playlistSongs,
-        onPlaylistAdded,
+    const form = PlaylistUi(
+        state.playlists,
+        state.currentPlaylist,
+        state.currentPlaylist ? songListToQueueItems(state.playlistSongs) : state.queue,
         onPlaylistSelected,
-        onPlaylistDeleted,
         onSongSelected,
-        onSongRemoved,
-        onReorder);
+        onReorder,
+        onOrderBy);
+
+    form.onsubmit = (e:SubmitEvent) => {
+        e.preventDefault();
+        const clickedButton = e.submitter as HTMLButtonElement;
+        switch (clickedButton.id) {
+            case 'add-playlist':
+                addPlaylist();
+                break;
+            case 'shuffle':
+                onOrderBy();
+                break;
+            default:
+                if (clickedButton.hasAttribute('data-action')) {
+                    switch (clickedButton.getAttribute('data-action')) {
+                        case 'delete-playlist':
+                            const playlistId = clickedButton.value;
+                            if (playlistId) {
+                                const playlist = state.playlists.find(p => p.id === playlistId);
+                                if (playlist) {
+                                    onPlaylistDeleted(playlist);
+                                }
+                            }
+                            return;
+                        case 'remove-item':
+                            const itemIndex = parseInt(clickedButton.value, 10);
+                            removeSong(itemIndex);
+                            return;
+                        default:
+                            break;
+                    }
+                }
+                console.log("Playlist form submitted" + e.submitter?.id);
+        }
+    };
 
     state.addListener('playlists',
-        () => elm.querySelector('.playlists')!.replaceWith(
-            PlaylistList(state.playlists, onPlaylistSelected, onPlaylistDeleted)
+        () => form.querySelector('.playlists')!.replaceWith(
+            PlaylistList(state.playlists, onPlaylistSelected)
         )
     );
 
     state.addListener('currentPlaylistId', 
         async () => {
-            elm.querySelector('.playlist-editor')!.replaceWith(
-                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onSongRemoved, onReorder, onOrderBy)
+            form.querySelector('.playlist-editor')!.replaceWith(
+                PlaylistEditor(state.currentPlaylist, [], onSongSelected , onReorder, onOrderBy)
             )
             state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
         });
 
     state.addListener('playlistSongs',
         () => {
-            elm.querySelector('.playlist-songs')!.replaceWith(
-                PlaylistSongs(state.playlistSongs, onSongSelected , onSongRemoved, onReorder)
+            form.querySelector('.playlist-songs')!.replaceWith(
+                PlaylistSongs(songListToQueueItems(state.playlistSongs), onSongSelected , onReorder)
             )
             // if no current song, set to first song in playlist
             if (!state.currentTrack) {
@@ -105,6 +146,16 @@ export default function PlaylistManager(state:State, backendService: BackendServ
         }
     );
 
+    state.addListener('queue',
+        () => {
+            if (!state.currentPlaylistId) {
+                form.querySelector('.playlist-songs')!.replaceWith(
+                    PlaylistSongs(state.queue, onSongSelected , onReorder)
+                )
+            }
+        }
+    );
+
     refreshPlaylists(state, backendService);
-    return elm;
+    return form;
 }

@@ -1,18 +1,17 @@
 /// <reference path="../JSX.d.ts" />
 
 import jsx from '../jsx.js';
-import { Playlist, Song } from '../types.js';
+import { Playlist, QueueItem, Song } from '../types.js';
 import playlistSongs from './playlist-songs.js';
 
 export default (playlist:Playlist|null,
-  songs: Song[],
+  songs: QueueItem[],
   onSelected:(song: Song) => void,
-  onRemoved:(song: Song) => void,
   onReordered:(oldPosition: number, newPosition: number) => void,
   onOrderBy: (column?:string, asec?:boolean) => void) => (
     <article class="playlist-editor">
-      <h2 id="playlist-name">{playlist?.name || "Select a playlist"}</h2>
-      <button onclick={() => onOrderBy()}>shuffle</button>
+      <h2 id="playlist-name">{playlist?.name || "Coming up next ..."}</h2>
+      <button id="shuffle">shuffle</button>
       <table id="songs-table">
         <thead>
           <tr>
@@ -24,6 +23,6 @@ export default (playlist:Playlist|null,
             <th>Actions</th>
           </tr>
         </thead>
-        {playlistSongs(songs, onSelected, onRemoved, onReordered)}
+        {playlistSongs(songs, onSelected, onReordered)}
       </table>
     </article> as HTMLElement);

@@ -7,7 +7,6 @@ export default async function extractSongMetadata(file: File):Promise<SongMetada
         title: rawMetaData.common.title || file.name,
         artists: rawMetaData.common.artists || "Unknown Artist",
         album: rawMetaData.common.album || "Unknown Album",
-        picture: rawMetaData.common.picture || [],
         duration: rawMetaData.format.duration || 0,
         genres: rawMetaData.common.genre || [],
         tags: rawMetaData.common.label || [],

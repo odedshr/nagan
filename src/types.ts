@@ -14,6 +14,24 @@ export interface Player {
     getDivElement(): HTMLDivElement;
 }
 
+// Section represents a portion of a song to play
+export interface Section {
+    type: 'section';
+    song: Song;
+    startTime: number;  // in seconds
+    endTime: number;    // in seconds
+}
+
+// QueueItem can be a song, section, or playlist
+export type SongQueueItem = { type: 'song'; song: Song };
+export type PlaylistQueueItem = { type: 'playlist'; playlist: Playlist };
+export type QueueItem = 
+    | SongQueueItem
+    | Section
+    | PlaylistQueueItem;
+// Repeat modes
+export type RepeatMode = 'none' | 'section' | 'song' | 'playlist';
+
 export type Mode = "database" | "playlist" | "notes";
 // Core Data Models
 export interface SongMetadata {
@@ -80,6 +98,10 @@ export type StateBase = {
     db: Song[];
     playlists: Playlist[];
     currentPlaylistId: string | null;
+    // Queue system
+    queue: QueueItem[];
+    repeat: RepeatMode;
+    currentSection: Section | null;
     // computed items:
     currentPlaylist: Playlist | null;
     playlistSongs: Song[];

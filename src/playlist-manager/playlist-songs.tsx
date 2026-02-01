@@ -2,11 +2,10 @@
 
 import { prettyTime } from '../formatters.js';
 import jsx from '../jsx.js';
-import { Song } from '../types.js';
+import { QueueItem, Song, SongQueueItem } from '../types.js';
 
-export default (songs: Song[],
+export default (songs: QueueItem[],
     onSongSelected:(song: Song) => void,
-    onRemoved:(song: Song) => void,
     onReorder:(oldPosition: number, newPosition: number) => void) => {
     
     let draggedIndex: number | null = null;
@@ -72,7 +71,11 @@ export default (songs: Song[],
     };
 
     return (<tbody class="playlist-songs">
-        {(songs||[]).map((song, index) => {
+        {(songs||[]).map((queueItem, index) => {
+            if (queueItem.type !== 'song') {
+                return null; // Skip non-song items
+            }
+            const song = (queueItem as SongQueueItem).song;
             const onSelected = () => onSongSelected(song);
             return (<tr 
                 ondragover={handleDragOver}
@@ -90,7 +93,7 @@ export default (songs: Song[],
                 <td onclick={onSelected}>{song.metadata.album}</td>
                 <td onclick={onSelected}>{prettyTime(song.metadata.duration)}</td>
                 <td>
-                  <button class="remove-song-btn" onclick={() => onRemoved(song)}>[x]</button>
+                  <button class="remove-song-btn" data-action="remove-item" value={index}>[x]</button>
                 </td>
             </tr>);
         })} 

@@ -5,9 +5,7 @@ import { Song } from '../types.js';
 import SongDatabaseTableBody from './SongDatabaseTableBody.js';
 
 export default (songs:Song[],
-    onPlaySong:(song:Song)=>void,
-    onAddToPlaylist:(song:Song)=>void,
-    onRemoveSong:(song:Song)=>void) => {
+    onPlaySong:(song:Song)=>void) => {
         const selectedSongs = new Set<Song>();
 
         const selectAll = (e:Event) => {
@@ -29,7 +27,7 @@ export default (songs:Song[],
             document.querySelectorAll('button[data-target="song"]').forEach(btn => (btn as HTMLButtonElement).disabled = !anySongsSelected);
         }
 
-        return (<form class="song-database-container">
+        return (<form id="song-database" class="song-database-container">
             <table class="song-database-table" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
@@ -39,6 +37,7 @@ export default (songs:Song[],
                             <button class="std-button" disabled="true" data-target="song" id="add-to-queue-button">Add to queue</button>
                             <button class="std-button" disabled="true" data-target="song" id="add-to-playlist-button">Add to playlist</button>
                             <button class="std-button" disabled="true" data-target="song" id="play-now-button">Play now</button>
+                            <button class="std-button" disabled="true" data-target="song" id="delete-button">Delete</button>
                         </th>
                     </tr>
                     <tr>
@@ -55,10 +54,9 @@ export default (songs:Song[],
                         <th>Tracks Total</th>
                         <th>Comment</th>
                         <th>File Name</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
-                {SongDatabaseTableBody(songs, onToggleSong, onPlaySong, onAddToPlaylist, onRemoveSong)}
+                {SongDatabaseTableBody(songs, onToggleSong, onPlaySong)}
             </table>
         </form>  as HTMLFormElement);
 };

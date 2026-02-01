@@ -58,7 +58,7 @@ export default (label:string, state:State, propName:keyof StateBase, min:number,
     
         currentX = Math.min(Math.max(lastRot + delta * speed, -maxRot), maxRot);
 
-        elm.style = `--angle:${currentX}deg`;
+        elm.setAttribute('style', `--angle:${currentX}deg`);
 
         const value = snapToStep((currentX + maxRot) / (maxRot * 2) * 100, min, max, step);
         knobElm.setAttribute('value', `${value}`);

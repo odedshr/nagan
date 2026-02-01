@@ -3,3 +3,6 @@
 - fix knob for safari
 - consolidate modal css
 - handle backend errors
+- queue
+- play straight away
+- coming up next

@@ -1,24 +1,22 @@
 /// <reference path="../JSX.d.ts" />
 
 import jsx from '../jsx.js';
-import { Playlist, Song } from '../types.js';
+import { Playlist, QueueItem, Song } from '../types.js';
 import PlaylistList from './Playlist-list.js';
 import PlaylistEditor from './playlist-editor.js';
 
-export default (playlists: Playlist[],
+export default (
+  playlists: Playlist[],
   currentPlaylist: Playlist | null,
-  songs: Song[],
-  onPlaylistAdded: () => void,
-  onPlaylistSelected: (playlist: Playlist) => void,
-  onPlaylistDeleted: (playlist: Playlist) => void,
+  songs: QueueItem[],
+  onPlaylistSelected: (playlist: Playlist|null) => void,
   onSongSelected: (song: Song) => void,
-  onSongRemoved: (song: Song) => void,
   onReordered: (oldPosition: number, newPosition: number) => void,
   onOrderBy: (column?: string, asc?: boolean) => void) => (
-    <div class="playlist-manager">
+    <form id="playlist-manager"class="playlist-manager">
       <aside class="playlist-list">
-        <button id="add-playlist" onclick={onPlaylistAdded}>Add Playlist</button>
-          {PlaylistList(playlists, onPlaylistSelected, onPlaylistDeleted)}
+        <button id="add-playlist">Add Playlist</button>
+          {PlaylistList(playlists, onPlaylistSelected)}
       </aside>
-      {PlaylistEditor(currentPlaylist, songs, onSongSelected, onSongRemoved, onReordered, onOrderBy)}
-    </div> as HTMLDivElement);
+      {PlaylistEditor(currentPlaylist, songs, onSongSelected, onReordered, onOrderBy)}
+    </form> as HTMLFormElement);
