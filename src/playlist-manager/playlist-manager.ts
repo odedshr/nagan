@@ -7,6 +7,7 @@ import PlaylistUi from './PlaylistManager.tsx';
 import PlaylistEditor from './playlist-editor.tsx';
 import PlaylistSongs from './playlist-songs.tsx';
 import { BackendService } from '../backend/backend.ts';
+import { shuffleQueue } from '../queue/queue-manager.ts';
 
 async function refreshPlaylists(state:State, backendService:BackendService) {
     try {
@@ -62,6 +63,15 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     };
 
     const onReorder = async (oldPosition: number, newPosition: number) => {
+        if (!state.currentPlaylistId) {
+            // reorder queue
+            const updatedQueue = [...state.queue];
+            const [movedItem] = updatedQueue.splice(oldPosition, 1);
+            updatedQueue.splice(newPosition, 0, movedItem);
+            state.queue = updatedQueue;
+            return;
+        }
+        
         const songIds = state.playlistSongs.map(s => s.id);
         const [movedSongId] = songIds.splice(oldPosition, 1);
         songIds.splice(newPosition, 0, movedSongId);
@@ -70,6 +80,10 @@ export default function PlaylistManager(state:State, backendService: BackendServ
     }
 
     const onOrderBy = async (column?:string, asec?:boolean) => {
+        if (!state.currentPlaylistId) {
+            shuffleQueue(state);
+            return;
+        }
         if (!column) {
             await backendService.shufflePlaylist(state.currentPlaylistId!);
         }

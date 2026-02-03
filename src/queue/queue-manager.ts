@@ -70,3 +70,12 @@ export function cycleRepeatMode(state: State): void {
     const nextMode = modes[(currentIndex + 1) % modes.length];
     setRepeatMode(state, nextMode);
 }
+
+export function shuffleQueue(state: State): void {
+    const copy = [...state.queue];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    state.queue = copy;
+}

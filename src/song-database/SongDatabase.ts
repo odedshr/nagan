@@ -1,7 +1,8 @@
 import { BackendService } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
-import { FileDropEvent, Song, State, TauriFile } from '../types.ts';
+import { FileDropEvent, Playlist, Song, State, TauriFile } from '../types.ts';
 import { showConfirm } from '../ui-components/confirm/confirm.ts';
+import AddToPlaylist from './AddToPlaylist.tsx';
 import SongDatabaseUI from './SongDatabase.tsx';
 import selectFile from "./files/select-file.ts";
 
@@ -79,30 +80,45 @@ export default function SongDatabase(
             }
         };
 
-        const elm = SongDatabaseUI(state.db, onSongSelected);
+        let addToPlaylist = AddToPlaylist(state.playlists);
+        const elm = SongDatabaseUI(state.db, addToPlaylist, onSongSelected);
         const onFormSubmitted = (e:SubmitEvent) => {
             e.preventDefault();
             const songIds = (new FormData(e.target as HTMLFormElement)).getAll('selected-song');
             const songs = songIds.map(songId=>state.db.find(s => s.id === songId)).filter(s => s !== undefined) as Song[];
-            switch ((e.submitter as HTMLButtonElement).id) {
-                case 'add-songs-button':
+            switch ((e.submitter as HTMLButtonElement).getAttribute('data-action')) {
+                case 'add-songs':
                     browseFile(state, backendService);
                     break;
-                case 'edit-tags-button':
+                case 'edit-tags':
                     // Handle edit tags
                     break;
-                case 'add-to-queue-button':
+                case 'add-to-queue':
                     enqueueSongs(state, songs);
                     break;
-                case 'add-to-playlist-button':
-                    songs.forEach(async song => await onAddToPlaylist(song));
+                case 'add-to-playlist':
+                    // ideally this should be css-based only, but for now...
+                    e.submitter?.setAttribute('data-show', 'true');
+                    document.addEventListener('click', () => e.submitter?.removeAttribute('data-show'), { once: true });
                     break;
-                case 'play-now-button':
+                case 'play-now':
                     enqueueSongsNext(state, songs);
                     state.lastEvent = new CustomEvent('next-song');
                     break;
-                case 'delete-button':
+                case 'delete':
                     songs.forEach(async song => await onRemoveSong(song));
+                    break;
+                case 'add-to-playlist-option':
+                    const playlistId = (e.submitter as HTMLButtonElement).getAttribute('data-playlist-id');
+                    if (playlistId) {
+                        songs.forEach(async song => {
+                            try {
+                                await backendService.addSongToPlaylist({ playlistId, songId: song.id });
+                            } catch (error) {
+                                console.error(`❌ Failed to add song ${song.id} to playlist ${playlistId}:`, error);
+                            }
+                        });
+                    }
                     break;
                 default:
                     break;
@@ -113,11 +129,17 @@ export default function SongDatabase(
 
         state.addListener('db', 
             () => {
-                const newForm = SongDatabaseUI(state.db, onSongSelected)
+                const newForm = SongDatabaseUI(state.db, addToPlaylist, onSongSelected);
                 newForm.onsubmit = onFormSubmitted;
                 elm.replaceWith(newForm);
             }
         );
+
+        state.addListener('playlists', (playlists: Playlist[]) => {
+            const newAddToPlaylist = AddToPlaylist(playlists);
+            addToPlaylist.replaceWith(newAddToPlaylist);
+            addToPlaylist = newAddToPlaylist;
+        });
         
         refreshSongs(state, backendService);
 

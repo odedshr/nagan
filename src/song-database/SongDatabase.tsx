@@ -5,6 +5,7 @@ import { Song } from '../types.js';
 import SongDatabaseTableBody from './SongDatabaseTableBody.js';
 
 export default (songs:Song[],
+    AddToPlaylist: HTMLDivElement,
     onPlaySong:(song:Song)=>void) => {
         const selectedSongs = new Set<Song>();
 
@@ -31,13 +32,15 @@ export default (songs:Song[],
             <table class="song-database-table" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th colspan="14" class="buttons-row"> 
-                            <button class="std-button" id="add-songs-button">Add Songs</button>
-                            <button class="std-button" disabled="true" data-target="song" id="edit-tags-button">Edit tags</button>
-                            <button class="std-button" disabled="true" data-target="song" id="add-to-queue-button">Add to queue</button>
-                            <button class="std-button" disabled="true" data-target="song" id="add-to-playlist-button">Add to playlist</button>
-                            <button class="std-button" disabled="true" data-target="song" id="play-now-button">Play now</button>
-                            <button class="std-button" disabled="true" data-target="song" id="delete-button">Delete</button>
+                        <th colspan="14" class="buttons-row">
+                            <div class="song-data-buttons">
+                                <button class="std-button" id="add-songs-button" data-action="add-songs">Add Songs</button>
+                                <button class="std-button" disabled="true" data-target="song" id="edit-tags-button" data-action="edit-tags">Edit tags</button>
+                                <button class="std-button" disabled="true" data-target="song" id="add-to-queue-button" data-action="add-to-queue">Add to queue</button>
+                                {AddToPlaylist}
+                                <button class="std-button" disabled="true" data-target="song" id="play-now-button" data-action="play-now">Play now</button>
+                                <button class="std-button" disabled="true" data-target="song" id="delete-button" data-action="delete">Delete</button>
+                            </div>
                         </th>
                     </tr>
                     <tr>
