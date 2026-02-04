@@ -11,8 +11,6 @@ interface PromptProps {
 export default function Prompt(props: PromptProps): HTMLDialogElement {
   const { message, defaultValue = '', onSubmit } = props;
 
-  let form:HTMLFormElement;
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
     if (form.checkValidity()) {
@@ -36,41 +34,31 @@ export default function Prompt(props: PromptProps): HTMLDialogElement {
   const modal = (
     <dialog class="modal-dialog">
       <form method="dialog" onsubmit={handleSubmit}>
-          <div class="modal-message">{message}</div>
-          <input
-              type="text"
-              class="modal-input"
-              value={defaultValue}
-              onkeydown={handleKeyDown}
-              required
-          />
-          <div class="modal-buttons">
+        <div class="modal-message">{message}</div>
+        <input type="text" class="modal-input" value={defaultValue} onkeydown={handleKeyDown} required />
+        <div class="modal-buttons">
           <button class="std-button" onclick={handleCancel}>
-              Cancel
+            Cancel
           </button>
-          <button class="std-button primary-btn">
-              OK
-          </button>
-          </div>
+          <button class="std-button primary-btn">OK</button>
+        </div>
       </form>
     </dialog>
   ) as HTMLDialogElement;
 
-    // Prevent clicks on backdrop from closing (only buttons should close)
+  // Prevent clicks on backdrop from closing (only buttons should close)
   // const dialog = modal.querySelector('.modal-dialog') as HTMLDialogElement;
   // modal.addEventListener('click', (e) => e.stopPropagation());
-  
-  form = modal.querySelector('form') as HTMLFormElement;
+
+  const form = modal.querySelector('form') as HTMLFormElement;
 
   // Click on backdrop cancels
   // modal.addEventListener('click', handleCancel);
-  
+
   // Trap focus within modal
-  modal.addEventListener('keydown', (e) => {
+  modal.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
-      const focusableElements = modal.querySelectorAll(
-        'input, button'
-      ) as NodeListOf<HTMLElement>;
+      const focusableElements = modal.querySelectorAll('input, button') as NodeListOf<HTMLElement>;
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
 
