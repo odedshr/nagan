@@ -30,6 +30,11 @@ export type StateBase = {
 // Update or create history entry when song finishes or changes
 function updateHistory(state: State, songId: string, duration: number): void
 
+// Increment play count when a song is considered "played"
+// (e.g. on natural track end or when a threshold is reached)
+// NOTE: This helper may not exist yet; add it if you need timesPlayed tracking.
+function incrementTimesPlayed(state: State, songId: string): void
+
 // Get history entry for a song
 function getHistoryEntry(state: State, songId: string): HistoryEntry | undefined
 
@@ -43,13 +48,31 @@ function getMostPlayed(state: State, limit?: number): HistoryEntry[]
 function getRecentlyPlayed(state: State, limit?: number): HistoryEntry[]
 ```
 
-### 2. Update `src/player/player.ts`
+### 2. Update the player (refactored modules)
 
-Track playback:
-- On `play` event: store `playStartTime = Date.now()`
-- On `pause`/`ended`/track change: calculate `duration = (Date.now() - playStartTime) / 1000`
-- Call `updateHistory(state, songId, duration)`
-- Increment `timesPlayed` only on `ended` event (full play) or threshold (e.g., >30s played)
+`src/player/player.ts` is now a small composition root. The playback lifecycle is split across:
+
+- `src/player/player.audio.ts` – audio adapter (`createPlayerAudio`) and audio event subscriptions
+- `src/player/player.state.ts` – state listeners (`wirePlayerState`) that load tracks/handle sections
+- `src/player/player.next.ts` – progression logic (`handleEnded`)
+
+Track playback by wiring history at the same level where audio and state meet (recommended: in `src/player/player.ts`, or in a small helper module like `src/player/player.history.ts`).
+
+#### Suggested wiring (works with the refactor)
+
+- On `audio.onPlay`: store `playStartTime = Date.now()` (if there is an active song)
+- On `audio.onPause`: compute `duration = (Date.now() - playStartTime) / 1000` and call `updateHistory(state, songId, duration)`
+- On **natural** `audio.onEnded`: flush duration, then call `incrementTimesPlayed(state, songId)`
+- On track change (`state.addListener('currentTrack', ...)`): flush duration for the previous track before switching the active song id
+
+#### Important nuance: “ended” vs section-end
+
+Section playback ends are triggered from `src/player/player.state.ts` (it calls the same progression callback when `time >= section.endTime`).
+
+For history:
+
+- Count **duration played** for sections (flushing on pause/track change is enough).
+- Only increment `timesPlayed` on **natural track end** (`audio.onEnded`), or on a threshold you define (e.g. >30 seconds) — but do not treat “section end” as a full play unless you explicitly want that.
 
 ## Files
 
@@ -57,4 +80,6 @@ Track playback:
 |------|--------|
 | `src/types.ts` | Add `HistoryEntry`, update `StateBase` |
 | `src/history/history-manager.ts` | Create history functions |
-| `src/player/player.ts` | Track duration, update history on events |
+| `src/player/player.ts` | Wire history tracking (composition root) |
+| `src/player/player.audio.ts` | Source of audio events (`play`/`pause`/`ended`) |
+| `src/player/player.state.ts` | Source of track changes + section-end progression |

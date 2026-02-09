@@ -66,6 +66,13 @@ export interface Marker {
   comment?: string;
   color?: string;
 }
+
+export interface HistoryEntry {
+  songId: string;
+  durationPlayed: number; // total seconds played across all plays
+  timesPlayed: number; // number of times song was played
+  lastPlayed: number; // timestamp of last play
+}
 export interface TauriFile extends File {
   path: string;
 }
@@ -94,6 +101,7 @@ export type StateBase = {
   queue: QueueItem[];
   repeat: RepeatMode;
   currentSection: Section | null;
+  history: HistoryEntry[];
   // computed items:
   currentPlaylist: Playlist | null;
   playlistSongs: Song[];
