@@ -1,17 +1,19 @@
 /* Modal Dialog */
 .modal-dialog {
-  background-color: var(--background-color);
-  border: 0.1rem solid var(--text-color);
-  box-shadow: 
-    4px 4px 0 rgba(0, 0, 0, 0.5),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.3),
-    inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+  background-color: var(--color-surface);
+  border: 0.1rem solid var(--color-border);
+  box-shadow:
+    4px 4px 0 var(--color-shadow),
+    inset -1px -1px 0 var(--color-shadow),
+    inset 1px 1px 0 var(--color-surface-alt);
   padding: 20px;
   min-width: 300px;
   max-width: 500px;
   transform: scale(0.7);
   opacity: 0;
-  transition: transform 0.2s steps(5), opacity 0.2s steps(5);
+  transition:
+    transform 0.2s steps(5),
+    opacity 0.2s steps(5);
   image-rendering: pixelated;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
 
@@ -31,29 +33,29 @@
   margin-bottom: 15px;
   font-size: 14px;
   line-height: 1.4;
-  color: var(--text-color);
+  color: var(--color-text);
 }
 
 /* Modal Input */
 .modal-input {
-    background-color: var(--background-color);
-    border: 0.1rem solid var(--text-color);
-    box-sizing: border-box;
-    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.2);
-    color: var(--text-color);
-    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
-    font-size: 1.4rem;
-    margin-bottom: 1.5rem;
-    outline: none;
-    padding: 6px 8px;
-    width: 100%;
+  background-color: var(--color-input-bg);
+  border: 0.1rem solid var(--color-input-border);
+  box-sizing: border-box;
+  box-shadow: inset 2px 2px 0 var(--color-shadow);
+  color: var(--color-input-text);
+  font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  outline: none;
+  padding: 6px 8px;
+  width: 100%;
 }
 
 .modal-input:focus {
-    border-color: var(--highlight-color, #0066ff);
-    box-shadow: 
-        inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-        0 0 0 2px var(--highlight-color, #0066ff);
+  border-color: var(--color-input-border-focus);
+  box-shadow:
+    inset 2px 2px 0 var(--color-shadow),
+    0 0 0 2px var(--color-focus-ring);
 }
 
 /* Modal Buttons */
@@ -61,28 +63,4 @@
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .modal-dialog {
-    box-shadow: 
-      4px 4px 0 rgba(0, 0, 0, 0.8),
-      inset -1px -1px 0 rgba(0, 0, 0, 0.5),
-      inset 1px 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .modal-input {
-    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
-  }
-
-  .modal-input:focus {
-    box-shadow: 
-      inset 2px 2px 0 rgba(0, 0, 0, 0.5),
-      0 0 0 2px var(--highlight-color, #3399ff);
-  }
-
-  .modal-button:hover {
-    background-color: var(--hover-color, #333333);
-  }
 }

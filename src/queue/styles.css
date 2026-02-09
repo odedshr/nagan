@@ -1,28 +1,28 @@
 /* Queue and Repeat Control Styles */
 
 .repeat-btn {
-    position: relative;
-    transition: opacity 0.2s ease;
+  position: relative;
+  transition: opacity 0.2s ease;
 }
 
 .repeat-btn.repeat-none {
-    opacity: 0.5;
+  opacity: 0.5;
 }
 
 .repeat-btn.repeat-song,
 .repeat-btn.repeat-playlist,
 .repeat-btn.repeat-section {
-    opacity: 1;
+  opacity: 1;
 }
 
 .repeat-btn.repeat-song {
-    color: var(--accent-color, #4a9eff);
+  color: var(--accent-color, #4a9eff);
 }
 
 .repeat-btn.repeat-playlist {
-    color: var(--accent-color, #4a9eff);
+  color: var(--accent-color, #4a9eff);
 }
 
 .repeat-btn.repeat-section {
-    color: var(--highlight-color, #ff9e4a);
+  color: var(--color-primary, #ff9e4a);
 }

@@ -1,110 +1,103 @@
-import { StateTemplate } from "./Context";
+import { StateTemplate } from './Context';
 
 export interface Player {
-    setMetadata(data: {
-        title: string;
-        artist: string;
-        image?: string;
-        duration: number;
-    }): void;
-    setCurrentTime(time: number): void;
-    setFileSelectedHandler(handler: (file: File) => void): void;
-    setAudioToggleHandler(handler: (isPlaying: boolean) => void): void;
-    setPositionUpdateHandler(handler: (time: number) => void): void;
-    getDivElement(): HTMLDivElement;
+  setMetadata(data: { title: string; artist: string; image?: string; duration: number }): void;
+  setCurrentTime(time: number): void;
+  setFileSelectedHandler(handler: (file: File) => void): void;
+  setAudioToggleHandler(handler: (isPlaying: boolean) => void): void;
+  setPositionUpdateHandler(handler: (time: number) => void): void;
+  getDivElement(): HTMLDivElement;
 }
 
 // Section represents a portion of a song to play
 export interface Section {
-    type: 'section';
-    song: Song;
-    startTime: number;  // in seconds
-    endTime: number;    // in seconds
+  type: 'section';
+  song: Song;
+  startTime: number; // in seconds
+  endTime: number; // in seconds
 }
 
 // QueueItem can be a song, section, or playlist
 export type SongQueueItem = { type: 'song'; song: Song };
 export type PlaylistQueueItem = { type: 'playlist'; playlist: Playlist };
-export type QueueItem = 
-    | SongQueueItem
-    | Section
-    | PlaylistQueueItem;
+export type QueueItem = SongQueueItem | Section | PlaylistQueueItem;
 // Repeat modes
 export type RepeatMode = 'none' | 'section' | 'song' | 'playlist';
 
-export type Mode = "database" | "playlist" | "notes";
+export type Mode = 'database' | 'playlist' | 'notes';
 // Core Data Models
 export interface SongMetadata {
-    title: string;
-    album: string;
-    year?: number;
-    track?: number;
-    image?: string;
-    duration: number;
-    artists: string | string[];
-    instruments?: string[];
-    bpm?: number;
-    genres: string[];
-    comment?: string;
-    tags: string[];
-    file_exists: boolean;
-    times_played: number;
+  title: string;
+  album: string;
+  year?: number;
+  track?: number;
+  image?: string;
+  duration: number;
+  artists: string | string[];
+  instruments?: string[];
+  bpm?: number;
+  genres: string[];
+  comment?: string;
+  tags: string[];
+  file_exists: boolean;
+  times_played: number;
 }
 
 export interface Song {
-    id: string;
-    url: string;
-    filename: string;
-    metadata: SongMetadata;
-    available: boolean;
+  id: string;
+  url: string;
+  filename: string;
+  metadata: SongMetadata;
+  available: boolean;
 }
 
 export interface Playlist {
-    id: string;
-    name: string;
-    tags: string[];
-    totalDuration: number;
+  id: string;
+  name: string;
+  tags: string[];
+  totalDuration: number;
 }
 
 export interface Marker {
-    id: string;
-    song: string;
-    start: number;
-    end?: number;
-    comment?: string;
-    color?: string;
+  id: string;
+  song: string;
+  start: number;
+  end?: number;
+  comment?: string;
+  color?: string;
 }
 export interface TauriFile extends File {
-    path: string;
+  path: string;
 }
 
 export type FileDropEvent = CustomEvent<{
-    type: 'files-dropped';
-    files: File[];
+  type: 'files-dropped';
+  files: File[];
 }>;
 
 export type FileLoadedEvent = CustomEvent<{
-    type: 'file-loaded';
-    file: File;
-    metadata: SongMetadata;
-}> ;
+  type: 'file-loaded';
+  file: File;
+  metadata: SongMetadata;
+}>;
 
 export type StateBase = {
-    mode: "database" | "playlist" | "notes";
-    currentTrack: Song | null;
-    playbackRate: number;
-    volume: number;
-    lastEvent?: CustomEvent;
-    db: Song[];
-    playlists: Playlist[];
-    currentPlaylistId: string | null;
-    // Queue system
-    queue: QueueItem[];
-    repeat: RepeatMode;
-    currentSection: Section | null;
-    // computed items:
-    currentPlaylist: Playlist | null;
-    playlistSongs: Song[];
-}
+  mode: 'database' | 'playlist' | 'notes';
+  currentTrack: Song | null;
+  playbackRate: number;
+  volume: number;
+  lastEvent?: CustomEvent;
+  db: Song[];
+  playlists: Playlist[];
+  currentPlaylistId: string | null;
+  // Queue system
+  queue: QueueItem[];
+  repeat: RepeatMode;
+  currentSection: Section | null;
+  // computed items:
+  currentPlaylist: Playlist | null;
+  playlistSongs: Song[];
+  cssTheme: string;
+};
 
 export type State = StateTemplate<StateBase>;

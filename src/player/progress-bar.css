@@ -1,96 +1,93 @@
 .progress-bar {
-    --progress: 0%;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    box-sizing: border-box;
-    cursor: default;
-    height: 0.6rem;
-    padding: 0;
-    position: relative;
-    margin: 0 auto;
-    width: 90%;
+  --progress: 0%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  cursor: default;
+  height: 0.6rem;
+  padding: 0;
+  position: relative;
+  margin: 0 auto;
+  width: 90%;
 
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 6px;
-      background: #1b1b1b;           /* progress color */
-      width: var(--progress, 0%);
-      z-index: 1;
-    }
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 6px;
+    background: var(--color-text);
+    width: var(--progress, 0%);
+    z-index: 1;
+  }
 
   /* ───────── WebKit (Chrome, Safari) ───────── */
 
-    &::-webkit-slider-runnable-track {
-        height: 0.6rem;
-        background: #9BAE8F;           /* LCD green */
-        border: 0.1rem solid #1b1b1b;
-        overflow: hidden;
-    }
+  &::-webkit-slider-runnable-track {
+    height: 0.6rem;
+    background: #9bae8f; /* LCD green */
+    border: 0.1rem solid #1b1b1b;
+    overflow: hidden;
+  }
 
-    &::-webkit-slider-thumb {
-        border: none;
-        cursor: pointer;
-        height: 1rem;
-        background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><polygon points='0,0 0,8 8,0' fill='%231b1b1b'/><polygon points='0,16 8,16 0,8' fill='%231b1b1b'/><rect x='4' y='4' width='8' height='8' fill='%239BAE8F' stroke='%231b1b1b' stroke-width='1' transform='rotate(45 8 8)'/></svg>");
-        background-size: 0.6rem 0.6rem;
-        background-repeat: no-repeat;
-        -webkit-appearance: none;
-        transform: translateY(-12.5%);
-        width: 1rem;
-        /* -webkit-appearance: none;
-        width: 0;                      /* invisible thumb
-        height: 0; */
-        box-shadow: -9999px 0 0 9999px #1b1b1b;
-    }
+  &::-webkit-slider-thumb {
+    border: none;
+    cursor: pointer;
+    height: 1rem;
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><polygon points='0,0 0,8 8,0' fill='currentColor'/><polygon points='0,16 8,16 0,8' fill='currentColor'/><rect x='4' y='4' width='8' height='8' fill='%239BAE8F' stroke='currentColor' stroke-width='1' transform='rotate(45 8 8)'/></svg>");
+    background-size: 0.6rem 0.6rem;
+    background-repeat: no-repeat;
+    -webkit-appearance: none;
+    transform: translateY(-12.5%);
+    width: 1rem;
+    box-shadow: -9999px 0 0 9999px var(--color-text);
+  }
 
-    /* ───────── Firefox ───────── */
+  /* ───────── Firefox ───────── */
 
-    &::-moz-range-track {
-        height: 6px;
-        background: #9BAE8F;
-        border: 1px solid #1b1b1b;
-    }
+  &::-moz-range-track {
+    height: 6px;
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+  }
 
-    &::-webkit-slider-progress,
-    &::-moz-range-progress {
-        height: 6px;
-        background: #1b1b1b;
-    }
+  &::-webkit-slider-progress,
+  &::-moz-range-progress {
+    height: 6px;
+    background: var(--color-text);
+  }
 
-    /* hide thumb */
-    &::-moz-range-thumb {
-        width: 0;
-        height: 0;
-        border: none;
-    }
+  /* hide thumb */
+  &::-moz-range-thumb {
+    width: 0;
+    height: 0;
+    border: none;
+  }
 
-    /* ───────── Edge / IE ───────── */
+  /* ───────── Edge / IE ───────── */
 
-    &::-ms-track {
-        height: 6px;
-        background: transparent;
-        border-color: transparent;
-        color: transparent;
-    }
+  &::-ms-track {
+    height: 6px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+  }
 
-    &::-ms-fill-lower {
-        background: #1b1b1b;
-    }
+  &::-ms-fill-lower {
+    background: var(--color-text);
+  }
 
-    &::-ms-fill-upper {
-        background: #9BAE8F;
-        border: 1px solid #1b1b1b;
-    }
+  &::-ms-fill-upper {
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+  }
 
-    &::-ms-thumb {
-        width: 0;
-        height: 0;
-        border: none;
-    }
+  &::-ms-thumb {
+    width: 0;
+    height: 0;
+    border: none;
+  }
 }

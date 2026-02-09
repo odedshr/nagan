@@ -1,87 +1,88 @@
 .song-database-table {
-    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
-    font-size: 1.2rem;
-    image-rendering: pixelated;
-    line-height: 1.2;
-    width: 100%;
+  font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+  font-size: 1.2rem;
+  image-rendering: pixelated;
+  line-height: 1.2;
+  width: 100%;
 
-    & thead {
-        position: sticky;
-        top: 0;
-        z-index: 1;
+  & thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  & thead th {
+    padding: 3px;
+    background: var(--color-surface);
+
+    &.buttons-row {
+      padding: 0.5rem 0.5rem;
+      text-align: left;
+
+      button {
+        margin-right: 0.5rem;
+      }
     }
-
-    & thead th {
-        padding: 3px;
-        background: white;
-    
-        &.buttons-row {
-            padding: 0.5rem 0.5rem;
-            text-align: left;
-
-            button {
-                margin-right: 0.5rem;
-            }
-        }
-    }
+  }
 }
 
 .song-data-buttons {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: flex-start;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-.add-to-playlist-button[data-show="true"] + .add-to-playlist-menu,
+.add-to-playlist-button[data-show='true'] + .add-to-playlist-menu,
 .add-to-playlist-dropdown:focus-within .add-to-playlist-menu {
-    /* :focus-within. doens't work on button, so we use a wrapper div */
-    display: block;
+  /* :focus-within. doens't work on button, so we use a wrapper div */
+  display: block;
 }
 
 .add-to-playlist-menu {
-    background: white;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 0.2rem -0.5rem rgba(0, 0, 0, 0.2);
-    border-radius: 0.4rem;
-    display: none;
-    list-style: none;
-    margin-top: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0.2rem -0.5rem var(--color-shadow);
+  border-radius: 0.4rem;
+  display: none;
+  list-style: none;
+  margin-top: 0.5rem;
+  padding: 0;
+  position: absolute;
+  overflow: auto;
+
+  .playlist-item {
     padding: 0;
-    position: absolute;
-    overflow: auto;
+    margin: 0;
 
-    .playlist-item {
-        padding: 0;
-        margin: 0;
+    .add-to-playlist-option {
+      background: none;
+      border: none;
+      border-radius: 0;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
 
-        .add-to-playlist-option {
-            background: none;
-            border: none;
-            border-radius: 0;
-            text-align: left;
-            cursor: pointer;
-            width: 100%;
-
-            &:hover {
-                background-color: #f0f0f0;
-            }
-        }
+      &:hover {
+        background-color: var(--color-hover-bg);
+      }
     }
+  }
 }
 
-.song-database-table th, .song-database-table td {
-    padding: 0.5rem;
-    border-bottom: 1px solid #ddd;
-    border-left: 1px solid #ddd;
+.song-database-table th,
+.song-database-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-border-muted);
+  border-left: 1px solid var(--color-border-muted);
 }
 
 .artwork-thumbnail {
-    width: 4.8rem;
-    height: 4.8rem;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    image-rendering: pixelated;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+  width: 4.8rem;
+  height: 4.8rem;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  image-rendering: pixelated;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
 }

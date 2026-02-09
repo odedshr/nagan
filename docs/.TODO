@@ -6,3 +6,24 @@
 - queue
 - play straight away
 - coming up next
+
+Using Proxy for state and event management
+events, if needed are set into the proxy "lastEvent" variable with designated type
+type=notifications issues toast notifications
+Using barebone JSX to create dynamic HTMLs
+big components are form that can be submitted so actions are handled on the onsubmit event instead of per-button
+Dynamic lists are component that can be replaced when the lists is updated. The List component is then injected to the form component so no rewiring is needed if the lists is updated
+components can notify for change in 3 ways
+update the state, if they have access to it,
+ use a delegate method
+button-click to be catched by surrounding form
+modals - Yes/No, prompt, dialog
+Dialog is Modal(Component(resolve,reject))
+ConfirmComponent
+PromptComponent
+
+
+tasks
+Fix songs table to have 3 rows
+add colour themes
+tag editor

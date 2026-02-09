@@ -1,3 +1,4 @@
+@import './themes/default.css';
 @import './player/styles.css';
 @import './song-database/styles.css';
 @import './playlist-manager/styles.css';
@@ -5,13 +6,6 @@
 @import './queue/styles.css';
 
 :root {
-  --hover-bg-color:#f0f0f0;
-  --active-bg-color: #ccc;
-  --background-color: #f6f6f6;
-  --text-color: #0f0f0f;
-  --border-color : #1b1b1b;
-  --highlight-color: #396cd8;
-  
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 62.5%;
   line-height: 24px;
@@ -25,47 +19,48 @@
 }
 
 body {
-  background-color: var(--background-color);
+  background-color: var(--color-bg);
   box-sizing: border-box;
-  color: var(--text-color);
-  display: grid; 
+  color: var(--color-text);
+  display: grid;
   font-size: 1.6rem;
   height: 100vh;
   margin: 0;
   padding: 0;
 
-  grid-template-columns: 5rem 1fr; 
-  grid-template-rows: 1fr 15rem; 
-  gap: 0px 0px; 
-  grid-template-areas: 
-    "main main"
-    "nav player";
+  grid-template-columns: 5rem 1fr;
+  grid-template-rows: 1fr 15rem;
+  gap: 0px 0px;
+  grid-template-areas:
+    'main main'
+    'nav player';
 }
 
 .drag-active::after {
-  content: "Drop files to add to playlist";
+  content: 'Drop files to add to playlist';
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 2rem 4rem;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
+  background-color: var(--color-overlay);
+  color: var(--color-text-inverse);
   font-size: 2rem;
   border-radius: 8px;
   z-index: 1000;
 }
 
 #container {
-  &[data-mode="database"] #playlist-manager,
-  &[data-mode="playlist"] #song-database { display: none; }
+  &[data-mode='database'] #playlist-manager,
+  &[data-mode='playlist'] #song-database {
+    display: none;
+  }
 }
 .container {
-  border-bottom: 0.1rem solid var(--border-color);
+  border-bottom: 0.1rem solid var(--color-border);
   grid-area: main;
   overflow: auto;
 }
-
 
 .row {
   display: flex;
@@ -74,12 +69,12 @@ body {
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-link);
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: var(--color-link-hover);
 }
 
 h1 {
@@ -94,10 +89,10 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
+  color: var(--color-input-text);
+  background-color: var(--color-input-bg);
   transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 2px var(--color-shadow);
 }
 
 button {
@@ -105,40 +100,11 @@ button {
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: var(--color-primary);
 }
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
-
-  a:hover {
-    color: #24c8db;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
-  }
+  border-color: var(--color-primary);
+  background-color: var(--color-active-bg);
 }
 
 .nav-buttons {
@@ -151,35 +117,43 @@ button {
 }
 
 .nav-button {
-    background-color: transparent;
-    background-size: 2.5rem 2.5rem;
-    background-repeat: no-repeat;
-    background-position: center;
-    border: none;
-    cursor: pointer;
-    height: 5rem;
-    width: 5rem;
-    margin: 0.5rem 0;
-    padding: 0;
-    transition: filter 0.25s;
+  background-color: transparent;
+  background-size: 2.5rem 2.5rem;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  cursor: pointer;
+  height: 5rem;
+  width: 5rem;
+  margin: 0.5rem 0;
+  padding: 0;
+  transition: filter 0.25s;
 }
 
 .nav-button:not(:disabled):hover {
-    background-color: var(--hover-bg-color);
+  background-color: var(--color-nav-hover-bg);
 }
 .nav-button:not(:disabled):active {
-    filter: var(--active-bg-color);
+  background-color: var(--color-nav-active-bg);
 }
 .nav-button:disabled {
-    filter: opacity(0.5);
-    cursor: default;
+  filter: opacity(0.5);
+  cursor: default;
 }
 
-.nav-button span { display: none; }
+.nav-button span {
+  display: none;
+}
 
-#dbBtn { background-image: url(./assets/btn-db.svg); }
-#playlistBtn { background-image: url(./assets/btn-playlist.svg); }
-#notesBtn { background-image: url(./assets/btn-notes.svg); }
+#dbBtn {
+  background-image: url(./assets/btn-db.svg);
+}
+#playlistBtn {
+  background-image: url(./assets/btn-playlist.svg);
+}
+#notesBtn {
+  background-image: url(./assets/btn-notes.svg);
+}
 
 #player-container {
   grid-area: player;

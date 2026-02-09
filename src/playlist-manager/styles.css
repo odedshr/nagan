@@ -1,18 +1,19 @@
 .playlist-manager {
-  display: grid; 
-  grid-template-columns: 30rem 1fr; 
-  grid-template-rows: 1fr; 
-  gap: 0px 0px; 
+  display: grid;
+  grid-template-columns: 30rem 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
   height: 100%;
-  grid-template-areas: 
-    "list item";
+  grid-template-areas: 'list item';
 }
 
 .playlist-list {
-  border-right: 0.1rem solid var(--border-color);
+  border-right: 0.1rem solid var(--color-border);
   grid-area: list;
 }
-.playlist-editor { grid-area: item; }
+.playlist-editor {
+  grid-area: item;
+}
 
 .playlists {
   list-style: none;
@@ -22,17 +23,17 @@
 
 .playlist-item {
   align-items: center;
-  border-bottom: 0.1rem solid var(--text-color);
+  border-bottom: 0.1rem solid var(--color-divider);
   cursor: pointer;
   display: flex;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
   font-size: 1.4rem;
   padding: 1rem;
-  
+
   & a {
     flex: 1 1 auto;
     text-decoration: none;
-    color: var(--text-color);
+    color: var(--color-text);
   }
 }
 
@@ -48,11 +49,11 @@
   user-select: none;
   width: 2rem;
   text-align: center;
-  color: var(--text-color-muted, #888);
+  color: var(--color-text-muted);
 }
 
 .playlist-songs .drag-handle:hover {
-  color: var(--text-color, #333);
+  color: var(--color-text);
 }
 
 .playlist-songs .drag-handle:active {
@@ -61,10 +62,10 @@
 
 .playlist-songs tr.dragging {
   opacity: 0.5;
-  background-color: var(--highlight-color, #e0e0e0);
+  background-color: var(--color-highlight);
 }
 
 .playlist-songs tr.drag-over {
-  border-top: 2px solid var(--accent-color, #007bff);
-  background-color: var(--drag-over-color, rgba(0, 123, 255, 0.1));
+  border-top: 2px solid var(--color-accent);
+  background-color: var(--color-hover-bg);
 }
