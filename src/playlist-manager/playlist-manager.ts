@@ -1,6 +1,6 @@
 import { QueueItem, Song } from './../types';
-import { showPrompt } from '../ui-components/prompt/prompt.ts';
-import { showConfirm } from '../ui-components/confirm/confirm.ts';
+import prompt from '../ui-components/prompt/prompt.ts';
+import confirm from '../ui-components/confirm/confirm.ts';
 import { State, Playlist } from '../types.ts';
 import PlaylistList from './Playlist-list.tsx';
 import PlaylistUi from './PlaylistManager.tsx';
@@ -23,7 +23,7 @@ function songListToQueueItems(songs: Song[]): QueueItem[] {
 
 export default function PlaylistManager(state: State, backendService: BackendService) {
   const addPlaylist = async () => {
-    const playlistName = await showPrompt('Enter playlist name:');
+    const playlistName = await prompt('Enter playlist name:');
     if (playlistName) {
       try {
         await backendService.createPlaylist(playlistName);
@@ -39,7 +39,7 @@ export default function PlaylistManager(state: State, backendService: BackendSer
   };
 
   const onPlaylistDeleted = async (playlist: Playlist) => {
-    if (await showConfirm(`Are you sure you want to delete the playlist "${playlist.name}"?`, 'Delete', 'Cancel')) {
+    if (await confirm(`Are you sure you want to delete the playlist "${playlist.name}"?`, 'Delete', 'Cancel')) {
       try {
         await backendService.deletePlaylist(playlist.id);
         refreshPlaylists(state, backendService);

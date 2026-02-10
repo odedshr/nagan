@@ -1,37 +1,12 @@
+import { openInModal } from '../modal/modal.ts';
 import Confirm from './confirm.tsx';
 
 /**
- * Show a retro-styled modal prompt asking for text input
+ * Show a retro-styled modal confirm dialog
  * @param message - The message to display to the user
  * @param defaultValue - Optional default value for the input field
  * @returns Promise that resolves with the input text on OK, or null on Cancel
  */
-export function showConfirm(
-  message: string,
-  yes: string = 'Yes',
-  no: string = 'No',
-): Promise<boolean> {
-    return new Promise((resolve) => {
-      const modal = Confirm({
-          message,
-          yes,
-          no,
-          onSubmit: (value) => {
-              // Add closing animation
-              modal.classList.add('modal-closing');
-              
-              // Wait for animation to complete before removing
-              setTimeout(() => {
-                  document.body.removeChild(modal);
-                  resolve(value);
-                }, 200);
-            },
-        });
-        
-    document.body.appendChild(modal);
-
-    // Trigger opening animation
-    modal.showModal();
-    requestAnimationFrame(() => modal.classList.add('modal-open'));
-  });
+export default function confirm(message: string, yes: string = 'Yes', no: string = 'No'): Promise<boolean> {
+  return openInModal(Confirm, { message, yes, no, onSubmit: () => {} });
 }

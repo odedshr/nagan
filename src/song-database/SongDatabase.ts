@@ -1,7 +1,7 @@
 import { BackendService } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
 import { FileDropEvent, Playlist, Song, State, TauriFile } from '../types.ts';
-import { showConfirm } from '../ui-components/confirm/confirm.ts';
+import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
 import SongDatabaseUI from './SongDatabase.tsx';
 import selectFile from './files/select-file.ts';
@@ -78,9 +78,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   const onRemoveSong = async (song: Song) => {
-    if (
-      await showConfirm(`Are you sure you want to delete the song: ${song.filename}? This action cannot be undone.`)
-    ) {
+    if (await confirm(`Are you sure you want to delete the song: ${song.filename}? This action cannot be undone.`)) {
       const success = await backendService.deleteSong(song.id);
       if (success) {
         refreshSongs(state, backendService);

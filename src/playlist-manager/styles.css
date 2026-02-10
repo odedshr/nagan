@@ -46,7 +46,6 @@
 /* Drag and drop styles for playlist songs */
 .playlist-songs .drag-handle {
   cursor: grab;
-  user-select: none;
   width: 2rem;
   text-align: center;
   color: var(--color-text-muted);

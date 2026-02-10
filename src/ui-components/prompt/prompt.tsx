@@ -1,20 +1,21 @@
 /// <reference path="../../JSX.d.ts" />
 
 import jsx from '../../jsx.js';
-
+import { openInModal } from '../modal/modal.js';
 interface PromptProps {
   message: string;
   defaultValue?: string;
   onSubmit: (value: string | null) => void;
 }
 
-export default function Prompt(props: PromptProps): HTMLDialogElement {
+export default function Prompt(props: PromptProps): HTMLFormElement {
   const { message, defaultValue = '', onSubmit } = props;
 
   const handleSubmit = (e: Event) => {
+    const form = e.target as HTMLFormElement;
     e.preventDefault();
     if (form.checkValidity()) {
-      const input = form.querySelector('.modal-input') as HTMLInputElement;
+      const input = form.querySelector('#prompt-input') as HTMLInputElement;
       onSubmit(input.value);
     }
   };
@@ -31,46 +32,25 @@ export default function Prompt(props: PromptProps): HTMLDialogElement {
     }
   };
 
-  const modal = (
-    <dialog class="modal-dialog">
-      <form method="dialog" onsubmit={handleSubmit}>
-        <div class="modal-message">{message}</div>
-        <input type="text" class="modal-input" value={defaultValue} onkeydown={handleKeyDown} required />
-        <div class="modal-buttons">
-          <button class="std-button" onclick={handleCancel}>
-            Cancel
-          </button>
-          <button class="std-button primary-btn">OK</button>
-        </div>
-      </form>
-    </dialog>
-  ) as HTMLDialogElement;
-
-  // Prevent clicks on backdrop from closing (only buttons should close)
-  // const dialog = modal.querySelector('.modal-dialog') as HTMLDialogElement;
-  // modal.addEventListener('click', (e) => e.stopPropagation());
-
-  const form = modal.querySelector('form') as HTMLFormElement;
-
-  // Click on backdrop cancels
-  // modal.addEventListener('click', handleCancel);
-
-  // Trap focus within modal
-  modal.addEventListener('keydown', e => {
-    if (e.key === 'Tab') {
-      const focusableElements = modal.querySelectorAll('input, button') as NodeListOf<HTMLElement>;
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
-    }
-  });
-
-  return modal;
+  return (
+    <form method="dialog" onsubmit={handleSubmit} class="modal-form prompt-form">
+      <label class="modal-message" for="prompt-input">
+        {message}
+      </label>
+      <input
+        type="text"
+        id="prompt-input"
+        class="prompt-input modal-input"
+        value={defaultValue}
+        onkeydown={handleKeyDown}
+        required
+      />
+      <div class="modal-buttons">
+        <button class="std-button" onclick={handleCancel}>
+          Cancel
+        </button>
+        <button class="std-button primary-btn">OK</button>
+      </div>
+    </form>
+  ) as HTMLFormElement;
 }

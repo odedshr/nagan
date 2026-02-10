@@ -2,14 +2,14 @@
 
 import jsx from '../../jsx.js';
 
-interface PromptProps {
+interface ConfirmProps {
   message: string;
   yes?: string;
   no?: string;
   onSubmit: (value: boolean) => void;
 }
 
-export default function Prompt(props: PromptProps): HTMLDialogElement {
+export default function Confirm(props: ConfirmProps): HTMLFormElement {
   const { message, yes = 'Yes', no = 'No', onSubmit } = props;
 
   const handleSubmit = (e: SubmitEvent) => {
@@ -19,18 +19,16 @@ export default function Prompt(props: PromptProps): HTMLDialogElement {
   };
 
   return (
-    <dialog class="modal-dialog">
-      <form method="dialog" onsubmit={handleSubmit}>
-          <div class="modal-message">{message}</div>
-          <div class="modal-buttons">
-            <button class="std-button" data-value="false">
-                {no}
-            </button>
-            <button class="std-button primary-btn" data-value="true">
-                {yes}
-            </button>
-          </div>
-      </form>
-    </dialog>
-  ) as HTMLDialogElement;
+    <form method="dialog" onsubmit={handleSubmit} class="modal-form confirm-form">
+      <div class="modal-message">{message}</div>
+      <div class="modal-buttons">
+        <button class="std-button" data-value="false">
+          {no}
+        </button>
+        <button class="std-button primary-btn" data-value="true">
+          {yes}
+        </button>
+      </div>
+    </form>
+  ) as HTMLFormElement;
 }
