@@ -3,6 +3,7 @@ import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
 import { FileDropEvent, Playlist, Song, State, TauriFile } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
+import editId3Tags from './id3-tag-editor/Id3TagEditor.tsx';
 import SongDatabaseUI from './SongDatabase.tsx';
 import selectFile from './files/select-file.ts';
 
@@ -35,17 +36,32 @@ async function addSongsToPlaylist(
   state: State
 ) {
   if (playlistId) {
-    songs.forEach(async song => {
-      try {
-        await backendService.addSongToPlaylist({ playlistId, songId: song.id });
-      } catch (error) {
-        console.error(`❌ Failed to add song ${song.id} to playlist ${playlistId}:`, error);
-      }
-    });
+    await Promise.all(
+      songs.map(async song => {
+        try {
+          await backendService.addSongToPlaylist({ playlistId, songId: song.id });
+        } catch (error) {
+          console.error(`❌ Failed to add song ${song.id} to playlist ${playlistId}:`, error);
+        }
+      })
+    );
     if (state.currentPlaylistId === playlistId) {
       state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId });
     }
   }
+}
+
+async function saveUpdatedSongs(backendService: BackendService, dbCopy: Song[], updatedSongs: Song[]): Promise<Song[]> {
+  await Promise.all(
+    updatedSongs.map(async song => {
+      const updatedSong = await backendService.updateSong({ id: song.id, metadata: song.metadata, update_id3: true });
+      if (updatedSong) {
+        dbCopy = dbCopy.map(s => (s.id === updatedSong.id ? updatedSong : s));
+      }
+    })
+  );
+
+  return dbCopy;
 }
 
 export default function SongDatabase(state: State, backendService: BackendService) {
@@ -89,17 +105,20 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
-  const elm = SongDatabaseUI(state.db, addToPlaylist, onSongSelected);
+  let elm = SongDatabaseUI(state.db, addToPlaylist, onSongSelected);
   const onFormSubmitted = async (e: SubmitEvent) => {
     e.preventDefault();
     const songIds = new FormData(e.target as HTMLFormElement).getAll('selected-song');
     const songs = songIds.map(songId => state.db.find(s => s.id === songId)).filter(s => s !== undefined) as Song[];
     switch ((e.submitter as HTMLButtonElement).getAttribute('data-action')) {
       case 'add-songs':
-        browseFile(state, backendService);
-        break;
+        return browseFile(state, backendService);
       case 'edit-tags':
-        // Handle edit tags
+        const updatedSongs = await editId3Tags(songs);
+        if (updatedSongs) {
+          const dbCopy = await saveUpdatedSongs(backendService, [...state.db], updatedSongs);
+          state.db = dbCopy;
+        }
         break;
       case 'add-to-queue':
         enqueueSongs(state, songs);
@@ -134,6 +153,8 @@ export default function SongDatabase(state: State, backendService: BackendServic
     const newForm = SongDatabaseUI(state.db, addToPlaylist, onSongSelected);
     newForm.onsubmit = onFormSubmitted;
     elm.replaceWith(newForm);
+    elm = newForm;
+    elm.onsubmit = onFormSubmitted;
   });
 
   state.addListener('playlists', (playlists: Playlist[]) => {

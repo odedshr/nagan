@@ -151,15 +151,59 @@ impl Database {
     pub async fn update_song(
         &self,
         id: &str,
-        _updates: UpdateSongPayload,
+        updates: UpdateSongPayload,
     ) -> Result<Option<Song>, sqlx::Error> {
-        // This is a simplified version - in a real implementation, you'd parse the metadata
-        // and update specific fields
-        sqlx::query("UPDATE songs SET updated_at = ? WHERE id = ?")
-            .bind(Utc::now())
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+        // Fast existence check so we can return Ok(None) for unknown ids
+        if self.get_song_by_id(id).await?.is_none() {
+            return Ok(None);
+        }
+
+        let mut new_title: Option<String> = None;
+        let mut new_album: Option<String> = None;
+        let mut new_artists_json: Option<String> = None;
+
+        if let Some(obj) = updates.metadata.as_object() {
+            if let Some(title) = obj.get("title").and_then(|v| v.as_str()) {
+                new_title = Some(title.to_string());
+            }
+            if let Some(album) = obj.get("album").and_then(|v| v.as_str()) {
+                new_album = Some(album.to_string());
+            }
+
+            // Preferred: { artists: ["a", "b"] }
+            if let Some(artists) = obj.get("artists").and_then(|v| v.as_array()) {
+                let artists_vec: Vec<String> = artists
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect();
+                new_artists_json = Some(serde_json::to_string(&artists_vec).unwrap_or("[]".into()));
+            } else if let Some(artist) = obj.get("artist").and_then(|v| v.as_str()) {
+                // Fallback: { artist: "single" }
+                new_artists_json = Some(serde_json::to_string(&vec![artist.to_string()]).unwrap_or("[]".into()));
+            }
+        }
+
+        sqlx::query(
+            r#"
+            UPDATE songs
+            SET
+              title = COALESCE(?, title),
+              album = COALESCE(?, album),
+              artists = COALESCE(?, artists),
+              filename = COALESCE(?, filename),
+              updated_at = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(new_title)
+        .bind(new_album)
+        .bind(new_artists_json)
+        .bind(updates.filename)
+        .bind(Utc::now())
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
 
         self.get_song_by_id(id).await
     }

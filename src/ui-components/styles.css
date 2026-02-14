@@ -1,5 +1,6 @@
 @import './notification/styles.css';
 @import './knob/styles.css';
+@import './modal/styles.css';
 
 .std-button {
   background-color: var(--color-surface);

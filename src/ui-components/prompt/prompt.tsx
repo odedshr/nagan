@@ -1,7 +1,6 @@
 /// <reference path="../../JSX.d.ts" />
 
 import jsx from '../../jsx.js';
-import { openInModal } from '../modal/modal.js';
 interface PromptProps {
   message: string;
   defaultValue?: string;

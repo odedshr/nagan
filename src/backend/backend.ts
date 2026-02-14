@@ -87,7 +87,9 @@ export interface CalculateSimilarityResponse {
 export interface BackendService {
   getSongs(query: GetSongsQuery): Promise<GetSongsResponse>;
   addSong(filePath: string): Promise<Song>;
+  updateSong(payload: UpdateSongPayload): Promise<Song | null>;
   deleteSong(songId: string): Promise<boolean>;
+  bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
   getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
   createPlaylist(name: string): Promise<Playlist>;
   deletePlaylist(playlistId: string): Promise<void>;
@@ -96,8 +98,6 @@ export interface BackendService {
   getPlaylistSongs(query: GetPlaylistSongsQuery): Promise<Song[]>;
   reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<boolean>;
   shufflePlaylist(playlistId: string): Promise<boolean>;
-  // updateSong(payload: UpdateSongPayload): Promise<Song>;
-  // bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
   // updatePlaylist(payload: UpdatePlaylistPayload): Promise<Playlist>;
   // addMarker(payload: AddMarkerPayload): Promise<Marker>;
   // updateMarker(payload: UpdateMarkerPayload): Promise<Marker>;

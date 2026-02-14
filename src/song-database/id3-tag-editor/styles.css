@@ -1,0 +1,33 @@
+.id3-tags-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+
+  .tags-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  label {
+    display: inline-block;
+    width: 7rem;
+  }
+
+  input[type='text'] {
+    background-color: var(--color-surface);
+    border: 0.1rem solid var(--color-border);
+    box-sizing: border-box;
+    box-shadow:
+      inset -1px -1px 0 var(--color-shadow),
+      inset 1px 1px 0 var(--color-surface-alt);
+    color: var(--color-text);
+    font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+    font-size: 1.4rem;
+    padding: 0.5rem 0.5rem;
+  }
+}
