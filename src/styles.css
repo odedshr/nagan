@@ -36,6 +36,19 @@ body {
     'nav player';
 }
 
+body.no-text-select,
+body.no-text-select * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body.no-text-select input,
+body.no-text-select textarea,
+body.no-text-select [contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .drag-active::after {
   content: 'Drop files to add to playlist';
   position: fixed;

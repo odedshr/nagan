@@ -10,9 +10,16 @@ import { handleEnded } from './player.next.ts';
 import { wirePlayerState } from './player.state.ts';
 import { createPlaybackHistoryTracker } from './player.history.ts';
 import type { Song } from '../types.ts';
+import RepeatControl from '../queue/repeat-control.tsx';
+import Knob from '../ui-components/knob/knob.tsx';
 
 export default function Player(state: State) {
-  const form: HTMLFormElement = PlayerUi(state);
+  const form: HTMLFormElement = PlayerUi(
+    RepeatControl(state),
+    Knob('Playback Rate', state.playbackRate, 50, 200, 5, elm => state.bidi('playbackRate', elm, 'value', 'input')),
+    Knob('Volume', state.volume, 0, 100, 5, elm => state.bidi('volume', elm, 'value', 'input'))
+  );
+
   const elms = getPlayerElements(form);
   const audio = createPlayerAudio();
 

@@ -27,10 +27,9 @@
 }
 
 .knob {
-  visibility: hidden;
-  border-radius: 50%;
   box-sizing: border-box;
   box-shadow: 0 0 0.5rem 0.2rem var(--color-shadow);
+  border-radius: 50%;
   cursor: grab;
   position: relative;
   height: var(--w);
@@ -44,6 +43,10 @@
       transition: transform 0.25s;
     }
   }
+}
+
+body.knob-grabbing {
+  cursor: grabbing;
 }
 
 .knob-indicator {

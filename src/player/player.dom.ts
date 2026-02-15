@@ -68,8 +68,15 @@ export function bindSeekControls(
     deps.seekTo(newTime);
   };
 
-  const onMouseDown = () => elms.progressBar.setAttribute('data-dragging', 'true');
-  const onMouseUp = () => elms.progressBar.removeAttribute('data-dragging');
+  const onMouseDown = (event: MouseEvent) => {
+    event.preventDefault();
+    elms.progressBar.setAttribute('data-dragging', 'true');
+    document.body.classList.add('no-text-select');
+  };
+  const onMouseUp = () => {
+    elms.progressBar.removeAttribute('data-dragging');
+    document.body.classList.remove('no-text-select');
+  };
 
   const onPositionChange = () => {
     const duration = deps.getDuration();
@@ -86,12 +93,14 @@ export function bindSeekControls(
   elms.progressBar.addEventListener('change', onProgressChange);
   elms.progressBar.addEventListener('mousedown', onMouseDown);
   elms.progressBar.addEventListener('mouseup', onMouseUp);
+  elms.progressBar.addEventListener('mouseleave', onMouseUp);
   elms.position.addEventListener('change', onPositionChange);
 
   return () => {
     elms.progressBar.removeEventListener('change', onProgressChange);
     elms.progressBar.removeEventListener('mousedown', onMouseDown);
     elms.progressBar.removeEventListener('mouseup', onMouseUp);
+    elms.progressBar.removeEventListener('mouseleave', onMouseUp);
     elms.position.removeEventListener('change', onPositionChange);
   };
 }
