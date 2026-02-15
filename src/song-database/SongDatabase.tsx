@@ -63,7 +63,14 @@ export default (
             </th>
             <th class="artwork-col">Art</th>
             <th class="title-col">Title</th>
-            <th class="artists-col">Artist(s)</th>
+            <th class="artists-col filter">
+              <details>
+                <summary class="filter-label">Artist(s)</summary>
+                <div class="filter-options">
+                  <input type="text" name="artist-filter" placeholder="Filter by artist" />
+                </div>
+              </details>
+            </th>
             <th class="album-col">Album</th>
             <th class="genre-col">Genre</th>
             <th class="year-col">Year</th>

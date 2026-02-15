@@ -1,4 +1,4 @@
-import { BackendService } from '../backend/backend.ts';
+import { BackendService, GetSongsQuery } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
 import { FileDropEvent, Playlist, Song, SongMetadata, State, TauriFile } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
@@ -7,6 +7,7 @@ import editId3Tags from './id3-tag-editor/Id3TagEditor.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 import selectFile from './files/select-file.ts';
+import throttle from '../utils/throttle.ts';
 
 async function browseFile(state: State, backendService: BackendService) {
   ((await selectFile()) || []).forEach(async file => {
@@ -23,7 +24,13 @@ async function browseFile(state: State, backendService: BackendService) {
 
 async function refreshSongs(state: State, backendService: BackendService) {
   try {
-    const response = await backendService.getSongs({});
+    const query: GetSongsQuery = {};
+    if (state.dbFilterArtist) {
+      query.filters = { artists: state.dbFilterArtist };
+    }
+
+    console.log(query);
+    const response = await backendService.getSongs(query);
     state.db = response.songs;
   } catch (error) {
     console.error('Error fetching songs:', error);
@@ -92,13 +99,15 @@ async function saveUpdatedSongs(
 }
 
 export default function SongDatabase(state: State, backendService: BackendService) {
+  const refresh = () => refreshSongs(state, backendService);
+
   state.addListener('lastEvent', async (event?: CustomEvent) => {
     if (event) {
       switch (event.type) {
         case 'file-loaded':
           // const { file, metadata } = (event as FileLoadedEvent).detail;
           // const song = await backendService.addSong(file.name, metadata);
-          refreshSongs(state, backendService);
+          refresh();
           break;
         case 'files-dropped':
           const files = (event as FileDropEvent).detail.files as File[];
@@ -210,6 +219,10 @@ export default function SongDatabase(state: State, backendService: BackendServic
     addToPlaylist.replaceWith(newAddToPlaylist);
     addToPlaylist = newAddToPlaylist;
   });
+
+  const artistFilterInput = elm.querySelector('input[name="artist-filter"]') as HTMLInputElement;
+  state.bidi('dbFilterArtist', artistFilterInput, 'value', 'input');
+  state.addListener('dbFilterArtist', throttle(refresh, 1000));
 
   refreshSongs(state, backendService);
 

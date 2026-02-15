@@ -94,7 +94,10 @@ export type StateBase = {
   playbackRate: number;
   volume: number;
   lastEvent?: CustomEvent;
+  // DB system
   db: Song[];
+  dbFilterArtist: string | null;
+  // Playlist system
   playlists: Playlist[];
   currentPlaylistId: string | null;
   // Queue system

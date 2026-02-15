@@ -32,7 +32,7 @@ impl Database {
         if let Some(filters) = &query.filters {
             if let Some(filters_obj) = filters.as_object() {
                 for (key, value) in filters_obj {
-                    where_clauses.push(format!("{} = '{}'", key, value));
+                    where_clauses.push(format!("{} = {}", key, value));
                 }
             }
         }
@@ -58,6 +58,9 @@ impl Database {
 
         // Get total count
         let total: i64 = sqlx::query_scalar(&count_sql).fetch_one(&self.pool).await?;
+
+        // Debugging: Print the final SQL query
+        println!("Executing SQL: {}", sql);
 
         // Get songs
         let db_songs: Vec<DbSong> = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
