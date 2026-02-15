@@ -1,11 +1,13 @@
 @import './id3-tag-editor/styles.css';
 
 .song-database-table {
+  border-spacing: 0;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
   font-size: 1.2rem;
   image-rendering: pixelated;
   line-height: 1.2;
-  width: 100%;
+  table-layout: fixed;
+  width: min-content;
 
   & thead {
     position: sticky;
@@ -14,12 +16,12 @@
   }
 
   & thead th {
-    padding: 3px;
     background: var(--color-surface);
 
     &.buttons-row {
       padding: 0.5rem 0.5rem;
       text-align: left;
+      height: 3.5rem;
 
       button {
         margin-right: 0.5rem;
@@ -29,10 +31,13 @@
 }
 
 .song-data-buttons {
+  align-items: center;
   display: flex;
   gap: 0.5rem;
-  align-items: center;
   justify-content: flex-start;
+  left: 0.5rem;
+  position: fixed;
+  top: 0.5rem;
 }
 
 .add-to-playlist-button[data-show='true'] + .add-to-playlist-menu,
@@ -72,19 +77,81 @@
   }
 }
 
-.song-database-table th,
-.song-database-table td {
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--color-border-muted);
-  border-left: 1px solid var(--color-border-muted);
+.song-database-table {
+  .select-song-col {
+    width: 3rem;
+  }
+  .artwork-col {
+    width: 3rem;
+  }
+  .title-col {
+    width: 20rem;
+  }
+  .artists-col {
+    width: 15rem;
+  }
+  .album-col {
+    width: 15rem;
+  }
+  .genre-col {
+    width: 10rem;
+  }
+  .year-col {
+    width: 5rem;
+  }
+  .album-artist-col {
+    width: 15rem;
+  }
+  .bpm-col {
+    width: 4rem;
+  }
+  .duration-col {
+    width: 5rem;
+  }
+  .track-col {
+    width: 5rem;
+  }
+  .tracks-total-col {
+    width: 5rem;
+  }
+  .comment-col {
+    width: 20rem;
+  }
+  .file-name-col {
+    width: 30rem;
+  }
+
+  & th,
+  & td {
+    padding: 0.5rem;
+    border-bottom: 0.1rem solid var(--color-border-muted);
+    border-left: 0.1rem solid var(--color-border-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.artwork-cell {
+      padding: 0;
+      text-align: center;
+    }
+  }
+
+  tr:has(input[type='checkbox']:checked) {
+    background-color: var(--color-selection-bg);
+    color: var(--color-selection-text);
+  }
+}
+
+.number-cell {
+  text-align: right;
 }
 
 .artwork-thumbnail {
-  width: 4.8rem;
-  height: 4.8rem;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
-  image-rendering: pixelated;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  height: 2.4rem;
+  margin-top: 0.2rem;
+  object-fit: cover;
+  /* image-rendering: auto; */
+  width: 2.4rem;
 }

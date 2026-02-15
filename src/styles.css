@@ -93,8 +93,15 @@ button {
   background-color: var(--color-input-bg);
   transition: border-color 0.25s;
   box-shadow: 0 2px 2px var(--color-shadow);
+
+  &:disabled {
+    background-color: var(--color-disabled-bg);
+    color: var(--color-disabled-text);
+    cursor: not-allowed;
+  }
 }
 
+input[type='checkbox'],
 button {
   cursor: pointer;
 }

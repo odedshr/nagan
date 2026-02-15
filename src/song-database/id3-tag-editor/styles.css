@@ -15,6 +15,7 @@
 
   label {
     display: inline-block;
+    margin-left: 0.5rem;
     width: 7rem;
   }
 
@@ -29,5 +30,11 @@
     font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
     font-size: 1.4rem;
     padding: 0.5rem 0.5rem;
+
+    &:disabled {
+      background-color: var(--color-disabled-bg);
+      color: var(--color-disabled-text);
+      cursor: not-allowed;
+    }
   }
 }

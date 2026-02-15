@@ -161,6 +161,10 @@ impl Database {
         let mut new_title: Option<String> = None;
         let mut new_album: Option<String> = None;
         let mut new_artists_json: Option<String> = None;
+        let mut new_year: Option<i32> = None;
+        let mut new_bpm: Option<f32> = None;
+        let mut new_genres_json: Option<String> = None;
+        let mut new_comment: Option<String> = None;
 
         if let Some(obj) = updates.metadata.as_object() {
             if let Some(title) = obj.get("title").and_then(|v| v.as_str()) {
@@ -168,6 +172,18 @@ impl Database {
             }
             if let Some(album) = obj.get("album").and_then(|v| v.as_str()) {
                 new_album = Some(album.to_string());
+            }
+
+            if let Some(year) = obj.get("year").and_then(|v| v.as_i64()) {
+                if let Ok(year) = i32::try_from(year) {
+                    new_year = Some(year);
+                }
+            }
+
+            if let Some(bpm) = obj.get("bpm").and_then(|v| v.as_f64()) {
+                if bpm.is_finite() {
+                    new_bpm = Some(bpm as f32);
+                }
             }
 
             // Preferred: { artists: ["a", "b"] }
@@ -180,7 +196,41 @@ impl Database {
                 new_artists_json = Some(serde_json::to_string(&artists_vec).unwrap_or("[]".into()));
             } else if let Some(artist) = obj.get("artist").and_then(|v| v.as_str()) {
                 // Fallback: { artist: "single" }
-                new_artists_json = Some(serde_json::to_string(&vec![artist.to_string()]).unwrap_or("[]".into()));
+                new_artists_json =
+                    Some(serde_json::to_string(&vec![artist.to_string()]).unwrap_or("[]".into()));
+            }
+
+            // Preferred: { genres: ["a", "b"] }, but also accept { genre: "single" }
+            if let Some(genres) = obj.get("genres") {
+                if let Some(arr) = genres.as_array() {
+                    let genres_vec: Vec<String> = arr
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                    new_genres_json =
+                        Some(serde_json::to_string(&genres_vec).unwrap_or("[]".into()));
+                } else if let Some(genre) = genres.as_str() {
+                    new_genres_json =
+                        Some(serde_json::to_string(&vec![genre.to_string()]).unwrap_or("[]".into()));
+                }
+            } else if let Some(genre) = obj.get("genre") {
+                if let Some(arr) = genre.as_array() {
+                    let genres_vec: Vec<String> = arr
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                    new_genres_json =
+                        Some(serde_json::to_string(&genres_vec).unwrap_or("[]".into()));
+                } else if let Some(genre) = genre.as_str() {
+                    new_genres_json =
+                        Some(serde_json::to_string(&vec![genre.to_string()]).unwrap_or("[]".into()));
+                }
+            }
+
+            if let Some(comment) = obj.get("comment").and_then(|v| v.as_str()) {
+                new_comment = Some(comment.to_string());
             }
         }
 
@@ -191,6 +241,10 @@ impl Database {
               title = COALESCE(?, title),
               album = COALESCE(?, album),
               artists = COALESCE(?, artists),
+                            year = COALESCE(?, year),
+                            bpm = COALESCE(?, bpm),
+                            genres = COALESCE(?, genres),
+                            comment = COALESCE(?, comment),
               filename = COALESCE(?, filename),
               updated_at = ?
             WHERE id = ?
@@ -199,6 +253,10 @@ impl Database {
         .bind(new_title)
         .bind(new_album)
         .bind(new_artists_json)
+                .bind(new_year)
+                .bind(new_bpm)
+                .bind(new_genres_json)
+                .bind(new_comment)
         .bind(updates.filename)
         .bind(Utc::now())
         .bind(id)
@@ -714,13 +772,30 @@ mod tests {
 
         let update_payload = UpdateSongPayload {
             id: "update-test".to_string(),
-            metadata: serde_json::json!({"title": "Updated"}),
+            metadata: serde_json::json!({
+                "title": "Updated",
+                "year": 2024,
+                "bpm": 128.5,
+                "genre": "Rock",
+                "comment": "hello"
+            }),
             update_id3: None,
             filename: None,
         };
 
         let updated = db.update_song("update-test", update_payload).await.unwrap();
         assert!(updated.is_some());
+
+        let updated = updated.unwrap();
+        assert_eq!(updated.metadata.title, "Updated");
+        assert_eq!(updated.metadata.year, Some(2024));
+        assert_eq!(updated.metadata.genres, vec!["Rock".to_string()]);
+        assert_eq!(updated.metadata.comment, Some("hello".to_string()));
+        assert!(updated
+            .metadata
+            .bpm
+            .map(|b| (b - 128.5).abs() < 0.0001)
+            .unwrap_or(false));
     }
 
     #[tokio::test]

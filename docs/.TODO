@@ -22,8 +22,9 @@ Dialog is Modal(Component(resolve,reject))
 ConfirmComponent
 PromptComponent
 
+Tasks
 
-tasks
-Fix songs table to have 3 rows
-add colour themes
-tag editor
+1. rearrange columns
+2. filter
+3. sort
+4. show/hide columns

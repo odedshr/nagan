@@ -25,17 +25,21 @@ function jsx(tag: JSX.Component, attributes: { [key: string]: string } | null, .
 
   // append children
   for (const child of children) {
-    if (typeof child === 'string' || typeof child === 'number') {
-      element.innerText += child;
-      continue;
-    }
+    try {
+      if (typeof child === 'string' || typeof child === 'number') {
+        element.innerText += child;
+        continue;
+      }
 
-    if (Array.isArray(child)) {
-      element.append(...child);
-      continue;
-    }
+      if (Array.isArray(child)) {
+        element.append(...child);
+        continue;
+      }
 
-    element.appendChild(child);
+      element.appendChild(child);
+    } catch (e) {
+      console.error('Error appending child:', child, e);
+    }
   }
   return element;
 }
