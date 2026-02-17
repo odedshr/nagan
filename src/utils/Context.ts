@@ -30,7 +30,7 @@ export function Context<T extends object>(initial: T): StateTemplate<T> {
       notify(prop, value);
       return result;
     },
-    delete(target: object, prop: string) {
+    deleteProperty(target: object, prop: string) {
       const result = Reflect.deleteProperty(target, prop);
       if (computed.has(prop)) {
         computed.delete(prop);

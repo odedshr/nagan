@@ -1,12 +1,12 @@
 import SongDatabase from './song-database/SongDatabase';
 import PlaylistManager from './playlist-manager/playlist-manager';
 import Player from './player/player';
-import { Context } from './Context';
+import { Context } from './utils/Context';
 import { Mode, RepeatMode, State } from './types';
 import isTauri from './is-tauri';
 import { BackendService, getBackendService } from './backend/backend';
 import initNotifications from './ui-components/notification/notification';
-import { persist, loadPersistedState } from './PersistedState';
+import { persist, loadPersistedState } from './utils/PersistedState';
 import { applyTheme } from './themes/theme';
 import NavButtons from './nav';
 
@@ -19,7 +19,7 @@ function initNav(state: State) {
   };
 }
 
-async function init() {
+export async function initApp() {
   // Define default state values for persistence
   const defaultState = {
     volume: 100,
@@ -68,4 +68,4 @@ async function init() {
   (await import(isTauri() ? './drag-and-drop.tauri.ts' : './drag-and-drop.ts')).default(state);
 }
 
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('DOMContentLoaded', () => void initApp());

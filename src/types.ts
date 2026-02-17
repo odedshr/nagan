@@ -1,4 +1,4 @@
-import { StateTemplate } from './Context';
+import { StateTemplate } from './utils/Context';
 
 export interface Player {
   setMetadata(data: { title: string; artist: string; image?: string; duration: number }): void;

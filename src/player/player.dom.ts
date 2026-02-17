@@ -1,4 +1,4 @@
-import { prettyTime } from '../formatters.ts';
+import { prettyTime } from '../utils/formatters.ts';
 import type { SongMetadata } from '../types.ts';
 import type { PlayerElements } from './player.elements.ts';
 

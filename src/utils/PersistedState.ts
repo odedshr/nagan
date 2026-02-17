@@ -1,4 +1,4 @@
-import { State, StateBase } from './types';
+import { State, StateBase } from '../types';
 
 const STORAGE_KEY = 'nagan-state';
 const SAVE_DEBOUNCE_MS = 1000;
@@ -34,10 +34,7 @@ function debounce(fn: () => void, ms: number): () => void {
  * @param keysToTriggerSave - Keys to watch for changes. If empty/undefined, saves on beforeunload only.
  * @returns Initial state merged with persisted values
  */
-export function persist<T extends Partial<StateBase>>(
-  state: State,
-  keysToTriggerSave?: (keyof T)[]
-): void {
+export function persist<T extends Partial<StateBase>>(state: State, keysToTriggerSave?: (keyof T)[]): void {
   if (!keysToTriggerSave?.length) {
     // No keys specified: save only on page unload
     window.addEventListener('beforeunload', () => saveState(state as unknown as T, Object.keys(state) as (keyof T)[]));
