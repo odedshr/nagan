@@ -29,7 +29,6 @@ async function refreshSongs(state: State, backendService: BackendService) {
       query.filters = { artists: state.dbFilterArtist };
     }
 
-    console.log(query);
     const response = await backendService.getSongs(query);
     state.db = response.songs;
   } catch (error) {
@@ -140,6 +139,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     }
   };
 
+  const columns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
   const selectedSongs = new Set<Song>();
   const selectAll = (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
@@ -163,8 +163,8 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
-  let songDatabaseTableBody = SongDatabaseTableBody(state.db, [] as string[], onToggleSong, onSongSelected);
-  const elm = SongDatabaseUI(addToPlaylist, songDatabaseTableBody, selectAll);
+  let songDatabaseTableBody = SongDatabaseTableBody(state.db, [] as string[], columns, onToggleSong, onSongSelected);
+  const elm = SongDatabaseUI(columns, addToPlaylist, songDatabaseTableBody, selectAll);
 
   const onFormSubmitted = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -208,7 +208,13 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   state.addListener('db', () => {
     const selectedSongIds = new Set(Array.from(selectedSongs).map(s => s.id));
-    const newContent = SongDatabaseTableBody(state.db, Array.from(selectedSongIds), onToggleSong, onSongSelected);
+    const newContent = SongDatabaseTableBody(
+      state.db,
+      Array.from(selectedSongIds),
+      columns,
+      onToggleSong,
+      onSongSelected
+    );
     newContent.onsubmit = onFormSubmitted;
     songDatabaseTableBody.replaceWith(newContent);
     songDatabaseTableBody = newContent;

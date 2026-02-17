@@ -42,7 +42,7 @@ function jsx(tag: JSX.Component, attributes: { [key: string]: string } | null, .
 
       element.appendChild(child);
     } catch (e) {
-      console.error('Error appending child:', child, e);
+      console.error(`Error appending child ${child} to '${element.tagName}'`, e);
     }
   }
   return element;
