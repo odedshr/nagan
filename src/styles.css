@@ -49,6 +49,10 @@ body.no-text-select [contenteditable='true'] {
   user-select: text;
 }
 
+button {
+  cursor: pointer;
+}
+
 .drag-active::after {
   content: 'Drop files to add to playlist';
   position: fixed;
@@ -137,17 +141,20 @@ button:active {
 }
 
 .nav-button {
-  background-color: transparent;
-  background-size: 2.5rem 2.5rem;
-  background-repeat: no-repeat;
-  background-position: center;
+  align-items: center;
   border: none;
-  cursor: pointer;
-  height: 5rem;
-  width: 5rem;
+  height: 3.2rem;
+  justify-content: center;
   margin: 0.5rem 0;
   padding: 0;
   transition: filter 0.25s;
+  display: flex;
+  width: 3.2rem;
+
+  .icon {
+    height: 2.4rem;
+    width: 2.4rem;
+  }
 }
 
 .nav-button:not(:disabled):hover {
@@ -163,16 +170,6 @@ button:active {
 
 .nav-button span {
   display: none;
-}
-
-#dbBtn {
-  background-image: url(./assets/btn-db.svg);
-}
-#playlistBtn {
-  background-image: url(./assets/btn-playlist.svg);
-}
-#notesBtn {
-  background-image: url(./assets/btn-notes.svg);
 }
 
 #player-container {

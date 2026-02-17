@@ -8,13 +8,15 @@ import { BackendService, getBackendService } from './backend/backend';
 import initNotifications from './ui-components/notification/notification';
 import { persist, loadPersistedState } from './PersistedState';
 import { applyTheme } from './themes/theme';
+import NavButtons from './nav';
 
 function initNav(state: State) {
-  [...document.getElementsByClassName('nav-button')].forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.mode = (btn as HTMLButtonElement).value as Mode;
-    });
-  });
+  const form = document.getElementById('nav') as HTMLFormElement;
+  form.appendChild(NavButtons());
+  form.onsubmit = (e: SubmitEvent) => {
+    e.preventDefault(); // Prevent form submission
+    state.mode = (e.submitter as HTMLButtonElement).value as Mode;
+  };
 }
 
 async function init() {
@@ -26,7 +28,9 @@ async function init() {
     currentPlaylistId: null as string | null,
     mode: 'database' as Mode,
     currentTrack: null,
+    // DB
     db: [],
+    dbFilterArtist: null,
     playlists: [],
     currentPlaylist: null,
     playlistSongs: [],

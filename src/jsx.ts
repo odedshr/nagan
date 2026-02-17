@@ -1,9 +1,13 @@
+const svgTags = ['svg', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'g'];
+
 function jsx(tag: JSX.Component, attributes: { [key: string]: string } | null, ...children: Node[]) {
   if (typeof tag === 'function') {
     return tag(attributes ?? {}, children);
   }
 
-  const element: HTMLElement = document.createElement(tag);
+  const element: HTMLElement = svgTags.includes(tag)
+    ? document.createElementNS('http://www.w3.org/2000/svg', tag)
+    : document.createElement(tag);
 
   // Assign attributes:
   const map = attributes ?? {};
@@ -15,7 +19,7 @@ function jsx(tag: JSX.Component, attributes: { [key: string]: string } | null, .
     const value = map[prop] as string;
     const anyReference = element as HTMLElement & { [key: string]: string | number | boolean };
 
-    if (typeof anyReference[prop] === 'undefined') {
+    if (typeof anyReference[prop] === 'undefined' || svgTags.includes(tag)) {
       // As a fallback, attempt to set an attribute:
       element.setAttribute(prop, value);
     } else {

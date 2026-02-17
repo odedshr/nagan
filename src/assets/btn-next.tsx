@@ -1,0 +1,30 @@
+/// <reference path="../JSX.d.ts" />
+
+import jsx from '../jsx.js';
+
+export default () =>
+  (
+    <svg
+      class="icon"
+      width="100"
+      height="100"
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+    >
+      <path
+        d="
+    M28 20
+    Q30 18 32 20
+    L62 48
+    Q64 50 62 52
+    L32 80
+    Q30 82 28 80
+    Q26 78 26 75
+    V25
+    Q26 22 28 20
+    Z"
+      />
+      <rect x="72" y="20" width="10" height="60" rx="5" />
+    </svg>
+  ) as SVGElement;

@@ -1,5 +1,10 @@
 /// <reference path="../JSX.d.ts" />
 
+import btnNext from '../assets/btn-next.js';
+import btnPause from '../assets/btn-pause.js';
+import btnPlay from '../assets/btn-play.js';
+import btnPrevious from '../assets/btn-previous.js';
+import btnShuffle from '../assets/btn-shuffle.js';
 import jsx from '../jsx.js';
 
 export default (repeatControl: HTMLButtonElement, playbackRateControl: HTMLDivElement, volumeControl: HTMLDivElement) =>
@@ -23,17 +28,18 @@ export default (repeatControl: HTMLButtonElement, playbackRateControl: HTMLDivEl
       </div>
       <nav class="player-controls">
         <button class="player-button" id="previousBtn" disabled>
-          <span>Previous</span>
+          {btnPrevious()}
         </button>
         <button class="player-button" id="playToggle" value="play">
-          <span></span>
+          {btnPlay()}
+          {btnPause()}
         </button>
         <button class="player-button" id="nextBtn" disabled>
-          <span>Next</span>
+          {btnNext()}
         </button>
         {repeatControl}
         <button class="player-button" id="shuffleBtn">
-          <span>Shuffle</span>
+          {btnShuffle()}
         </button>
       </nav>
       <div class="knobs">

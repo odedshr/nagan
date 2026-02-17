@@ -136,26 +136,20 @@ input[type='text'].position {
 #loadBtn {
   background-image: url(../assets/btn-eject.svg);
 }
-#previousBtn {
-  background-image: url(../assets/btn-previous.svg);
+
+button .icon {
+  height: 3.2rem;
+  width: 3.2rem;
 }
-#playToggle {
-  background-image: url(../assets/btn-play.svg);
-  span:before {
-    content: 'Play';
+#playToggle[value='play'] {
+  .pause-icon {
+    display: none;
   }
 }
 #playToggle[value='pause'] {
-  background-image: url(../assets/btn-pause.svg);
-  span:before {
-    content: 'Pause';
+  .play-icon {
+    display: none;
   }
-}
-#nextBtn {
-  background-image: url(../assets/btn-next.svg);
-}
-#shuffleBtn {
-  background-image: url(../assets/btn-shuffle.svg);
 }
 
 /* #progressBar {
