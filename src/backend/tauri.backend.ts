@@ -3,6 +3,8 @@ import {
   AddSongToPlaylistPayload,
   BackendService,
   BulkUpdateSongsPayload,
+  GetSongsGroupsQuery,
+  GetSongsGroupsResponse,
   GetPlaylistSongsQuery,
   GetPlaylistsQuery,
   GetSongsQuery,
@@ -50,6 +52,10 @@ export default class TauriBackendService implements BackendService {
   // Song related methods
   async getSongs(query: GetSongsQuery): Promise<GetSongsResponse> {
     return await invoke<GetSongsResponse>('get_songs', { query });
+  }
+
+  async getSongsGroups(query: GetSongsGroupsQuery): Promise<GetSongsGroupsResponse> {
+    return await invoke<GetSongsGroupsResponse>('get_song_groups', { query });
   }
 
   async addSong(filePath: string): Promise<Song> {

@@ -1,13 +1,103 @@
 @import './id3-tag-editor/styles.css';
 
-.song-database-table {
+.song-database-container {
+  display: grid;
+  gap: 0px 0px;
+  grid-template-columns: 15rem 1fr;
+  grid-template-rows: 5rem 1fr;
+  grid-template-areas:
+    'controls controls'
+    'groups songs';
+
+  height: 100%;
+  min-height: 0;
+
+  &:has(.db-groups:empty) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'controls'
+      'songs';
+  }
+}
+
+.db-controls {
+  align-items: center;
+  border-bottom: 0.1rem solid var(--color-border);
+  grid-area: controls;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  padding: 0 0.5rem;
+}
+
+.db-groups {
+  grid-area: groups;
+  border-right: 0.1rem solid var(--color-border);
+  height: 100%;
+  list-style: none;
+  overflow: auto;
+  padding: 0;
+
+  &:empty {
+    display: none;
+  }
+
+  .group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    &::before {
+      color: var(--color-text-muted);
+      content: attr(title);
+      display: block;
+      font-size: 1.6rem;
+      padding: 0.5rem;
+      text-transform: capitalize;
+    }
+
+    li {
+      padding: 0;
+      margin: 0;
+    }
+
+    button {
+      position: relative;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+      text-align: left;
+      width: 100%;
+      white-space: nowrap;
+
+      &[data-count]::after {
+        content: ' [' attr(data-count) ']';
+        position: absolute;
+        right: 0.5rem;
+      }
+
+      &:hover {
+        background-color: var(--color-hover-bg);
+      }
+    }
+  }
+}
+
+.db-table-scroll {
+  grid-area: songs;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.db-table {
   border-spacing: 0;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
   font-size: 1.2rem;
   image-rendering: pixelated;
   line-height: 1.2;
   table-layout: fixed;
-  width: min-content;
+  width: 100%;
 
   & thead {
     position: sticky;
@@ -30,20 +120,18 @@
   }
 }
 
-.song-data-buttons {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-start;
-  left: 0.5rem;
-  position: fixed;
-  top: 0.5rem;
-}
-
 .add-to-playlist-button[data-show='true'] + .add-to-playlist-menu,
 .add-to-playlist-dropdown:focus-within .add-to-playlist-menu {
   /* :focus-within. doens't work on button, so we use a wrapper div */
   display: block;
+  z-index: 10;
+}
+
+.group-by-button[data-show='true'] + .group-by-menu,
+.group-by-dropdown:focus-within .group-by-menu {
+  /* :focus-within. doens't work on button, so we use a wrapper div */
+  display: block;
+  z-index: 10;
 }
 
 .add-to-playlist-menu {
@@ -77,9 +165,41 @@
   }
 }
 
-.song-database-table {
+.group-by-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0.2rem -0.5rem var(--color-shadow);
+  border-radius: 0.4rem;
+  display: none;
+  list-style: none;
+  margin-top: 0.5rem;
+  padding: 0;
+  position: absolute;
+  overflow: auto;
+
+  .group-by-item {
+    padding: 0;
+    margin: 0;
+
+    .group-by-option {
+      background: none;
+      border: none;
+      border-radius: 0;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+
+      &:hover {
+        background-color: var(--color-hover-bg);
+      }
+    }
+  }
+}
+
+.db-table {
   .select-song-col {
-    width: 3rem;
+    width: 1.6rem;
+    text-align: center;
   }
   .artwork-col {
     width: 3.3rem;

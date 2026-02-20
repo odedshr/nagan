@@ -1,6 +1,7 @@
 use crate::models::*;
 use chrono::Utc;
 use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::Row;
 use sqlx::SqlitePool;
 use std::str::FromStr;
 
@@ -65,6 +66,257 @@ impl Database {
         let songs: Vec<Song> = db_songs.into_iter().map(|s| s.into()).collect();
 
         Ok(GetSongsResponse { songs, total })
+    }
+
+    pub async fn get_song_groups(
+        &self,
+        query: GetSongsGroupsQuery,
+    ) -> Result<GetSongsGroupsResponse, sqlx::Error> {
+        #[derive(Debug, Clone)]
+        enum BindValue {
+            Text(String),
+            Int(i64),
+            Float(f64),
+        }
+
+        fn normalize_group_name(name: &str) -> Option<&'static str> {
+            match name {
+                "artist" | "artists" => Some("artist"),
+                "album" | "albums" => Some("album"),
+                "year" | "years" => Some("year"),
+                "bpm" => Some("bpm"),
+                "genre" | "genres" => Some("genre"),
+                _ => None,
+            }
+        }
+
+        fn bpm_bucket_case_expr() -> &'static str {
+            "CASE\n                WHEN bpm IS NULL THEN 'Unknown'\n                WHEN bpm < 60 THEN '<60'\n                WHEN bpm < 80 THEN '60-79'\n                WHEN bpm < 100 THEN '80-99'\n                WHEN bpm < 120 THEN '100-119'\n                WHEN bpm < 130 THEN '120-129'\n                WHEN bpm < 140 THEN '130-139'\n                ELSE '140+'\n            END"
+        }
+
+        fn bpm_bucket_for_value(bpm: f64) -> &'static str {
+            if bpm < 60.0 {
+                "<60"
+            } else if bpm < 80.0 {
+                "60-79"
+            } else if bpm < 100.0 {
+                "80-99"
+            } else if bpm < 120.0 {
+                "100-119"
+            } else if bpm < 130.0 {
+                "120-129"
+            } else if bpm < 140.0 {
+                "130-139"
+            } else {
+                "140+"
+            }
+        }
+
+        fn add_selection_filter(
+            where_clauses: &mut Vec<String>,
+            binds: &mut Vec<BindValue>,
+            group_name: &str,
+            selected_value: &serde_json::Value,
+        ) {
+            let Some(group_name) = normalize_group_name(group_name) else {
+                return;
+            };
+
+            match group_name {
+                "album" => {
+                    if selected_value.is_null() {
+                        where_clauses.push("album IS NULL".to_string());
+                    } else if let Some(s) = selected_value.as_str() {
+                        where_clauses.push("album = ?".to_string());
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "year" => {
+                    if selected_value.is_null() {
+                        where_clauses.push("year IS NULL".to_string());
+                    } else if let Some(n) = selected_value.as_i64() {
+                        where_clauses.push("year = ?".to_string());
+                        binds.push(BindValue::Int(n));
+                    } else if let Some(s) = selected_value.as_str() {
+                        if let Ok(n) = s.parse::<i64>() {
+                            where_clauses.push("year = ?".to_string());
+                            binds.push(BindValue::Int(n));
+                        }
+                    }
+                }
+                "artist" => {
+                    if let Some(s) = selected_value.as_str() {
+                        where_clauses.push(
+                            "EXISTS (SELECT 1 FROM json_each(songs.artists) WHERE value = ?)"
+                                .to_string(),
+                        );
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "genre" => {
+                    if let Some(s) = selected_value.as_str() {
+                        where_clauses.push(
+                            "EXISTS (SELECT 1 FROM json_each(songs.genres) WHERE value = ?)"
+                                .to_string(),
+                        );
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "bpm" => {
+                    if selected_value.is_null() {
+                        where_clauses.push("bpm IS NULL".to_string());
+                        return;
+                    }
+
+                    let bucket: Option<String> = if let Some(s) = selected_value.as_str() {
+                        Some(s.to_string())
+                    } else if let Some(n) = selected_value.as_f64() {
+                        Some(bpm_bucket_for_value(n).to_string())
+                    } else {
+                        None
+                    };
+
+                    let Some(bucket) = bucket else {
+                        return;
+                    };
+
+                    match bucket.as_str() {
+                        "Unknown" => where_clauses.push("bpm IS NULL".to_string()),
+                        "<60" => {
+                            where_clauses.push("bpm IS NOT NULL AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(60.0));
+                        }
+                        "60-79" => {
+                            where_clauses
+                                .push("bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(60.0));
+                            binds.push(BindValue::Float(80.0));
+                        }
+                        "80-99" => {
+                            where_clauses
+                                .push("bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(80.0));
+                            binds.push(BindValue::Float(100.0));
+                        }
+                        "100-119" => {
+                            where_clauses
+                                .push("bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(100.0));
+                            binds.push(BindValue::Float(120.0));
+                        }
+                        "120-129" => {
+                            where_clauses
+                                .push("bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(120.0));
+                            binds.push(BindValue::Float(130.0));
+                        }
+                        "130-139" => {
+                            where_clauses
+                                .push("bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(130.0));
+                            binds.push(BindValue::Float(140.0));
+                        }
+                        "140+" => {
+                            where_clauses.push("bpm IS NOT NULL AND bpm >= ?".to_string());
+                            binds.push(BindValue::Float(140.0));
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        async fn run_group_items_query(
+            pool: &SqlitePool,
+            sql: String,
+            binds: Vec<BindValue>,
+        ) -> Result<Vec<SongGroupItemCount>, sqlx::Error> {
+            let mut q = sqlx::query(&sql);
+            for bind in binds {
+                q = match bind {
+                    BindValue::Text(s) => q.bind(s),
+                    BindValue::Int(i) => q.bind(i),
+                    BindValue::Float(f) => q.bind(f),
+                };
+            }
+
+            let rows = q.fetch_all(pool).await?;
+            let mut out = Vec::with_capacity(rows.len());
+            for row in rows {
+                let name: String = row.try_get("name")?;
+                let count: i64 = row.try_get("count")?;
+                out.push(SongGroupItemCount { name, count });
+            }
+            Ok(out)
+        }
+
+        let mut out_groups: Vec<SongGroupResponseItem> = Vec::new();
+
+        for (idx, group) in query.groups.iter().enumerate() {
+            let group_name = normalize_group_name(&group.name).unwrap_or(&group.name);
+
+            let mut where_clauses: Vec<String> = Vec::new();
+            let mut binds: Vec<BindValue> = Vec::new();
+
+            // Apply filters from all preceding groups that have a selection.
+            for prev in query.groups.iter().take(idx) {
+                add_selection_filter(&mut where_clauses, &mut binds, &prev.name, &prev.selected);
+            }
+
+            let order = if group.asec { "ASC" } else { "DESC" };
+            let mut sql = match normalize_group_name(group_name) {
+                Some("album") => {
+                    "SELECT album as name, COUNT(*) as count FROM songs".to_string()
+                }
+                Some("year") => {
+                    "SELECT COALESCE(CAST(year AS TEXT), 'Unknown') as name, COUNT(*) as count FROM songs".to_string()
+                }
+                Some("bpm") => {
+                    format!(
+                        "SELECT {} as name, COUNT(*) as count FROM songs",
+                        bpm_bucket_case_expr()
+                    )
+                }
+                Some("artist") => {
+                    "SELECT je.value as name, COUNT(DISTINCT songs.id) as count FROM songs JOIN json_each(songs.artists) as je".to_string()
+                }
+                Some("genre") => {
+                    "SELECT je.value as name, COUNT(DISTINCT songs.id) as count FROM songs JOIN json_each(songs.genres) as je".to_string()
+                }
+                _ => {
+                    // Unknown group name - return empty group items (validation is expected in command layer)
+                    out_groups.push(SongGroupResponseItem {
+                        name: group.name.clone(),
+                        selected: group.selected.clone(),
+                        asec: group.asec,
+                        items: vec![],
+                    });
+                    continue;
+                }
+            };
+
+            if matches!(normalize_group_name(group_name), Some("artist") | Some("genre")) {
+                where_clauses.push("je.value IS NOT NULL AND je.value != ''".to_string());
+            }
+
+            if !where_clauses.is_empty() {
+                sql.push_str(" WHERE ");
+                sql.push_str(&where_clauses.join(" AND "));
+            }
+
+            sql.push_str(&format!(" GROUP BY name ORDER BY name {}", order));
+
+            let items = run_group_items_query(&self.pool, sql, binds).await?;
+            out_groups.push(SongGroupResponseItem {
+                name: group.name.clone(),
+                selected: group.selected.clone(),
+                asec: group.asec,
+                items,
+            });
+        }
+
+        Ok(GetSongsGroupsResponse { groups: out_groups })
     }
 
     pub async fn get_song_by_id(&self, id: &str) -> Result<Option<Song>, sqlx::Error> {
@@ -986,5 +1238,122 @@ mod tests {
 
         let result = db.get_songs(query).await.unwrap();
         assert_eq!(result.songs.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_get_song_groups_genre_then_year() {
+        let db = setup_test_db().await;
+
+        let songs = vec![
+            Song {
+                id: "g1".to_string(),
+                url: "/path/g1.mp3".to_string(),
+                filename: "g1.mp3".to_string(),
+                metadata: SongMetadata {
+                    title: "G1".to_string(),
+                    album: "A".to_string(),
+                    year: Some(2020),
+                    track: None,
+                    image: None,
+                    duration: 1.0,
+                    artists: vec!["Artist1".to_string()],
+                    instruments: None,
+                    bpm: Some(128.0),
+                    genres: vec!["Rock".to_string(), "Pop".to_string()],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            },
+            Song {
+                id: "g2".to_string(),
+                url: "/path/g2.mp3".to_string(),
+                filename: "g2.mp3".to_string(),
+                metadata: SongMetadata {
+                    title: "G2".to_string(),
+                    album: "A".to_string(),
+                    year: Some(2021),
+                    track: None,
+                    image: None,
+                    duration: 1.0,
+                    artists: vec!["Artist2".to_string()],
+                    instruments: None,
+                    bpm: Some(95.0),
+                    genres: vec!["Rock".to_string()],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            },
+            Song {
+                id: "g3".to_string(),
+                url: "/path/g3.mp3".to_string(),
+                filename: "g3.mp3".to_string(),
+                metadata: SongMetadata {
+                    title: "G3".to_string(),
+                    album: "B".to_string(),
+                    year: Some(2021),
+                    track: None,
+                    image: None,
+                    duration: 1.0,
+                    artists: vec!["Artist2".to_string(), "Artist3".to_string()],
+                    instruments: None,
+                    bpm: None,
+                    genres: vec!["Jazz".to_string()],
+                    comment: None,
+                    tags: vec![],
+                    file_exists: true,
+                    times_played: 0,
+                },
+                available: true,
+            },
+        ];
+
+        for song in songs {
+            db.create_song(song).await.unwrap();
+        }
+
+        let result = db
+            .get_song_groups(GetSongsGroupsQuery {
+                groups: vec![
+                    SongGroupRequestItem {
+                        name: "genre".to_string(),
+                        selected: serde_json::json!("Rock"),
+                        asec: true,
+                    },
+                    SongGroupRequestItem {
+                        name: "year".to_string(),
+                        selected: serde_json::Value::Null,
+                        asec: true,
+                    },
+                ],
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(result.groups.len(), 2);
+
+        // Group 0: genre counts across all songs
+        let genre_group = &result.groups[0];
+        let mut genre_counts: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+        for item in &genre_group.items {
+            genre_counts.insert(item.name.clone(), item.count);
+        }
+        assert_eq!(genre_counts.get("Rock"), Some(&2));
+        assert_eq!(genre_counts.get("Pop"), Some(&1));
+        assert_eq!(genre_counts.get("Jazz"), Some(&1));
+
+        // Group 1: year counts restricted to selected genre=Rock
+        let year_group = &result.groups[1];
+        let mut year_counts: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+        for item in &year_group.items {
+            year_counts.insert(item.name.clone(), item.count);
+        }
+        assert_eq!(year_counts.get("2020"), Some(&1));
+        assert_eq!(year_counts.get("2021"), Some(&1));
     }
 }

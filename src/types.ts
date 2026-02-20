@@ -1,3 +1,4 @@
+import { SongGroupsGroupResponseItem } from './backend/backend';
 import { StateTemplate } from './utils/Context';
 
 export interface Player {
@@ -88,6 +89,15 @@ export type FileLoadedEvent = CustomEvent<{
   metadata: SongMetadata;
 }>;
 
+export type Group = {
+  name: string;
+  items: {
+    name: string;
+    count: number;
+  }[];
+  selected: string | number | null;
+};
+
 export type StateBase = {
   mode: 'database' | 'playlist' | 'notes';
   currentTrack: Song | null;
@@ -95,7 +105,9 @@ export type StateBase = {
   volume: number;
   lastEvent?: CustomEvent;
   // DB system
+  groups: SongGroupsGroupResponseItem[];
   db: Song[];
+  dbFilters: Record<string, unknown>;
   dbFilterArtist: string | null;
   // Playlist system
   playlists: Playlist[];

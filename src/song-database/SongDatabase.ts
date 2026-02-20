@@ -1,13 +1,14 @@
-import { BackendService, GetSongsQuery } from '../backend/backend.ts';
+import { BackendService, GetSongsQuery, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
 import { FileDropEvent, Playlist, Song, SongMetadata, State, TauriFile } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
+import GroupBy from './GroupBy.tsx';
 import editId3Tags from './id3-tag-editor/Id3TagEditor.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 import selectFile from './files/select-file.ts';
-import throttle from '../utils/throttle.ts';
+import Groups from './Groups.tsx';
 
 async function browseFile(state: State, backendService: BackendService) {
   ((await selectFile()) || []).forEach(async file => {
@@ -24,11 +25,7 @@ async function browseFile(state: State, backendService: BackendService) {
 
 async function refreshSongs(state: State, backendService: BackendService) {
   try {
-    const query: GetSongsQuery = {};
-    if (state.dbFilterArtist) {
-      query.filters = { artists: state.dbFilterArtist };
-    }
-
+    const query: GetSongsQuery = { filters: state.dbFilters };
     const response = await backendService.getSongs(query);
     state.db = response.songs;
   } catch (error) {
@@ -163,8 +160,11 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
+  let groupBy: SongMetadataAttribute | undefined = 'album';
+  let groupByDropdown = GroupBy(groupBy);
   let songDatabaseTableBody = SongDatabaseTableBody(state.db, [] as string[], columns, onToggleSong, onSongSelected);
-  const elm = SongDatabaseUI(columns, addToPlaylist, songDatabaseTableBody, selectAll);
+  let groups = Groups(state.groups);
+  const elm = SongDatabaseUI(groups, columns, addToPlaylist, groupByDropdown, songDatabaseTableBody, selectAll);
 
   const onFormSubmitted = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -185,6 +185,11 @@ export default function SongDatabase(state: State, backendService: BackendServic
         e.submitter?.setAttribute('data-show', 'true');
         document.addEventListener('click', () => e.submitter?.removeAttribute('data-show'), { once: true });
         break;
+      case 'group-by':
+        // ideally this should be css-based only, but for now...
+        e.submitter?.setAttribute('data-show', 'true');
+        document.addEventListener('click', () => e.submitter?.removeAttribute('data-show'), { once: true });
+        break;
       case 'play-now':
         enqueueSongsNext(state, songs);
         state.lastEvent = new CustomEvent('next-song');
@@ -199,7 +204,36 @@ export default function SongDatabase(state: State, backendService: BackendServic
           backendService,
           state
         );
+      case 'group-by-option':
+        const groupByValue = (e.submitter as HTMLButtonElement).getAttribute('data-group-by') as typeof groupBy;
+        groupBy = groupByValue;
+        if (!groupBy) {
+          state.groups = [];
+        } else {
+          try {
+            const response = await backendService.getSongsGroups({
+              groups: [{ name: groupBy, selected: null, asec: true }],
+            });
+            state.groups = response.groups;
+          } catch (error) {
+            console.error(`Error fetching song groups (${groupBy}):`, error);
+          }
+        }
+        const newGroupByDropdown = GroupBy(groupBy);
+        groupByDropdown.replaceWith(newGroupByDropdown);
+        groupByDropdown = newGroupByDropdown;
+        return;
+      case 'group-select':
+        const button = e.submitter as HTMLButtonElement;
+        const itemName = button.getAttribute('title');
+        const groupName = button.getAttribute('data-group');
+        if (groupName && itemName) {
+          state.dbFilters[groupName] = itemName;
+          refreshSongs(state, backendService);
+        }
+        return;
       default:
+        console.warn('Unknown action:', (e.submitter as HTMLButtonElement).getAttribute('data-action'));
         break;
     }
     return false;
@@ -220,6 +254,12 @@ export default function SongDatabase(state: State, backendService: BackendServic
     songDatabaseTableBody = newContent;
   });
 
+  state.addListener('groups', () => {
+    const newGroups = Groups(state.groups);
+    groups.replaceWith(newGroups);
+    groups = newGroups;
+  });
+
   state.addListener('playlists', (playlists: Playlist[]) => {
     const newAddToPlaylist = AddToPlaylist(playlists);
     addToPlaylist.replaceWith(newAddToPlaylist);
@@ -228,9 +268,17 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   const artistFilterInput = elm.querySelector('input[name="artist-filter"]') as HTMLInputElement;
   state.bidi('dbFilterArtist', artistFilterInput, 'value', 'input');
-  state.addListener('dbFilterArtist', throttle(refresh, 1000));
+  // state.addListener('dbFilterArtist', throttle(refresh, 1000));
 
   refreshSongs(state, backendService);
+
+  backendService
+    .getSongsGroups({
+      groups: [{ name: 'album', selected: null, asec: true }],
+    })
+    .then(response => {
+      state.groups = response.groups;
+    });
 
   return elm;
 }

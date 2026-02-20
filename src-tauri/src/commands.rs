@@ -7,12 +7,6 @@ use crate::id3::Id3Manager;
 use crate::models::*;
 use crate::AppState;
 
-// Keep original greet command for compatibility
-#[tauri::command]
-pub async fn greet(name: &str) -> Result<String, String> {
-    Ok(format!("Hello, {}! You've been greeted from Rust!", name))
-}
-
 // Song Management Commands
 
 #[tauri::command]
@@ -22,6 +16,38 @@ pub async fn get_songs(
 ) -> Result<GetSongsResponse, String> {
     let db: &Database = &*state.db.lock().await;
     db.get_songs(query)
+        .await
+        .map_err(|e: sqlx::Error| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_song_groups(
+    query: GetSongsGroupsQuery,
+    state: State<'_, AppState>,
+) -> Result<GetSongsGroupsResponse, String> {
+    fn normalize_group_name(name: &str) -> Option<&'static str> {
+        match name {
+            "artist" | "artists" => Some("artist"),
+            "album" | "albums" => Some("album"),
+            "year" | "years" => Some("year"),
+            "bpm" => Some("bpm"),
+            "genre" | "genres" => Some("genre"),
+            _ => None,
+        }
+    }
+
+    // Validate group list
+    for (idx, g) in query.groups.iter().enumerate() {
+        if normalize_group_name(&g.name).is_none() {
+            return Err(format!("invalidInput: unknown group name '{}'", g.name));
+        }
+        if idx < query.groups.len().saturating_sub(1) && g.selected.is_null() {
+            return Err("invalidInput: only the last group can have selected=null".to_string());
+        }
+    }
+
+    let db: &Database = &*state.db.lock().await;
+    db.get_song_groups(query)
         .await
         .map_err(|e: sqlx::Error| e.to_string())
 }
@@ -540,30 +566,6 @@ mod tests {
         let app_state = Box::leak(Box::new(AppState { db: db.clone() }));
         let state = state_from_app_state(app_state);
         add_song(file_path, state).await
-    }
-
-    #[tokio::test]
-    async fn test_greet_command() {
-        let result = greet("World").await;
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            "Hello, World! You've been greeted from Rust!"
-        );
-    }
-
-    #[tokio::test]
-    async fn test_greet_with_empty_name() {
-        let result = greet("").await;
-        assert!(result.is_ok());
-        assert!(result.unwrap().contains("Hello, !"));
-    }
-
-    #[tokio::test]
-    async fn test_greet_with_special_characters() {
-        let result = greet("Test123!@#").await;
-        assert!(result.is_ok());
-        assert!(result.unwrap().contains("Test123!@#"));
     }
 
     #[test]

@@ -42,8 +42,8 @@ pub async fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            commands::greet,
             commands::get_songs,
+            commands::get_song_groups,
             commands::add_song,
             commands::update_song,
             commands::delete_song,

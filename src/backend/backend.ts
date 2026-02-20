@@ -1,6 +1,8 @@
 import isTauri from '../is-tauri';
 import { Playlist, Song, SongMetadata } from '../types';
 
+export type SongMetadataAttribute = 'artists' | 'album' | 'year' | 'bpm' | 'genre';
+
 export interface GetSongsQuery {
   filters?: Record<string, unknown>;
   sort?: string;
@@ -11,6 +13,32 @@ export interface GetSongsQuery {
 export interface GetSongsResponse {
   songs: Song[];
   total: number;
+}
+
+export interface SongsGroupsGroupQueryItem {
+  name: SongMetadataAttribute;
+  selected: string | number | null;
+  asec: boolean;
+}
+
+export interface SongGroupsGroupItem {
+  name: SongMetadataAttribute;
+  count: number;
+}
+
+export interface SongGroupsGroupResponseItem {
+  name: SongMetadataAttribute;
+  selected: string | number | null;
+  asec: boolean;
+  items: SongGroupsGroupItem[];
+}
+
+export interface GetSongsGroupsQuery {
+  groups: SongsGroupsGroupQueryItem[];
+}
+
+export interface GetSongsGroupsResponse {
+  groups: SongGroupsGroupResponseItem[];
 }
 
 export interface UpdateSongPayload {
@@ -86,6 +114,7 @@ export interface CalculateSimilarityResponse {
 
 export interface BackendService {
   getSongs(query: GetSongsQuery): Promise<GetSongsResponse>;
+  getSongsGroups(query: GetSongsGroupsQuery): Promise<GetSongsGroupsResponse>;
   addSong(filePath: string): Promise<Song>;
   updateSong(payload: UpdateSongPayload): Promise<Song | null>;
   deleteSong(songId: string): Promise<boolean>;

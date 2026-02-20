@@ -51,6 +51,16 @@ body.no-text-select [contenteditable='true'] {
 
 button {
   cursor: pointer;
+
+  &.bare-button {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    display: inline-block;
+  }
 }
 
 .drag-active::after {

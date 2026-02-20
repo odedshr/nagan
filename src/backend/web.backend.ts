@@ -2,6 +2,8 @@ import {
   AddSongToPlaylistPayload,
   BackendService,
   BulkUpdateSongsPayload,
+  GetSongsGroupsQuery,
+  GetSongsGroupsResponse,
   GetPlaylistSongsQuery,
   GetPlaylistsQuery,
   GetSongsQuery,
@@ -13,6 +15,11 @@ import {
 import { Playlist, Song } from '../types';
 
 export default class WebBackendService implements BackendService {
+  getSongsGroups(query: GetSongsGroupsQuery): Promise<GetSongsGroupsResponse> {
+    console.error('getSongsGroups not implemented in WebBackendService', query);
+    return Promise.resolve({ groups: [] });
+  }
+
   updateSong(payload: UpdateSongPayload): Promise<Song | null> {
     console.error('Method not implemented.', payload);
     return Promise.resolve(null);

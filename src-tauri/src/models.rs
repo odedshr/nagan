@@ -123,6 +123,42 @@ pub struct GetSongsResponse {
     pub total: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SongGroupRequestItem {
+    pub name: String,
+    pub selected: serde_json::Value,
+    pub asec: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetSongsGroupsQuery {
+    pub groups: Vec<SongGroupRequestItem>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SongGroupItemCount {
+    pub name: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SongGroupResponseItem {
+    pub name: String,
+    pub selected: serde_json::Value,
+    pub asec: bool,
+    pub items: Vec<SongGroupItemCount>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetSongsGroupsResponse {
+    pub groups: Vec<SongGroupResponseItem>,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct UpdateSongPayload {
     pub id: String,
