@@ -1,4 +1,4 @@
-import { SongGroupsGroupResponseItem } from './backend/backend';
+import { SongGroupsResponseItem, SongGroupsQueryItem } from './backend/backend';
 import { StateTemplate } from './utils/Context';
 
 export interface Player {
@@ -105,7 +105,8 @@ export type StateBase = {
   volume: number;
   lastEvent?: CustomEvent;
   // DB system
-  groups: SongGroupsGroupResponseItem[];
+  groupBy: SongGroupsQueryItem[];
+  groups: SongGroupsResponseItem[];
   db: Song[];
   dbFilters: Record<string, unknown>;
   dbFilterArtist: string | null;

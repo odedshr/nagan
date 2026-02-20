@@ -125,10 +125,19 @@ pub struct GetSongsResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum SongGroupSortBy {
+    ValueAsec,
+    ValueDesc,
+    CountAsec,
+    CountDesc,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SongGroupRequestItem {
     pub name: String,
     pub selected: serde_json::Value,
-    pub asec: bool,
+    pub sort_by: SongGroupSortBy,
 }
 
 #[derive(Debug, Deserialize)]
@@ -149,7 +158,7 @@ pub struct SongGroupItemCount {
 pub struct SongGroupResponseItem {
     pub name: String,
     pub selected: serde_json::Value,
-    pub asec: bool,
+    pub sort_by: SongGroupSortBy,
     pub items: Vec<SongGroupItemCount>,
 }
 

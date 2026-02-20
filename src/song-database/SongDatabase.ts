@@ -9,6 +9,7 @@ import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 import selectFile from './files/select-file.ts';
 import Groups from './Groups.tsx';
+import replaceWith from '../utils/replaceWith.ts';
 
 async function browseFile(state: State, backendService: BackendService) {
   ((await selectFile()) || []).forEach(async file => {
@@ -164,7 +165,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
-  let groupBy: SongMetadataAttribute | undefined = 'album';
+  const groupBy: SongMetadataAttribute | undefined = 'album';
   let groupByDropdown = GroupBy(groupBy);
   const columns = getColumns();
   let songDatabaseTableBody = SongDatabaseTableBody(state.db, [] as string[], columns, onToggleSong, onSongSelected);
@@ -201,22 +202,9 @@ export default function SongDatabase(state: State, backendService: BackendServic
         );
       case 'group-by-option':
         const groupByValue = (e.submitter as HTMLButtonElement).getAttribute('data-group-by') as typeof groupBy;
-        groupBy = groupByValue;
-        if (!groupBy) {
-          state.groups = [];
-        } else {
-          try {
-            const response = await backendService.getSongsGroups({
-              groups: [{ name: groupBy, selected: null, asec: true }],
-            });
-            state.groups = response.groups;
-          } catch (error) {
-            console.error(`Error fetching song groups (${groupBy}):`, error);
-          }
-        }
-        const newGroupByDropdown = GroupBy(groupBy);
-        groupByDropdown.replaceWith(newGroupByDropdown);
-        groupByDropdown = newGroupByDropdown;
+        state.groupBy = groupByValue ? [{ name: groupByValue, selected: null, sortBy: 'valueAsec' }] : [];
+
+        groupByDropdown = replaceWith(groupByDropdown, GroupBy(groupByValue)) as HTMLDivElement;
         return;
       case 'group-select':
         const button = e.submitter as HTMLButtonElement;
@@ -245,20 +233,22 @@ export default function SongDatabase(state: State, backendService: BackendServic
       onSongSelected
     );
     newContent.onsubmit = onFormSubmitted;
-    songDatabaseTableBody.replaceWith(newContent);
-    songDatabaseTableBody = newContent;
+
+    songDatabaseTableBody = replaceWith(songDatabaseTableBody, newContent) as HTMLTableSectionElement;
+  });
+
+  state.addListener('groupBy', async () => {
+    const response =
+      state.groupBy.length > 0 ? await backendService.getSongsGroups({ groups: state.groupBy }) : { groups: [] };
+    state.groups = response.groups;
   });
 
   state.addListener('groups', () => {
-    const newGroups = Groups(state.groups);
-    groups.replaceWith(newGroups);
-    groups = newGroups;
+    groups = replaceWith(groups, Groups(state.groups)) as HTMLDivElement;
   });
 
   state.addListener('playlists', (playlists: Playlist[]) => {
-    const newAddToPlaylist = AddToPlaylist(playlists);
-    addToPlaylist.replaceWith(newAddToPlaylist);
-    addToPlaylist = newAddToPlaylist;
+    addToPlaylist = replaceWith(addToPlaylist, AddToPlaylist(playlists)) as HTMLDivElement;
   });
 
   const artistFilterInput = elm.querySelector('input[name="artist-filter"]') as HTMLInputElement;
@@ -269,7 +259,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   backendService
     .getSongsGroups({
-      groups: [{ name: 'album', selected: null, asec: true }],
+      groups: [{ name: 'album', selected: null, sortBy: 'countDesc' }],
     })
     .then(response => {
       state.groups = response.groups;

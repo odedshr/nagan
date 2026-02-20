@@ -15,30 +15,32 @@ export interface GetSongsResponse {
   total: number;
 }
 
-export interface SongsGroupsGroupQueryItem {
+export type SongGroupSortBy = 'valueAsec' | 'valueDesc' | 'countAsec' | 'countDesc';
+
+export interface SongGroupsQueryItem {
   name: SongMetadataAttribute;
   selected: string | number | null;
-  asec: boolean;
+  sortBy: SongGroupSortBy;
 }
 
-export interface SongGroupsGroupItem {
+export interface SongGroupItem {
   name: SongMetadataAttribute;
   count: number;
 }
 
-export interface SongGroupsGroupResponseItem {
+export interface SongGroupsResponseItem {
   name: SongMetadataAttribute;
   selected: string | number | null;
-  asec: boolean;
-  items: SongGroupsGroupItem[];
+  sortBy: SongGroupSortBy;
+  items: SongGroupItem[];
 }
 
 export interface GetSongsGroupsQuery {
-  groups: SongsGroupsGroupQueryItem[];
+  groups: SongGroupsQueryItem[];
 }
 
 export interface GetSongsGroupsResponse {
-  groups: SongGroupsGroupResponseItem[];
+  groups: SongGroupsResponseItem[];
 }
 
 export interface UpdateSongPayload {

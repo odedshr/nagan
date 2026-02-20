@@ -264,7 +264,12 @@ impl Database {
                 add_selection_filter(&mut where_clauses, &mut binds, &prev.name, &prev.selected);
             }
 
-            let order = if group.asec { "ASC" } else { "DESC" };
+            let order_by = match group.sort_by {
+                SongGroupSortBy::ValueAsec => "name ASC",
+                SongGroupSortBy::ValueDesc => "name DESC",
+                SongGroupSortBy::CountAsec => "count ASC, name ASC",
+                SongGroupSortBy::CountDesc => "count DESC, name ASC",
+            };
             let mut sql = match normalize_group_name(group_name) {
                 Some("album") => {
                     "SELECT album as name, COUNT(*) as count FROM songs".to_string()
@@ -289,7 +294,7 @@ impl Database {
                     out_groups.push(SongGroupResponseItem {
                         name: group.name.clone(),
                         selected: group.selected.clone(),
-                        asec: group.asec,
+                        sort_by: group.sort_by.clone(),
                         items: vec![],
                     });
                     continue;
@@ -305,13 +310,13 @@ impl Database {
                 sql.push_str(&where_clauses.join(" AND "));
             }
 
-            sql.push_str(&format!(" GROUP BY name ORDER BY name {}", order));
+            sql.push_str(&format!(" GROUP BY name ORDER BY {}", order_by));
 
             let items = run_group_items_query(&self.pool, sql, binds).await?;
             out_groups.push(SongGroupResponseItem {
                 name: group.name.clone(),
                 selected: group.selected.clone(),
-                asec: group.asec,
+                sort_by: group.sort_by.clone(),
                 items,
             });
         }
@@ -1323,12 +1328,12 @@ mod tests {
                     SongGroupRequestItem {
                         name: "genre".to_string(),
                         selected: serde_json::json!("Rock"),
-                        asec: true,
+                        sort_by: SongGroupSortBy::ValueAsec,
                     },
                     SongGroupRequestItem {
                         name: "year".to_string(),
                         selected: serde_json::Value::Null,
-                        asec: true,
+                        sort_by: SongGroupSortBy::ValueAsec,
                     },
                 ],
             })

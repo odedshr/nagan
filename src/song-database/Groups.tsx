@@ -1,9 +1,9 @@
 /// <reference path="../JSX.d.ts" />
 
-import { SongGroupsGroupResponseItem } from '../backend/backend.ts';
+import { SongGroupsResponseItem } from '../backend/backend.ts';
 import jsx from '../jsx.js';
 
-export default (groups: SongGroupsGroupResponseItem[]) =>
+export default (groups: SongGroupsResponseItem[]) =>
   (
     <div class="db-groups">
       {groups.map(
