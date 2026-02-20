@@ -2,6 +2,7 @@
 
 import jsx from '../jsx.js';
 import { SongMetadataAttribute } from '../backend/backend.ts';
+import DropDown from '../ui-components/dropdown/dropdown.tsx';
 
 const GROUP_BY_OPTIONS: SongMetadataAttribute[] = ['album', 'artists', 'genre', 'year', 'bpm'];
 
@@ -14,29 +15,29 @@ const LABELS: Record<SongMetadataAttribute, string> = {
 };
 
 export default (current?: SongMetadataAttribute) =>
-  (
-    <div class="group-by-dropdown">
-      <button class="std-button group-by-button" id="group-by-button" data-action="group-by">
-        Group by: {current ? LABELS[current] : 'None'}
-      </button>
-      <ul class="group-by-menu">
-        <li class="group-by-item" data-id="none">
-          <button class="group-by-option" data-action="group-by-option" disabled={current === undefined}>
-            None
+  DropDown({
+    wrapperClass: 'group-by-dropdown',
+    buttonClass: 'std-button group-by-button',
+    buttonId: 'group-by-button',
+    buttonContent: ['Group by: ', current ? LABELS[current] : 'None'],
+    menuClass: 'group-by-menu',
+    menuContent: [
+      <li class="group-by-item" data-id="none">
+        <button class="group-by-option" data-action="group-by-option" disabled={current === undefined}>
+          None
+        </button>
+      </li>,
+      ...GROUP_BY_OPTIONS.map(option => (
+        <li class="group-by-item" data-id={option}>
+          <button
+            class="group-by-option"
+            data-group-by={option}
+            data-action="group-by-option"
+            disabled={option === current}
+          >
+            {LABELS[option] ?? option}
           </button>
         </li>
-        {GROUP_BY_OPTIONS.map(option => (
-          <li class="group-by-item" data-id={option}>
-            <button
-              class="group-by-option"
-              data-group-by={option}
-              data-action="group-by-option"
-              disabled={option === current}
-            >
-              {LABELS[option] ?? option}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  ) as HTMLDivElement;
+      )),
+    ],
+  });

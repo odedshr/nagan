@@ -94,6 +94,8 @@ async function saveUpdatedSongs(
   return dbCopy;
 }
 
+const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
+
 export default function SongDatabase(state: State, backendService: BackendService) {
   const refresh = () => refreshSongs(state, backendService);
 
@@ -121,6 +123,9 @@ export default function SongDatabase(state: State, backendService: BackendServic
     }
   });
 
+  const getColumns = () =>
+    allColumns.filter(column => !state.groups.map(group => group.name as string).includes(column));
+
   const onSongSelected = (song: Song) => {
     state.currentTrack = song;
   };
@@ -136,7 +141,6 @@ export default function SongDatabase(state: State, backendService: BackendServic
     }
   };
 
-  const columns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
   const selectedSongs = new Set<Song>();
   const selectAll = (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
@@ -162,6 +166,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   let addToPlaylist = AddToPlaylist(state.playlists);
   let groupBy: SongMetadataAttribute | undefined = 'album';
   let groupByDropdown = GroupBy(groupBy);
+  const columns = getColumns();
   let songDatabaseTableBody = SongDatabaseTableBody(state.db, [] as string[], columns, onToggleSong, onSongSelected);
   let groups = Groups(state.groups);
   const elm = SongDatabaseUI(groups, columns, addToPlaylist, groupByDropdown, songDatabaseTableBody, selectAll);
@@ -179,16 +184,6 @@ export default function SongDatabase(state: State, backendService: BackendServic
           const dbCopy = await saveUpdatedSongs(backendService, [...state.db], songs, tagsToUpdate);
           state.db = dbCopy;
         }
-        break;
-      case 'add-to-playlist':
-        // ideally this should be css-based only, but for now...
-        e.submitter?.setAttribute('data-show', 'true');
-        document.addEventListener('click', () => e.submitter?.removeAttribute('data-show'), { once: true });
-        break;
-      case 'group-by':
-        // ideally this should be css-based only, but for now...
-        e.submitter?.setAttribute('data-show', 'true');
-        document.addEventListener('click', () => e.submitter?.removeAttribute('data-show'), { once: true });
         break;
       case 'play-now':
         enqueueSongsNext(state, songs);
@@ -245,7 +240,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     const newContent = SongDatabaseTableBody(
       state.db,
       Array.from(selectedSongIds),
-      columns,
+      getColumns(),
       onToggleSong,
       onSongSelected
     );
