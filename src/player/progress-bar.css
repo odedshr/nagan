@@ -14,6 +14,7 @@
   width: 90%;
 
   &::before {
+    color-scheme: dark;
     content: '';
     position: absolute;
     top: 0;
@@ -28,8 +29,8 @@
 
   &::-webkit-slider-runnable-track {
     height: 0.6rem;
-    background: #9bae8f; /* LCD green */
-    border: 0.1rem solid #1b1b1b;
+    background: var(--color-surface-alt); /* LCD green */
+    border: 0.1rem solid var(--color-border);
     overflow: hidden;
   }
 

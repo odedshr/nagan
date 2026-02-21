@@ -28,6 +28,10 @@
   gap: 0.5rem;
   justify-content: flex-start;
   padding: 0 0.5rem;
+
+  div:last-child {
+    margin-left: auto;
+  }
 }
 
 .db-groups {

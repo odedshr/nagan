@@ -29,10 +29,8 @@ export async function initApp() {
     mode: 'database' as Mode,
     currentTrack: null,
     // DB
-    groups: [],
-    db: [],
+    groupBy: [],
     dbFilters: {},
-    dbFilterArtist: null,
     playlists: [],
     currentPlaylist: null,
     playlistSongs: [],
