@@ -25,15 +25,190 @@ impl Database {
     // Song Management
 
     pub async fn get_songs(&self, query: GetSongsQuery) -> Result<GetSongsResponse, sqlx::Error> {
+        #[derive(Debug, Clone)]
+        enum BindValue {
+            Text(String),
+            Int(i64),
+            Float(f64),
+            Bool(bool),
+        }
+
+        fn normalize_filter_name(name: &str) -> Option<&'static str> {
+            match name {
+                "id" => Some("id"),
+                "url" => Some("url"),
+                "filename" => Some("filename"),
+                "title" => Some("title"),
+                "album" => Some("album"),
+                "year" | "years" => Some("year"),
+                "bpm" => Some("bpm"),
+                "available" => Some("available"),
+                "artist" | "artists" => Some("artist"),
+                "genre" | "genres" => Some("genre"),
+                _ => None,
+            }
+        }
+
+        fn bpm_bucket_for_value(bpm: f64) -> &'static str {
+            if bpm < 60.0 {
+                "<60"
+            } else if bpm < 80.0 {
+                "60-79"
+            } else if bpm < 100.0 {
+                "80-99"
+            } else if bpm < 120.0 {
+                "100-119"
+            } else if bpm < 130.0 {
+                "120-129"
+            } else if bpm < 140.0 {
+                "130-139"
+            } else {
+                "140+"
+            }
+        }
+
+        fn add_filter_clause(
+            where_clauses: &mut Vec<String>,
+            binds: &mut Vec<BindValue>,
+            key: &str,
+            value: &serde_json::Value,
+        ) {
+            let Some(key) = normalize_filter_name(key) else {
+                return;
+            };
+
+            match key {
+                "id" | "url" | "filename" | "title" | "album" => {
+                    if value.is_null() {
+                        where_clauses.push(format!("{key} IS NULL"));
+                    } else if let Some(s) = value.as_str() {
+                        where_clauses.push(format!("{key} = ?"));
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "year" => {
+                    if value.is_null() {
+                        where_clauses.push("year IS NULL".to_string());
+                    } else if let Some(s) = value.as_str() {
+                        if s == "Unknown" {
+                            where_clauses.push("year IS NULL".to_string());
+                        } else if let Ok(n) = s.parse::<i64>() {
+                            where_clauses.push("year = ?".to_string());
+                            binds.push(BindValue::Int(n));
+                        }
+                    } else if let Some(n) = value.as_i64() {
+                        where_clauses.push("year = ?".to_string());
+                        binds.push(BindValue::Int(n));
+                    }
+                }
+                "available" => {
+                    if let Some(b) = value.as_bool() {
+                        where_clauses.push("available = ?".to_string());
+                        binds.push(BindValue::Bool(b));
+                    }
+                }
+                "artist" => {
+                    if let Some(s) = value.as_str() {
+                        where_clauses.push(
+                            "EXISTS (SELECT 1 FROM json_each(songs.artists) WHERE value = ?)"
+                                .to_string(),
+                        );
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "genre" => {
+                    if let Some(s) = value.as_str() {
+                        where_clauses.push(
+                            "EXISTS (SELECT 1 FROM json_each(songs.genres) WHERE value = ?)"
+                                .to_string(),
+                        );
+                        binds.push(BindValue::Text(s.to_string()));
+                    }
+                }
+                "bpm" => {
+                    if value.is_null() {
+                        where_clauses.push("bpm IS NULL".to_string());
+                        return;
+                    }
+
+                    let bucket: Option<String> = if let Some(s) = value.as_str() {
+                        Some(s.to_string())
+                    } else if let Some(n) = value.as_f64() {
+                        if n.is_finite() {
+                            Some(bpm_bucket_for_value(n).to_string())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    let Some(bucket) = bucket else {
+                        return;
+                    };
+
+                    match bucket.as_str() {
+                        "Unknown" => where_clauses.push("bpm IS NULL".to_string()),
+                        "<60" => {
+                            where_clauses.push("bpm IS NOT NULL AND bpm < ?".to_string());
+                            binds.push(BindValue::Float(60.0));
+                        }
+                        "60-79" => {
+                            where_clauses.push(
+                                "bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string(),
+                            );
+                            binds.push(BindValue::Float(60.0));
+                            binds.push(BindValue::Float(80.0));
+                        }
+                        "80-99" => {
+                            where_clauses.push(
+                                "bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string(),
+                            );
+                            binds.push(BindValue::Float(80.0));
+                            binds.push(BindValue::Float(100.0));
+                        }
+                        "100-119" => {
+                            where_clauses.push(
+                                "bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string(),
+                            );
+                            binds.push(BindValue::Float(100.0));
+                            binds.push(BindValue::Float(120.0));
+                        }
+                        "120-129" => {
+                            where_clauses.push(
+                                "bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string(),
+                            );
+                            binds.push(BindValue::Float(120.0));
+                            binds.push(BindValue::Float(130.0));
+                        }
+                        "130-139" => {
+                            where_clauses.push(
+                                "bpm IS NOT NULL AND bpm >= ? AND bpm < ?".to_string(),
+                            );
+                            binds.push(BindValue::Float(130.0));
+                            binds.push(BindValue::Float(140.0));
+                        }
+                        "140+" => {
+                            where_clauses.push("bpm IS NOT NULL AND bpm >= ?".to_string());
+                            binds.push(BindValue::Float(140.0));
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
+
         let mut sql = "SELECT * FROM songs".to_string();
         let mut count_sql = "SELECT COUNT(*) as count FROM songs".to_string();
-        let mut where_clauses = Vec::new();
+        let mut where_clauses: Vec<String> = Vec::new();
+        let mut binds: Vec<BindValue> = Vec::new();
 
         // Add filters if provided
         if let Some(filters) = &query.filters {
             if let Some(filters_obj) = filters.as_object() {
                 for (key, value) in filters_obj {
-                    where_clauses.push(format!("{} = {}", key, value));
+                    add_filter_clause(&mut where_clauses, &mut binds, key, value);
                 }
             }
         }
@@ -58,10 +233,28 @@ impl Database {
         }
 
         // Get total count
-        let total: i64 = sqlx::query_scalar(&count_sql).fetch_one(&self.pool).await?;
+        let mut count_q = sqlx::query_scalar::<_, i64>(&count_sql);
+        for bind in binds.clone() {
+            count_q = match bind {
+                BindValue::Text(s) => count_q.bind(s),
+                BindValue::Int(i) => count_q.bind(i),
+                BindValue::Float(f) => count_q.bind(f),
+                BindValue::Bool(b) => count_q.bind(b),
+            };
+        }
+        let total: i64 = count_q.fetch_one(&self.pool).await?;
 
         // Get songs
-        let db_songs: Vec<DbSong> = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
+        let mut songs_q = sqlx::query_as::<_, DbSong>(&sql);
+        for bind in binds {
+            songs_q = match bind {
+                BindValue::Text(s) => songs_q.bind(s),
+                BindValue::Int(i) => songs_q.bind(i),
+                BindValue::Float(f) => songs_q.bind(f),
+                BindValue::Bool(b) => songs_q.bind(b),
+            };
+        }
+        let db_songs: Vec<DbSong> = songs_q.fetch_all(&self.pool).await?;
 
         let songs: Vec<Song> = db_songs.into_iter().map(|s| s.into()).collect();
 

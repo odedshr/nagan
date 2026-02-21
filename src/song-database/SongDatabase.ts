@@ -1,4 +1,4 @@
-import { BackendService, GetSongsQuery, SongMetadataAttribute } from '../backend/backend.ts';
+import { BackendService, GetSongsQuery, SongGroupSortBy, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
 import { FileDropEvent, Playlist, Song, SongMetadata, State, TauriFile } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
@@ -231,8 +231,22 @@ export default function SongDatabase(state: State, backendService: BackendServic
           state
         );
       case 'group-by-option':
+        // remove previous group by filter if exists
+        const previousGroupBy = getCurrentGroupBy();
+        if (previousGroupBy) {
+          const { [previousGroupBy]: _, ...restFilters } = state.dbFilters;
+          state.dbFilters = restFilters;
+        }
         const groupByValue = (e.submitter as HTMLButtonElement).getAttribute('data-group-by') as SongMetadataAttribute;
         state.groupBy = groupByValue ? [{ name: groupByValue, selected: null, sortBy: 'valueAsec' }] : [];
+
+        return;
+      case 'group-sort-by':
+        const sortBy = (e.submitter as HTMLButtonElement).getAttribute('data-sort-by') as SongGroupSortBy;
+        const sortGroupName = (e.submitter as HTMLButtonElement).getAttribute('data-group') as SongMetadataAttribute;
+        if (sortGroupName && sortBy) {
+          state.groupBy = state.groupBy.map(group => (group.name === sortGroupName ? { ...group, sortBy } : group));
+        }
         return;
       case 'group-select':
         const button = e.submitter as HTMLButtonElement;
