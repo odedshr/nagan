@@ -3,7 +3,7 @@ import PlaylistManager from './playlist-manager/playlist-manager';
 import Player from './player/player';
 import { Context } from './utils/Context';
 import { Mode, RepeatMode, State } from './types';
-import isTauri from './is-tauri';
+import isTauri from './utils/is-tauri';
 import { BackendService, getBackendService } from './backend/backend';
 import initNotifications from './ui-components/notification/notification';
 import { persist, loadPersistedState } from './utils/PersistedState';
@@ -65,7 +65,7 @@ export async function initApp() {
   document.getElementById('player-container')!.appendChild(Player(state));
   initNotifications(state, document.getElementById('notifications') as HTMLUListElement);
 
-  (await import(isTauri() ? './drag-and-drop.tauri.ts' : './drag-and-drop.ts')).default(state);
+  (await import(isTauri() ? './files/drag-and-drop.tauri.ts' : './files/drag-and-drop.ts')).default(state);
 }
 
 window.addEventListener('DOMContentLoaded', () => void initApp());

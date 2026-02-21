@@ -1,4 +1,4 @@
-import isTauri from '../is-tauri';
+import isTauri from '../utils/is-tauri';
 import { Playlist, Song, SongMetadata } from '../types';
 
 export type SongMetadataAttribute = 'artists' | 'album' | 'year' | 'bpm' | 'genre';

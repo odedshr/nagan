@@ -1,9 +1,9 @@
-import isTauri from "../../is-tauri.ts";
+import isTauri from '../utils/is-tauri.ts';
 
-export default async function loadFile(path:string): Promise<File> {
-    if (isTauri()) {
-        return import('./load-file.tauri.ts').then(module => module.default(path));
-    }
+export default async function loadFile(path: string): Promise<File> {
+  if (isTauri()) {
+    return import('./load-file.tauri.ts').then(module => module.default(path));
+  }
 
   const response = await fetch(path);
   if (!response.ok) {

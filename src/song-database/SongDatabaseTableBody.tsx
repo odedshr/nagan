@@ -112,7 +112,7 @@ export default (
                 case 'comment':
                   return (
                     <td onclick={play} class="comment-col" title={song.metadata.comment ? song.metadata.comment : ''}>
-                      {song.metadata.comment ? song.metadata.comment : ''}
+                      {song.metadata.comment ? song.metadata.comment : '\u00A0'}
                     </td>
                   );
                 case 'file-name':

@@ -1,8 +1,8 @@
-/// <reference path="../JSX.d.ts" />
+/// <reference path="../../JSX.d.ts" />
 
-import { SongGroupsResponseItem } from '../backend/backend.ts';
-import jsx from '../jsx.js';
-import DropDown from '../ui-components/dropdown/dropdown.tsx';
+import { SongGroupsResponseItem } from '../../backend/backend.ts';
+import jsx from '../../jsx.js';
+import DropDown from '../../ui-components/dropdown/dropdown.tsx';
 
 const SORT_BY_OPTIONS = ['valueAsec', 'valueDesc', 'countAsec', 'countDesc'] as const;
 

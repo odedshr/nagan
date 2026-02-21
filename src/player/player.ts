@@ -1,7 +1,7 @@
 import PlayerUi from './Player.ui.js';
 
 import { State } from '../types.ts';
-import loadFile from '../song-database/files/load-file.ts';
+import loadFile from '../files/load-file.ts';
 
 import { getPlayerElements } from './player.elements.ts';
 import { bindSeekControls, renderCurrentTime, setPlayToggleState } from './player.dom.ts';

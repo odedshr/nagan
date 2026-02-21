@@ -31,7 +31,7 @@ function jsx(tag: JSX.Component, attributes: { [key: string]: string } | null, .
   for (const child of children) {
     try {
       if (typeof child === 'string' || typeof child === 'number') {
-        element.innerText += child;
+        element.appendChild(document.createTextNode(String(child)));
         continue;
       }
 
