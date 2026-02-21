@@ -1192,6 +1192,71 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_songs_filter_by_genre() {
+        let db = setup_test_db().await;
+
+        let rock_song = Song {
+            id: "song-rock".to_string(),
+            url: "/path/rock.mp3".to_string(),
+            filename: "rock.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Rock Song".to_string(),
+                album: "Album".to_string(),
+                year: Some(2023),
+                track: Some(1),
+                image: None,
+                duration: 180.0,
+                artists: vec!["Artist".to_string()],
+                instruments: None,
+                bpm: Some(120.0),
+                genres: vec!["Rock".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+        let pop_song = Song {
+            id: "song-pop".to_string(),
+            url: "/path/pop.mp3".to_string(),
+            filename: "pop.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "Pop Song".to_string(),
+                album: "Album".to_string(),
+                year: Some(2023),
+                track: Some(2),
+                image: None,
+                duration: 200.0,
+                artists: vec!["Artist".to_string()],
+                instruments: None,
+                bpm: Some(110.0),
+                genres: vec!["Pop".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        db.create_song(rock_song).await.unwrap();
+        db.create_song(pop_song).await.unwrap();
+
+        let query = GetSongsQuery {
+            filters: Some(serde_json::json!({ "genre": "Rock" })),
+            sort: None,
+            limit: None,
+            offset: None,
+        };
+
+        let result = db.get_songs(query).await.unwrap();
+        assert_eq!(result.total, 1);
+        assert_eq!(result.songs.len(), 1);
+        assert_eq!(result.songs[0].metadata.genres, vec!["Rock".to_string()]);
+    }
+
+    #[tokio::test]
     async fn test_update_song() {
         let db = setup_test_db().await;
 
