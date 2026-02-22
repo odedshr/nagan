@@ -1,3 +1,5 @@
+/// <reference path="./jsx.d.ts" />
+
 import btnDb from './assets/BtnDb';
 import btnNotes from './assets/BtnNotes.js';
 import btnPlaylist from './assets/BtnPlaylist.js';

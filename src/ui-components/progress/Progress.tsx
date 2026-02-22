@@ -12,6 +12,9 @@ export interface ProgressModalHandle {
 export default function openProgressModal(title: string, initialTotal: number): ProgressModalHandle {
   let cancelled = false;
 
+  const progressBar = (
+    <progress class="modal-progress" max={Math.max(1, initialTotal)} value={0} />
+  ) as HTMLProgressElement;
   const progressText = (<div class="modal-message" />) as HTMLDivElement;
   const progressMessage = (<div class="modal-message" />) as HTMLDivElement;
 
@@ -37,6 +40,7 @@ export default function openProgressModal(title: string, initialTotal: number): 
   const form = (
     <form method="dialog" class="modal-form">
       <h2>{title}</h2>
+      {progressBar}
       {progressText}
       {progressMessage}
       <div class="modal-buttons">
@@ -54,7 +58,12 @@ export default function openProgressModal(title: string, initialTotal: number): 
   requestAnimationFrame(() => modal.classList.add('modal-open'));
 
   const update = (current: number, total: number = initialTotal, message: string = '') => {
-    progressText.textContent = `${Math.min(current, total)}/${total}`;
+    const safeTotal = Math.max(1, total);
+    const safeCurrent = Math.min(Math.max(0, current), safeTotal);
+
+    progressBar.max = safeTotal;
+    progressBar.value = safeCurrent;
+    progressText.textContent = `${safeCurrent}/${safeTotal}`;
     progressMessage.textContent = message;
   };
 

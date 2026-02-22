@@ -3,9 +3,10 @@
 import jsx from '../../jsx.js';
 
 import { Song, SongMetadata } from '../../types.ts';
-import openProgressModal from '../../ui-components/progress/Progress.tsx';
+import openProgressModal, { ProgressModalHandle } from '../../ui-components/progress/Progress.tsx';
 
 type GetSongBpm = (songId: string) => Promise<number | null>;
+type GetSongGenres = (songId: string) => Promise<string[] | null>;
 
 function toggleField(e: Event) {
   const checkbox = e.target as HTMLInputElement;
@@ -17,7 +18,8 @@ function toggleField(e: Event) {
 export default function Id3TagEditor(
   songs: Song[],
   handleSubmit: (e: SubmitEvent) => void,
-  getSongBpm?: GetSongBpm
+  getSongBpm?: GetSongBpm,
+  getSongGenres?: GetSongGenres
 ): HTMLFormElement {
   const commonTags: Partial<SongMetadata> = songs.reduce(
     (common, song) => {
@@ -45,6 +47,13 @@ export default function Id3TagEditor(
     const hidden = document.getElementById('analyzed-bpms') as HTMLInputElement | null;
     if (hidden) hidden.value = '';
     const indicator = document.getElementById('bpm-analyzed-indicator') as HTMLSpanElement | null;
+    if (indicator) indicator.textContent = '';
+  };
+
+  const clearAnalyzedGenres = () => {
+    const hidden = document.getElementById('analyzed-genres') as HTMLInputElement | null;
+    if (hidden) hidden.value = '';
+    const indicator = document.getElementById('genres-analyzed-indicator') as HTMLSpanElement | null;
     if (indicator) indicator.textContent = '';
   };
 
@@ -80,6 +89,56 @@ export default function Id3TagEditor(
       return null;
     } finally {
       progress.close();
+    }
+  };
+
+  const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+  const analyzeGenres = async (
+    songsToAnalyze: Song[],
+    progressHandle?: ProgressModalHandle
+  ): Promise<Record<string, string[]> | null> => {
+    if (!getSongGenres) return null;
+
+    const ownsProgress = !progressHandle;
+    const progress = progressHandle ?? openProgressModal('Fetching Genres', songsToAnalyze.length);
+    const results: Record<string, string[]> = {};
+
+    try {
+      for (let i = 0; i < songsToAnalyze.length; i++) {
+        if (progress.isCancelled()) {
+          return null;
+        }
+
+        const s = songsToAnalyze[i];
+        progress.update(i, songsToAnalyze.length, s.metadata.title || s.filename);
+
+        const genres = await getSongGenres(s.id);
+
+        progress.update(i + 1, songsToAnalyze.length, s.metadata.title || s.filename);
+
+        if (progress.isCancelled()) {
+          return null;
+        }
+
+        if (genres && Array.isArray(genres) && genres.length) {
+          results[s.id] = genres;
+        }
+
+        // MusicBrainz is rate-limited; keep requests spaced out.
+        if (i < songsToAnalyze.length - 1) {
+          await sleep(1100);
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Failed to fetch genres:', error);
+      return null;
+    } finally {
+      if (ownsProgress) {
+        progress.close();
+      }
     }
   };
 
@@ -152,6 +211,82 @@ export default function Id3TagEditor(
     })();
   };
 
+  const onGetGenresClick = (e: MouseEvent) => {
+    e.preventDefault();
+    if (!getSongGenres) return;
+
+    const button = e.target as HTMLButtonElement;
+    button.disabled = true;
+
+    void (async () => {
+      const progress = openProgressModal('Fetching Genres', songs.length);
+      try {
+        clearAnalyzedGenres();
+
+        const results = await analyzeGenres(songs, progress);
+        if (!results) {
+          return;
+        }
+
+        const enabledCheckbox = document.getElementById('tag-genres-enabled') as HTMLInputElement | null;
+        const genresInput = document.getElementById('tag-genres') as HTMLInputElement | null;
+
+        if (songs.length === 1) {
+          const genres = results[songs[0].id];
+          if (!genres || !genres.length) {
+            console.warn('Could not determine genres for song', songs[0].id);
+            return;
+          }
+
+          if (enabledCheckbox) {
+            enabledCheckbox.checked = true;
+          }
+          if (genresInput) {
+            genresInput.disabled = false;
+            genresInput.value = genres.join(', ');
+          }
+          return;
+        }
+
+        // Multi-select: store per-song results for save-time application.
+        // Disable the manual genres field so it doesn't override the analyzed payload.
+        if (enabledCheckbox) {
+          enabledCheckbox.checked = false;
+        }
+        if (genresInput) {
+          genresInput.disabled = true;
+          genresInput.value = '';
+        }
+
+        const hidden = document.getElementById('analyzed-genres') as HTMLInputElement | null;
+        if (hidden) {
+          hidden.value = JSON.stringify(results);
+        }
+
+        const indicator = document.getElementById('genres-analyzed-indicator') as HTMLSpanElement | null;
+        if (indicator) {
+          indicator.textContent = Object.keys(results).length ? 'Various' : '';
+        }
+      } catch (error) {
+        console.error('Failed to fetch genres:', error);
+      } finally {
+        progress.close();
+        button.disabled = false;
+      }
+    })();
+  };
+
+  const onAnalyzeGenresClick = (e: MouseEvent) => {
+    e.preventDefault();
+    // Multi-select uses the same flow now.
+    onGetGenresClick(e);
+  };
+
+  const onGenresManualChange = (_e: Event) => {
+    // Manual edit should override analyzed genres.
+    clearAnalyzedGenres();
+  };
+
   const onBpmManualChange = (_e: Event) => {
     // Manual edit should override analyzed BPMs.
     clearAnalyzedBpms();
@@ -160,6 +295,7 @@ export default function Id3TagEditor(
   return (
     <form method="dialog" onsubmit={handleSubmit} class="modal-form id3-tags-editor-form">
       <input type="hidden" id="analyzed-bpms" name="analyzed-bpms" value="" />
+      <input type="hidden" id="analyzed-genres" name="analyzed-genres" value="" />
       <h2>{songs.length > 1 ? `${songs.length} Songs` : songs[0].metadata.title}</h2>
       <section class="tags-section">
         <div class="tag-field">
@@ -247,7 +383,27 @@ export default function Id3TagEditor(
             onchange={toggleField}
           />
           <label for="tag-genres">Genre:</label>
-          <input type="text" name="genres" id="tag-genres" value={genresValue} disabled={!commonTags.genres?.length} />
+          <input
+            type="text"
+            name="genres"
+            id="tag-genres"
+            value={genresValue}
+            onchange={onGenresManualChange}
+            oninput={onGenresManualChange}
+            disabled={!commonTags.genres?.length}
+          />
+          <span id="genres-analyzed-indicator" class="modal-message"></span>
+          {getSongGenres ? (
+            songs.length === 1 ? (
+              <button type="button" class="std-button" onclick={onGetGenresClick}>
+                Get Genres
+              </button>
+            ) : (
+              <button type="button" class="std-button" onclick={onAnalyzeGenresClick}>
+                Analyze Genres
+              </button>
+            )
+          ) : null}
         </div>
         <div class="tag-field">
           <input

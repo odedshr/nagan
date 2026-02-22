@@ -5,6 +5,7 @@ import editId3Tags, { Id3TagEditorResult } from './id3-tag-editor/id3-tag-editor
 import { SongDatabaseState } from './song-database-state.ts';
 import { browseFile, songsFromIds } from './add-songs.ts';
 import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './update-songs.ts';
+import { getMusicBrainzGenres } from '../utils/musicbrainz.ts';
 
 export type GetCurrentGroupBy = () => SongMetadataAttribute | undefined;
 
@@ -49,24 +50,41 @@ export function createSongDatabaseActionHandler({
         return browseFileFn({ state, backendService, refreshDb });
 
       case 'edit-tags': {
-        const editResult = (await editId3TagsFn(songs, (songId: string) => backendService.getSongBpm(songId))) as
-          | Id3TagEditorResult
-          | null
-          | undefined;
+        const getSongGenres = async (songId: string): Promise<string[] | null> => {
+          const s = songs.find(song => song.id === songId);
+          if (!s) return null;
+          return getMusicBrainzGenres({ title: s.metadata.title || s.filename, artists: s.metadata.artists });
+        };
+
+        const editResult = (await editId3TagsFn(
+          songs,
+          (songId: string) => backendService.getSongBpm(songId),
+          getSongGenres
+        )) as Id3TagEditorResult | null | undefined;
 
         if (editResult) {
-          const { updatedTags, analyzedBpms } = editResult;
+          const { updatedTags, analyzedBpms, analyzedGenres } = editResult;
 
           let dbCopy = [...dbState.db];
           if (Object.keys(updatedTags).length > 0) {
             dbCopy = await saveUpdatedSongsFn(backendService, dbCopy, songs, updatedTags);
           }
 
+          const updatesBySongId: Record<string, Partial<SongMetadata>> = {};
+
           if (analyzedBpms && Object.keys(analyzedBpms).length > 0 && updatedTags.bpm === undefined) {
-            const updatesBySongId: Record<string, Partial<SongMetadata>> = {};
             for (const [songId, bpm] of Object.entries(analyzedBpms)) {
-              updatesBySongId[songId] = { bpm };
+              updatesBySongId[songId] = { ...(updatesBySongId[songId] ?? {}), bpm };
             }
+          }
+
+          if (analyzedGenres && Object.keys(analyzedGenres).length > 0 && updatedTags.genres === undefined) {
+            for (const [songId, genres] of Object.entries(analyzedGenres)) {
+              updatesBySongId[songId] = { ...(updatesBySongId[songId] ?? {}), genres };
+            }
+          }
+
+          if (Object.keys(updatesBySongId).length > 0) {
             dbCopy = await saveUpdatedSongsPerSong(backendService, dbCopy, updatesBySongId);
           }
 
