@@ -98,6 +98,26 @@ export type Group = {
   selected: string | number | null;
 };
 
+export type DbSortDirection = 'asc' | 'desc';
+
+export type DbSortKey =
+  | 'title'
+  | 'artists'
+  | 'album'
+  | 'genre'
+  | 'year'
+  | 'bpm'
+  | 'duration'
+  | 'track'
+  | 'comment'
+  | 'filename'
+  | 'timesPlayed';
+
+export type DbSortItem = {
+  key: DbSortKey;
+  direction: DbSortDirection;
+};
+
 export type StateBase = {
   mode: 'database' | 'playlist' | 'notes';
   currentTrack: Song | null;
@@ -107,6 +127,7 @@ export type StateBase = {
   // DB system
   groupBy: SongGroupsQueryItem[];
   dbFilters: Record<string, unknown>;
+  dbSort: DbSortItem[];
   // Playlist system
   playlists: Playlist[];
   currentPlaylistId: string | null;

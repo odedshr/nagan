@@ -1,5 +1,5 @@
 import { BackendService, SongGroupsResponseItem, SongMetadataAttribute } from '../backend/backend.ts';
-import { FileDropEvent, Playlist, State } from '../types.ts';
+import { DbSortItem, FileDropEvent, Playlist, State } from '../types.ts';
 import { SongDatabaseState } from './song-database-state.ts';
 
 export type SongDatabaseListenerDeps = {
@@ -9,6 +9,7 @@ export type SongDatabaseListenerDeps = {
   artistFilterInput: HTMLInputElement;
   refreshDb: () => Promise<void>;
   rerenderTableBody: () => void;
+  onSortByDropdownChange: (current: DbSortItem[]) => void;
   onGroupByDropdownChange: (current: SongMetadataAttribute | undefined) => void;
   onGroupsChanged: (groups: SongGroupsResponseItem[]) => void;
   onPlaylistsChanged: (playlists: Playlist[]) => void;
@@ -23,6 +24,7 @@ export function attachSongDatabaseStateListeners({
   artistFilterInput,
   refreshDb,
   rerenderTableBody,
+  onSortByDropdownChange,
   onGroupByDropdownChange,
   onGroupsChanged,
   onPlaylistsChanged,
@@ -51,7 +53,12 @@ export function attachSongDatabaseStateListeners({
   dbState.addListener('db', rerenderTableBody);
   dbState.addListener('artistFilter', rerenderTableBody);
 
-  state.addListener('dbFilters', () => void refreshDb());
+  state.addListener('dbFilters', refreshDb);
+
+  state.addListener('dbSort', () => {
+    onSortByDropdownChange(state.dbSort);
+    refreshDb();
+  });
 
   state.addListener('groupBy', async () => {
     onGroupByDropdownChange(getCurrentGroupBy());

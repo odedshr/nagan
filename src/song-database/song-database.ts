@@ -4,6 +4,7 @@ import { Playlist, Song, State, TauriFile } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
 import GroupBy from './groups/GroupBy.tsx';
+import SortBy from './sort/SortBy.tsx';
 import editId3Tags from './id3-tag-editor/id3-tag-editor.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableHeader from './SongDatabaseTableHeader.tsx';
@@ -118,6 +119,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
+  let sortByDropdown = SortBy(state.dbSort);
   let groupByDropdown = GroupBy(getCurrentGroupBy());
   const columns = getColumns();
   let tableBody = SongDatabaseTableBody(
@@ -130,7 +132,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   );
   let tableHeader = SongDatabaseTableHeader(columns, selectAll);
   let groups = Groups(dbState.groups);
-  const elm = SongDatabaseUI(groups, columns, addToPlaylist, groupByDropdown, tableHeader, tableBody);
+  const elm = SongDatabaseUI(groups, columns, addToPlaylist, sortByDropdown, groupByDropdown, tableHeader, tableBody);
 
   const addSongsToPlaylist = async (playlistId: string | null, songs: Song[]) => {
     return addSongsToPlaylistImpl({ playlistId, songs, backendService, state, enqueueSongsFn: enqueueSongs });
@@ -177,6 +179,9 @@ export default function SongDatabase(state: State, backendService: BackendServic
     refreshDb,
     rerenderTableBody,
     getCurrentGroupBy,
+    onSortByDropdownChange: current => {
+      sortByDropdown = replaceWith(sortByDropdown, SortBy(current)) as HTMLDivElement;
+    },
     onGroupByDropdownChange: current => {
       groupByDropdown = replaceWith(groupByDropdown, GroupBy(current)) as HTMLDivElement;
     },

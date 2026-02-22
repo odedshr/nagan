@@ -1,6 +1,6 @@
 import { BackendService, SongGroupSortBy, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongsNext } from '../queue/queue-manager.ts';
-import { Song, SongMetadata, State } from '../types.ts';
+import { DbSortDirection, DbSortItem, DbSortKey, Song, SongMetadata, State } from '../types.ts';
 import editId3Tags, { Id3TagEditorResult } from './id3-tag-editor/id3-tag-editor.ts';
 import { SongDatabaseState } from './song-database-state.ts';
 import { browseFile, songsFromIds } from './add-songs.ts';
@@ -137,6 +137,50 @@ export function createSongDatabaseActionHandler({
         if (groupName && itemName) {
           state.dbFilters = { ...state.dbFilters, [groupName]: itemName };
         }
+        return;
+      }
+
+      case 'sort-by-option': {
+        const button = e.submitter as HTMLButtonElement;
+        const sortKey = button.getAttribute('data-sort-by') as DbSortKey | null;
+
+        const multi = button.dataset.multi === '1';
+        delete button.dataset.multi;
+
+        if (!sortKey) {
+          state.dbSort = [];
+          return;
+        }
+
+        const prev = state.dbSort ?? [];
+        const existingIdx = prev.findIndex(s => s.key === sortKey);
+        const existing = existingIdx >= 0 ? prev[existingIdx] : undefined;
+
+        const toggledDirection: DbSortDirection =
+          existing?.direction === 'asc' ? 'desc' : existing?.direction === 'desc' ? 'asc' : 'asc';
+
+        if (multi) {
+          const next = [...prev];
+          if (existingIdx === -1) {
+            next.push({ key: sortKey, direction: 'asc' } satisfies DbSortItem);
+          } else {
+            next[existingIdx] = { ...next[existingIdx], direction: toggledDirection };
+          }
+          state.dbSort = next;
+          return;
+        }
+
+        if (existingIdx === 0) {
+          state.dbSort = [{ key: sortKey, direction: toggledDirection } satisfies DbSortItem];
+          return;
+        }
+
+        state.dbSort = [
+          {
+            key: sortKey,
+            direction: existing?.direction ?? 'asc',
+          } satisfies DbSortItem,
+        ];
         return;
       }
 

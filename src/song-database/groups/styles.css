@@ -80,6 +80,13 @@
   z-index: 10;
 }
 
+.sort-by-button[data-show='true'] + .sort-by-menu,
+.sort-by-dropdown:focus-within .sort-by-menu {
+  /* :focus-within. doens't work on button, so we use a wrapper div */
+  display: block;
+  z-index: 10;
+}
+
 .group-sort-button[data-show='true'] + .group-sort-menu,
 .group-sort-dropdown:focus-within .group-sort-menu {
   /* :focus-within. doens't work on button, so we use a wrapper div */
@@ -135,6 +142,37 @@
     margin: 0;
 
     .group-by-option {
+      background: none;
+      border: none;
+      border-radius: 0;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+
+      &:hover {
+        background-color: var(--color-hover-bg);
+      }
+    }
+  }
+}
+
+.sort-by-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0.2rem -0.5rem var(--color-shadow);
+  border-radius: 0.4rem;
+  display: none;
+  list-style: none;
+  margin-top: 0.5rem;
+  padding: 0;
+  position: absolute;
+  overflow: auto;
+
+  .sort-by-item {
+    padding: 0;
+    margin: 0;
+
+    .sort-by-option {
       background: none;
       border: none;
       border-radius: 0;

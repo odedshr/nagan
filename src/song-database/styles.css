@@ -35,6 +35,11 @@
   }
 }
 
+.db-dropdowns {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .db-table-scroll {
   grid-area: songs;
   height: 100%;

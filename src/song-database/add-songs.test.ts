@@ -34,6 +34,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     lastEvent: undefined,
     groupBy: [],
     dbFilters: {},
+    dbSort: [],
     playlists: [],
     currentPlaylistId: null,
     queue: [],

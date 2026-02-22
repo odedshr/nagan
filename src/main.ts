@@ -31,6 +31,7 @@ export async function initApp() {
     // DB
     groupBy: [],
     dbFilters: {},
+    dbSort: [],
     playlists: [],
     currentPlaylist: null,
     playlistSongs: [],

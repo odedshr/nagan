@@ -6,6 +6,7 @@ export default (
   groups: HTMLDivElement,
   columns: string[],
   AddToPlaylist: HTMLDivElement,
+  sortByDropdown: HTMLDivElement,
   groupByDropdown: HTMLDivElement,
   songDatabaseTableHeader: HTMLTableSectionElement,
   songDatabaseTableBody: HTMLTableSectionElement
@@ -26,7 +27,10 @@ export default (
         <button class="std-button" disabled="true" data-target="song" id="delete-button" data-action="delete">
           Delete
         </button>
-        {groupByDropdown}
+        <div class="db-dropdowns">
+          {sortByDropdown}
+          {groupByDropdown}
+        </div>
       </div>
       {groups}
       <div class="db-table-scroll">
