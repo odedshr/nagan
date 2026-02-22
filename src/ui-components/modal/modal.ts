@@ -1,4 +1,4 @@
-import Modal from './modal.tsx';
+import Modal from './Modal.tsx';
 
 /**
  * Show a retro-styled modal prompt asking for text input

@@ -1,8 +1,8 @@
-/// <reference path="../../JSX.d.ts" />
+/// <reference path="../../jsx.d.ts" />
 
 import jsx from '../../jsx.js';
 import { SongMetadataAttribute } from '../../backend/backend.ts';
-import DropDown from '../../ui-components/dropdown/dropdown.tsx';
+import DropDown from '../../ui-components/dropdown/Dropdown.tsx';
 
 const GROUP_BY_OPTIONS: SongMetadataAttribute[] = ['album', 'artists', 'genre', 'year', 'bpm'];
 

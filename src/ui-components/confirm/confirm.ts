@@ -1,5 +1,5 @@
 import { openInModal } from '../modal/modal.ts';
-import Confirm from './confirm.tsx';
+import Confirm from './Confirm.tsx';
 
 /**
  * Show a retro-styled modal confirm dialog

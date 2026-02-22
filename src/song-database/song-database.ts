@@ -1,0 +1,212 @@
+import { BackendService, SongMetadataAttribute } from '../backend/backend.ts';
+import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
+import { Playlist, Song, State, TauriFile } from '../types.ts';
+import confirm from '../ui-components/confirm/confirm.ts';
+import AddToPlaylist from './AddToPlaylist.tsx';
+import GroupBy from './groups/GroupBy.tsx';
+import editId3Tags from './id3-tag-editor/id3-tag-editor.ts';
+import SongDatabaseUI from './SongDatabase.tsx';
+import SongDatabaseTableHeader from './SongDatabaseTableHeader.tsx';
+import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
+import Groups from './groups/Groups.tsx';
+import replaceWith from '../utils/replace-with.ts';
+import { createSongDatabaseState } from './song-database-state.ts';
+import { addSongsToPlaylist as addSongsToPlaylistImpl, browseFile as browseFileImpl } from './add-songs.ts';
+import { createSongDatabaseActionHandler } from './action-handler.ts';
+import { attachSongDatabaseStateListeners } from './state-listener.ts';
+import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
+
+const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
+
+export default function SongDatabase(state: State, backendService: BackendService) {
+  const dbState = createSongDatabaseState();
+
+  const refreshDb = async () => {
+    dbState.db = await fetchSongs(state, backendService);
+  };
+
+  const getColumns = () =>
+    allColumns.filter(column => !dbState.groups.map(group => group.name as string).includes(column));
+
+  const getVisibleSongs = () => {
+    return filterSongsByArtist(dbState.db, dbState.artistFilter);
+  };
+
+  const getCurrentGroupBy = (): SongMetadataAttribute | undefined => {
+    const first = state.groupBy[0];
+    return first?.name as SongMetadataAttribute | undefined;
+  };
+
+  const onSongSelected = (song: Song) => {
+    state.currentTrack = song;
+  };
+
+  const onRemoveSong = async (song: Song) => {
+    if (await confirm(`Are you sure you want to delete the song: ${song.filename}? This action cannot be undone.`)) {
+      const success = await backendService.deleteSong(song.id);
+      if (success) {
+        void refreshDb();
+      } else {
+        console.error(`❌ Failed to delete song: ${song.id}`);
+      }
+    }
+  };
+
+  const selectedSongs = new Set<Song>();
+  let selectionAnchorSongId: string | null = null;
+
+  const onSongCheckboxClick = (song: Song, checked: boolean, shiftKey: boolean, visibleSongs: Song[]) => {
+    if (!shiftKey || !selectionAnchorSongId) {
+      selectionAnchorSongId = song.id;
+      return;
+    }
+
+    const visibleSongIds = visibleSongs.map(s => s.id);
+    const anchorIndex = visibleSongIds.indexOf(selectionAnchorSongId);
+    const currentIndex = visibleSongIds.indexOf(song.id);
+
+    if (anchorIndex === -1 || currentIndex === -1) {
+      selectionAnchorSongId = song.id;
+      return;
+    }
+
+    const [from, to] = anchorIndex <= currentIndex ? [anchorIndex, currentIndex] : [currentIndex, anchorIndex];
+
+    const checkboxNodes = Array.from(document.querySelectorAll('tbody .select-song-checkbox')) as HTMLInputElement[];
+    const checkboxBySongId = new Map<string, HTMLInputElement>();
+    checkboxNodes.forEach(cb => checkboxBySongId.set(cb.value, cb));
+
+    for (let i = from; i <= to; i++) {
+      const songId = visibleSongIds[i];
+      const checkbox = checkboxBySongId.get(songId);
+      if (!checkbox) continue;
+      if (checkbox.checked === checked) continue;
+      checkbox.checked = checked;
+      checkbox.dispatchEvent(new Event('change'));
+    }
+
+    selectionAnchorSongId = song.id;
+  };
+
+  const selectAll = (e: Event) => {
+    const checked = (e.target as HTMLInputElement).checked;
+    (document.querySelectorAll('.select-song-checkbox') as NodeListOf<HTMLInputElement>).forEach(checkbox => {
+      checkbox.checked = checked;
+      checkbox.dispatchEvent(new Event('change'));
+    });
+  };
+
+  const onToggleSong = (song: Song, checked: boolean) => {
+    if (checked) {
+      selectedSongs.add(song);
+    } else {
+      selectedSongs.delete(song);
+    }
+
+    const anySongsSelected = selectedSongs.size > 0;
+    document
+      .querySelectorAll('button[data-target="song"]')
+      .forEach(btn => ((btn as HTMLButtonElement).disabled = !anySongsSelected));
+  };
+
+  let addToPlaylist = AddToPlaylist(state.playlists);
+  let groupByDropdown = GroupBy(getCurrentGroupBy());
+  const columns = getColumns();
+  let tableBody = SongDatabaseTableBody(
+    getVisibleSongs(),
+    [] as string[],
+    columns,
+    onToggleSong,
+    onSongSelected,
+    onSongCheckboxClick
+  );
+  let tableHeader = SongDatabaseTableHeader(columns, selectAll);
+  let groups = Groups(dbState.groups);
+  const elm = SongDatabaseUI(groups, columns, addToPlaylist, groupByDropdown, tableHeader, tableBody);
+
+  const addSongsToPlaylist = async (playlistId: string | null, songs: Song[]) => {
+    return addSongsToPlaylistImpl({ playlistId, songs, backendService, state, enqueueSongsFn: enqueueSongs });
+  };
+
+  const onFormSubmitted = createSongDatabaseActionHandler({
+    state,
+    dbState,
+    backendService,
+    getCurrentGroupBy,
+    onRemoveSong,
+    addSongsToPlaylist,
+    refreshDb,
+    browseFileFn: browseFileImpl,
+    editId3TagsFn: editId3Tags,
+    enqueueSongsNextFn: enqueueSongsNext,
+  });
+
+  elm.onsubmit = onFormSubmitted;
+
+  const rerenderTableBody = () => {
+    const selectedSongIds = new Set(Array.from(selectedSongs).map(s => s.id));
+    const newContent = SongDatabaseTableBody(
+      getVisibleSongs(),
+      Array.from(selectedSongIds),
+      getColumns(),
+      onToggleSong,
+      onSongSelected,
+      onSongCheckboxClick
+    );
+    newContent.onsubmit = onFormSubmitted;
+    tableBody = replaceWith(tableBody, newContent) as HTMLTableSectionElement;
+    tableHeader = replaceWith(tableHeader, SongDatabaseTableHeader(getColumns(), selectAll)) as HTMLTableSectionElement;
+  };
+
+  const artistFilterInput = elm.querySelector('input[name="artist-filter"]') as HTMLInputElement;
+
+  attachSongDatabaseStateListeners({
+    state,
+    dbState,
+    backendService,
+    artistFilterInput,
+    refreshDb,
+    rerenderTableBody,
+    getCurrentGroupBy,
+    onGroupByDropdownChange: current => {
+      groupByDropdown = replaceWith(groupByDropdown, GroupBy(current)) as HTMLDivElement;
+    },
+    onGroupsChanged: _ => {
+      groups = replaceWith(groups, Groups(dbState.groups)) as HTMLDivElement;
+    },
+    onPlaylistsChanged: (playlists: Playlist[]) => {
+      addToPlaylist = replaceWith(addToPlaylist, AddToPlaylist(playlists)) as HTMLDivElement;
+    },
+    onFilesDropped: (files: File[]) => {
+      void (async () => {
+        const uniqueFiles = new Map<string, File>();
+        files.forEach(file => {
+          const maybePath = (file as TauriFile).path;
+          const key = maybePath || `${file.name}-${file.size}`;
+          if (!uniqueFiles.has(key)) {
+            uniqueFiles.set(key, file);
+          }
+        });
+
+        for (const file of uniqueFiles.values()) {
+          const filePath = (file as TauriFile).path || file.name;
+          try {
+            console.log(`➕ Adding song from file: ${filePath}`);
+            await backendService.addSong(filePath);
+          } catch (error) {
+            console.error(`❌ Failed to add song from file ${filePath}:`, error);
+            state.lastEvent = new CustomEvent('notification', {
+              detail: { type: 'error', message: error },
+            });
+          }
+        }
+
+        await refreshDb();
+      })();
+    },
+  });
+
+  void refreshDb();
+
+  return elm;
+}

@@ -1,13 +1,13 @@
-import SongDatabase from './song-database/SongDatabase';
+import SongDatabase from './song-database/song-database';
 import PlaylistManager from './playlist-manager/playlist-manager';
 import Player from './player/player';
-import { Context } from './utils/Context';
+import { Context } from './utils/context';
 import { Mode, RepeatMode, State } from './types';
 import { BackendService, getBackendService } from './backend/backend';
-import initNotifications from './ui-components/notification/notification';
-import { persist, loadPersistedState } from './utils/PersistedState';
+import initNotifications from './ui-components/notification/init-notifications';
+import { persist, loadPersistedState } from './utils/persisted-state';
 import { applyTheme } from './themes/theme';
-import NavButtons from './nav';
+import NavButtons from './Nav';
 import initFileDragAndDrop from './files/file-drag-and-drop';
 
 function initNav(state: State) {

@@ -1,8 +1,8 @@
-/// <reference path="../JSX.d.ts" />
+/// <reference path="../jsx.d.ts" />
 
 import jsx from '../jsx.js';
 import { Playlist } from '../types.js';
-import DropDown from '../ui-components/dropdown/dropdown.tsx';
+import DropDown from '../ui-components/dropdown/Dropdown.tsx';
 
 export default (playlists: Playlist[]) =>
   DropDown({

@@ -18,7 +18,7 @@ vi.mock('./backend/backend', () => {
   };
 });
 
-vi.mock('./song-database/SongDatabase', () => {
+vi.mock('./song-database/song-database', () => {
   return {
     default: vi.fn(() => {
       const elm = document.createElement('section');
@@ -38,7 +38,7 @@ vi.mock('./playlist-manager/playlist-manager', () => {
   };
 });
 
-vi.mock('./ui-components/notification/notification', () => {
+vi.mock('./ui-components/notification/init-notifications', () => {
   return {
     default: vi.fn(() => undefined),
   };
@@ -56,7 +56,7 @@ vi.mock('./drag-and-drop.tauri.ts', () => {
   };
 });
 
-vi.mock('./nav', () => {
+vi.mock('./Nav', () => {
   return {
     default: vi.fn(() => {
       const frag = document.createDocumentFragment();

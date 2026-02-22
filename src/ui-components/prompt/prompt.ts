@@ -1,5 +1,5 @@
 import { openInModal } from '../modal/modal.ts';
-import Prompt from './prompt.tsx';
+import Prompt from './Prompt.tsx';
 
 /**
  * Show a retro-styled modal prompt asking for text input

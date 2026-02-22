@@ -1,4 +1,4 @@
-/// <reference path="../JSX.d.ts" />
+/// <reference path="../jsx.d.ts" />
 
 import jsx from '../jsx.js';
 import { Song } from '../types.js';

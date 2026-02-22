@@ -1,9 +1,9 @@
-/// <reference path="../../JSX.d.ts" />
+/// <reference path="../../jsx.d.ts" />
 
 import jsx from '../../jsx.js';
 
 import { Song, SongMetadata } from '../../types.ts';
-import openProgressModal from '../../ui-components/progress/progress.tsx';
+import openProgressModal from '../../ui-components/progress/Progress.tsx';
 
 type GetSongBpm = (songId: string) => Promise<number | null>;
 

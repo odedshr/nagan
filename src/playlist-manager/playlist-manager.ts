@@ -2,10 +2,10 @@ import { QueueItem, Song } from './../types';
 import prompt from '../ui-components/prompt/prompt.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import { State, Playlist } from '../types.ts';
-import PlaylistList from './Playlist-list.tsx';
+import PlaylistList from './PlaylistList.tsx';
 import PlaylistUi from './PlaylistManager.tsx';
-import PlaylistEditor from './playlist-editor.tsx';
-import PlaylistSongs from './playlist-songs.tsx';
+import PlaylistEditor from './PlaylistEditor.tsx';
+import PlaylistSongs from './PlaylistSongs.tsx';
 import { BackendService } from '../backend/backend.ts';
 import { shuffleQueue } from '../queue/queue-manager.ts';
 

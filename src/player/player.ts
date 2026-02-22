@@ -1,17 +1,17 @@
-import PlayerUi from './Player.ui.js';
+import PlayerUi from './PlayerUi.js';
 
 import { State } from '../types.ts';
 import loadFile from '../files/load-file.ts';
 
-import { getPlayerElements } from './player.elements.ts';
-import { bindSeekControls, renderCurrentTime, setPlayToggleState } from './player.dom.ts';
-import { createPlayerAudio } from './player.audio.ts';
-import { handleEnded } from './player.next.ts';
-import { wirePlayerState } from './player.state.ts';
-import { createPlaybackHistoryTracker } from './player.history.ts';
+import { getPlayerElements } from './player-elements.ts';
+import { bindSeekControls, renderCurrentTime, setPlayToggleState } from './player-dom.ts';
+import { createPlayerAudio } from './player-audio.ts';
+import { handleEnded } from './player-next.ts';
+import { wirePlayerState } from './player-state.ts';
+import { createPlaybackHistoryTracker } from './player-history.ts';
 import type { Song } from '../types.ts';
-import RepeatControl from '../queue/repeat-control.tsx';
-import Knob from '../ui-components/knob/knob.tsx';
+import RepeatControl from '../queue/RepeatControl.tsx';
+import Knob from '../ui-components/knob/Knob.tsx';
 
 export default function Player(state: State) {
   const form: HTMLFormElement = PlayerUi(

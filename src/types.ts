@@ -1,5 +1,5 @@
 import { SongGroupsQueryItem } from './backend/backend';
-import { StateTemplate } from './utils/Context';
+import { StateTemplate } from './utils/context';
 
 export interface Player {
   setMetadata(data: { title: string; artist: string; image?: string; duration: number }): void;
