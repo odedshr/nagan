@@ -14,16 +14,34 @@ const LABELS: Record<SongMetadataAttribute, string> = {
   bpm: 'BPM',
 };
 
-export default (current?: SongMetadataAttribute) =>
-  DropDown({
+export default (current?: SongMetadataAttribute[]) => {
+  const selected = current ?? [];
+  const label =
+    selected.length === 0
+      ? 'None'
+      : selected.length === 1
+        ? LABELS[selected[0]]
+        : `${LABELS[selected[0]]} + ${LABELS[selected[1]]}`;
+
+  const onOptionClick = (e: MouseEvent) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    btn.dataset.multi = e.ctrlKey || e.metaKey ? '1' : '0';
+  };
+
+  return DropDown({
     wrapperClass: 'group-by-dropdown',
     buttonClass: 'std-button group-by-button',
     buttonId: 'group-by-button',
-    buttonContent: ['Group by: ', current ? LABELS[current] : 'None'],
+    buttonContent: ['Group by: ', label],
     menuClass: 'group-by-menu',
     menuContent: [
       <li class="group-by-item" data-id="none">
-        <button class="group-by-option" data-action="group-by-option" disabled={current === undefined}>
+        <button
+          class="group-by-option"
+          data-action="group-by-option"
+          disabled={selected.length === 0}
+          onclick={onOptionClick}
+        >
           None
         </button>
       </li>,
@@ -33,7 +51,8 @@ export default (current?: SongMetadataAttribute) =>
             class="group-by-option"
             data-group-by={option}
             data-action="group-by-option"
-            disabled={option === current}
+            disabled={selected.includes(option)}
+            onclick={onOptionClick}
           >
             {LABELS[option] ?? option}
           </button>
@@ -41,3 +60,4 @@ export default (current?: SongMetadataAttribute) =>
       )),
     ],
   });
+};

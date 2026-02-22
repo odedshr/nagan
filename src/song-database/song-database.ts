@@ -41,9 +41,8 @@ export default function SongDatabase(state: State, backendService: BackendServic
     return filterSongsByArtist(dbState.db, dbState.artistFilter);
   };
 
-  const getCurrentGroupBy = (): SongMetadataAttribute | undefined => {
-    const first = state.groupBy[0];
-    return first?.name as SongMetadataAttribute | undefined;
+  const getCurrentGroupBy = (): SongMetadataAttribute[] => {
+    return state.groupBy.map(g => g.name as SongMetadataAttribute);
   };
 
   const onSongSelected = (song: Song) => {

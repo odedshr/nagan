@@ -85,7 +85,7 @@ describe('actionHandler', () => {
       state,
       dbState,
       backendService,
-      getCurrentGroupBy: () => undefined,
+      getCurrentGroupBy: () => [],
       refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
@@ -124,7 +124,7 @@ describe('actionHandler', () => {
       state,
       dbState,
       backendService: {} as BackendService,
-      getCurrentGroupBy: () => 'artists',
+      getCurrentGroupBy: () => ['artists'],
       refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
@@ -141,6 +141,64 @@ describe('actionHandler', () => {
     expect(state.groupBy[0].name).toBe('album');
   });
 
+  it('group-by-option ctrl-click does not add secondary when primary has no selection', async () => {
+    const state = createState({
+      groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
+      dbFilters: {},
+    });
+    const dbState = createSongDatabaseState({ db: [] });
+
+    const handler = createSongDatabaseActionHandler({
+      state,
+      dbState,
+      backendService: {} as BackendService,
+      getCurrentGroupBy: () => ['album'],
+      refreshDb: vi.fn(async () => undefined),
+      onRemoveSong: vi.fn(async () => undefined),
+      addSongsToPlaylist: vi.fn(async () => undefined),
+    });
+
+    const form = document.createElement('form');
+    const btn = document.createElement('button');
+    btn.setAttribute('data-action', 'group-by-option');
+    btn.setAttribute('data-group-by', 'artists');
+    btn.dataset.multi = '1';
+
+    await handler(submitEvent(form, btn));
+
+    expect(state.groupBy.map(g => g.name)).toEqual(['album']);
+  });
+
+  it('group-by-option ctrl-click adds secondary after primary selection', async () => {
+    const state = createState({
+      groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
+      dbFilters: {},
+    });
+    const dbState = createSongDatabaseState({ db: [] });
+
+    const handler = createSongDatabaseActionHandler({
+      state,
+      dbState,
+      backendService: {} as BackendService,
+      getCurrentGroupBy: () => ['album'],
+      refreshDb: vi.fn(async () => undefined),
+      onRemoveSong: vi.fn(async () => undefined),
+      addSongsToPlaylist: vi.fn(async () => undefined),
+    });
+
+    const form = document.createElement('form');
+    const btn = document.createElement('button');
+    btn.setAttribute('data-action', 'group-by-option');
+    btn.setAttribute('data-group-by', 'artists');
+    btn.dataset.multi = '1';
+
+    state.dbFilters = { album: 'Kind of Blue' };
+
+    btn.dataset.multi = '1';
+    await handler(submitEvent(form, btn));
+    expect(state.groupBy.map(g => g.name)).toEqual(['album', 'artists']);
+  });
+
   it('play-now enqueues next and emits next-song event', async () => {
     const state = createState();
     const dbState = createSongDatabaseState({ db: [song('1')] });
@@ -151,7 +209,7 @@ describe('actionHandler', () => {
       state,
       dbState,
       backendService: {} as BackendService,
-      getCurrentGroupBy: () => undefined,
+      getCurrentGroupBy: () => [],
       refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),

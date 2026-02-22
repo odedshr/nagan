@@ -1,6 +1,8 @@
 .db-groups {
-  grid-area: groups;
   border-right: 0.1rem solid var(--color-border);
+  grid-area: groups;
+  display: flex;
+  flex-direction: row;
   height: 100%;
   list-style: none;
   overflow: auto;
@@ -14,7 +16,12 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    overflow: hidden;
     width: 15rem;
+
+    &:not(:last-child) {
+      border-right: 0.1rem solid var(--color-border);
+    }
 
     &:has(.group-header)::before {
       content: none;

@@ -10,11 +10,11 @@ export type SongDatabaseListenerDeps = {
   refreshDb: () => Promise<void>;
   rerenderTableBody: () => void;
   onSortByDropdownChange: (current: DbSortItem[]) => void;
-  onGroupByDropdownChange: (current: SongMetadataAttribute | undefined) => void;
+  onGroupByDropdownChange: (current: SongMetadataAttribute[]) => void;
   onGroupsChanged: (groups: SongGroupsResponseItem[]) => void;
   onPlaylistsChanged: (playlists: Playlist[]) => void;
   onFilesDropped?: (files: File[]) => void;
-  getCurrentGroupBy: () => SongMetadataAttribute | undefined;
+  getCurrentGroupBy: () => SongMetadataAttribute[];
 };
 
 export function attachSongDatabaseStateListeners({

@@ -48,7 +48,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
-      getCurrentGroupBy: () => undefined,
+      getCurrentGroupBy: () => [],
     });
 
     dbState.db = [];
@@ -74,7 +74,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
-      getCurrentGroupBy: () => undefined,
+      getCurrentGroupBy: () => [],
     });
 
     state.dbFilters = { a: 1 };
@@ -113,7 +113,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange,
       onGroupsChanged,
       onPlaylistsChanged: vi.fn(),
-      getCurrentGroupBy: () => 'album',
+      getCurrentGroupBy: () => ['album'],
     });
 
     const groupBy: SongGroupsQueryItem[] = [{ name: 'album', selected: null, sortBy: 'valueAsec' }];
@@ -121,7 +121,7 @@ describe('stateListener', () => {
 
     await new Promise(r => setTimeout(r, 0));
 
-    expect(onGroupByDropdownChange).toHaveBeenCalledWith('album');
+    expect(onGroupByDropdownChange).toHaveBeenCalledWith(['album']);
     expect(backendService.getSongsGroups).toHaveBeenCalledTimes(1);
     expect(dbState.groups).toHaveLength(1);
     expect(onGroupsChanged).toHaveBeenCalledTimes(1);
@@ -144,7 +144,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
-      getCurrentGroupBy: () => undefined,
+      getCurrentGroupBy: () => [],
     });
 
     state.lastEvent = new CustomEvent('file-loaded');
