@@ -73,7 +73,8 @@ describe('actionHandler', () => {
       async (
         _songs: Song[],
         _getSongBpm: (songId: string) => Promise<number | null>,
-        _getSongGenres: (songId: string) => Promise<string[] | null>
+        _getSongGenres?: (songId: string) => Promise<string[] | null>,
+        _notifier?: unknown
       ) => ({
         updatedTags: { title: 'new' },
       })
@@ -106,6 +107,7 @@ describe('actionHandler', () => {
     expect(editId3TagsFn.mock.calls[0][0]).toEqual([song('2', { title: 'b' })]);
     expect(typeof editId3TagsFn.mock.calls[0][1]).toBe('function');
     expect(typeof editId3TagsFn.mock.calls[0][2]).toBe('function');
+    expect(editId3TagsFn.mock.calls[0][3]).toBeUndefined();
     expect(saveUpdatedSongsFn).toHaveBeenCalledTimes(1);
     expect(dbState.db).toEqual([song('x', { title: 'z' })]);
   });

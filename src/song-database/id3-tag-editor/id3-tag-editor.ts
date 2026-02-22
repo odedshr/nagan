@@ -1,5 +1,6 @@
 import { Song, SongMetadata } from '../../types.ts';
 import { openInModal } from '../../ui-components/modal/modal.ts';
+import { Notifier } from '../../ui-components/notification/notifier.ts';
 import Id3TagEditorUI from './Id3TagEditor.tsx';
 
 type GetSongBpm = (songId: string) => Promise<number | null>;
@@ -15,6 +16,7 @@ interface Id3TagEditorProps {
   songs: Song[];
   getSongBpm: GetSongBpm;
   getSongGenres?: GetSongGenres;
+  notifier?: Notifier;
   onSubmit: (result: Id3TagEditorResult | null) => void;
 }
 
@@ -115,14 +117,15 @@ function handleSubmit(e: SubmitEvent, onSubmit: (result: Id3TagEditorResult | nu
   onSubmit({ updatedTags, analyzedBpms, analyzedGenres });
 }
 
-function Id3TagEditor({ songs, getSongBpm, getSongGenres, onSubmit }: Id3TagEditorProps) {
-  return Id3TagEditorUI(songs, (e: SubmitEvent) => handleSubmit(e, onSubmit), getSongBpm, getSongGenres);
+function Id3TagEditor({ songs, getSongBpm, getSongGenres, notifier, onSubmit }: Id3TagEditorProps) {
+  return Id3TagEditorUI(songs, (e: SubmitEvent) => handleSubmit(e, onSubmit), getSongBpm, getSongGenres, notifier);
 }
 
 export default async function editId3Tags(
   songs: Song[],
   getSongBpm: GetSongBpm,
-  getSongGenres?: GetSongGenres
+  getSongGenres?: GetSongGenres,
+  notifier?: Notifier
 ): Promise<Id3TagEditorResult | null> {
-  return openInModal(Id3TagEditor, { songs, getSongBpm, getSongGenres, onSubmit: () => {} });
+  return openInModal(Id3TagEditor, { songs, getSongBpm, getSongGenres, notifier, onSubmit: () => {} });
 }

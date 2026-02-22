@@ -15,11 +15,19 @@ import { addSongsToPlaylist as addSongsToPlaylistImpl, browseFile as browseFileI
 import { createSongDatabaseActionHandler } from './action-handler.ts';
 import { attachSongDatabaseStateListeners } from './state-listener.ts';
 import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
+import { createLastEventNotifier } from '../ui-components/notification/notifier.ts';
 
 const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
 
 export default function SongDatabase(state: State, backendService: BackendService) {
   const dbState = createSongDatabaseState();
+
+  const notifier = createLastEventNotifier(
+    event => {
+      state.lastEvent = event;
+    },
+    { logInDev: true }
+  );
 
   const refreshDb = async () => {
     dbState.db = await fetchSongs(state, backendService);
@@ -132,6 +140,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     state,
     dbState,
     backendService,
+    notifier,
     getCurrentGroupBy,
     onRemoveSong,
     addSongsToPlaylist,

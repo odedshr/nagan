@@ -4,6 +4,7 @@ import jsx from '../../jsx.js';
 
 import { Song, SongMetadata } from '../../types.ts';
 import openProgressModal, { ProgressModalHandle } from '../../ui-components/progress/Progress.tsx';
+import { Notifier, getNotify } from '../../ui-components/notification/notifier.ts';
 
 type GetSongBpm = (songId: string) => Promise<number | null>;
 type GetSongGenres = (songId: string) => Promise<string[] | null>;
@@ -19,8 +20,11 @@ export default function Id3TagEditor(
   songs: Song[],
   handleSubmit: (e: SubmitEvent) => void,
   getSongBpm?: GetSongBpm,
-  getSongGenres?: GetSongGenres
+  getSongGenres?: GetSongGenres,
+  notifier?: Notifier
 ): HTMLFormElement {
+  const notify = getNotify(notifier);
+
   const commonTags: Partial<SongMetadata> = songs.reduce(
     (common, song) => {
       for (const key in common) {
@@ -85,7 +89,10 @@ export default function Id3TagEditor(
 
       return results;
     } catch (error) {
-      console.error('Failed to analyze BPMs:', error);
+      notify({
+        type: 'error',
+        message: `Failed to analyze BPMs: ${error instanceof Error ? error.message : String(error)}`,
+      });
       return null;
     } finally {
       progress.close();
@@ -133,7 +140,10 @@ export default function Id3TagEditor(
 
       return results;
     } catch (error) {
-      console.error('Failed to fetch genres:', error);
+      notify({
+        type: 'error',
+        message: `Failed to fetch genres: ${error instanceof Error ? error.message : String(error)}`,
+      });
       return null;
     } finally {
       if (ownsProgress) {
@@ -155,7 +165,7 @@ export default function Id3TagEditor(
         clearAnalyzedBpms();
         const results = await analyzeBpms([songs[0]]);
         if (!results || results[songs[0].id] === undefined) {
-          console.warn('Could not determine BPM for song', songs[0].id);
+          notify({ type: 'warning', message: 'Could not determine BPM for the selected song.' });
           return;
         }
 
@@ -172,7 +182,10 @@ export default function Id3TagEditor(
           bpmInput.value = String(bpm);
         }
       } catch (error) {
-        console.error('Failed to analyze BPM:', error);
+        notify({
+          type: 'error',
+          message: `Failed to analyze BPM: ${error instanceof Error ? error.message : String(error)}`,
+        });
       } finally {
         button.disabled = false;
       }
@@ -205,6 +218,11 @@ export default function Id3TagEditor(
         if (indicator) {
           indicator.textContent = 'Various';
         }
+      } catch (error) {
+        notify({
+          type: 'error',
+          message: `Failed to analyze BPMs: ${error instanceof Error ? error.message : String(error)}`,
+        });
       } finally {
         button.disabled = false;
       }
@@ -234,7 +252,7 @@ export default function Id3TagEditor(
         if (songs.length === 1) {
           const genres = results[songs[0].id];
           if (!genres || !genres.length) {
-            console.warn('Could not determine genres for song', songs[0].id);
+            notify({ type: 'warning', message: 'Could not determine genres for the selected song.' });
             return;
           }
 
@@ -268,7 +286,10 @@ export default function Id3TagEditor(
           indicator.textContent = Object.keys(results).length ? 'Various' : '';
         }
       } catch (error) {
-        console.error('Failed to fetch genres:', error);
+        notify({
+          type: 'error',
+          message: `Failed to fetch genres: ${error instanceof Error ? error.message : String(error)}`,
+        });
       } finally {
         progress.close();
         button.disabled = false;

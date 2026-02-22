@@ -6,6 +6,7 @@ import { SongDatabaseState } from './song-database-state.ts';
 import { browseFile, songsFromIds } from './add-songs.ts';
 import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './update-songs.ts';
 import { getMusicBrainzGenres } from '../utils/musicbrainz.ts';
+import { Notifier } from '../ui-components/notification/notifier.ts';
 
 export type GetCurrentGroupBy = () => SongMetadataAttribute | undefined;
 
@@ -13,6 +14,7 @@ export type SongDatabaseActionHandlerDeps = {
   state: State;
   dbState: SongDatabaseState;
   backendService: BackendService;
+  notifier?: Notifier;
   getCurrentGroupBy: GetCurrentGroupBy;
   browseFileFn?: typeof browseFile;
   editId3TagsFn?: typeof editId3Tags;
@@ -28,6 +30,7 @@ export function createSongDatabaseActionHandler({
   state,
   dbState,
   backendService,
+  notifier,
   getCurrentGroupBy,
   onRemoveSong,
   addSongsToPlaylist,
@@ -59,7 +62,8 @@ export function createSongDatabaseActionHandler({
         const editResult = (await editId3TagsFn(
           songs,
           (songId: string) => backendService.getSongBpm(songId),
-          getSongGenres
+          getSongGenres,
+          notifier
         )) as Id3TagEditorResult | null | undefined;
 
         if (editResult) {
