@@ -2,6 +2,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 mod commands;
+mod bpm;
 mod database;
 mod id3;
 mod models;
@@ -47,6 +48,7 @@ pub async fn run() {
             commands::add_song,
             commands::update_song,
             commands::delete_song,
+            commands::get_song_bpm,
             commands::bulk_update_songs,
             commands::import_songs,
             commands::export_songs,

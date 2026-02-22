@@ -120,6 +120,7 @@ export interface BackendService {
   addSong(filePath: string): Promise<Song>;
   updateSong(payload: UpdateSongPayload): Promise<Song | null>;
   deleteSong(songId: string): Promise<boolean>;
+  getSongBpm(songId: string): Promise<number | null>;
   bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number>;
   getPlaylists(query: GetPlaylistsQuery): Promise<Playlist[]>;
   createPlaylist(name: string): Promise<Playlist>;

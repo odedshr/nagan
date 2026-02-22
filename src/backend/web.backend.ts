@@ -15,6 +15,11 @@ import {
 import { Playlist, Song } from '../types';
 
 export default class WebBackendService implements BackendService {
+  getSongBpm(songId: string): Promise<number | null> {
+    console.error('Method not implemented.', songId);
+    return Promise.resolve(null);
+  }
+
   getSongsGroups(query: GetSongsGroupsQuery): Promise<GetSongsGroupsResponse> {
     console.error('getSongsGroups not implemented in WebBackendService', query);
     return Promise.resolve({ groups: [] });

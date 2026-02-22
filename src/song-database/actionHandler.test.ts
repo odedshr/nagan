@@ -64,10 +64,12 @@ describe('actionHandler', () => {
       db: [song('1', { title: 'a' }), song('2', { title: 'b' })],
     });
 
-    const backendService = {} as BackendService;
+    const backendService = {
+      getSongBpm: vi.fn(async () => 120),
+    } as unknown as BackendService;
 
     const saveUpdatedSongsFn = vi.fn(async () => [song('x', { title: 'z' })]);
-    const editId3TagsFn = vi.fn(async () => ({ title: 'new' }));
+    const editId3TagsFn = vi.fn(async () => ({ updatedTags: { title: 'new' } }));
 
     const handler = createSongDatabaseActionHandler({
       state,
@@ -93,6 +95,8 @@ describe('actionHandler', () => {
     await handler(submitEvent(form, btn));
 
     expect(editId3TagsFn).toHaveBeenCalledTimes(1);
+    expect(editId3TagsFn.mock.calls[0][0]).toEqual([song('2', { title: 'b' })]);
+    expect(typeof editId3TagsFn.mock.calls[0][1]).toBe('function');
     expect(saveUpdatedSongsFn).toHaveBeenCalledTimes(1);
     expect(dbState.db).toEqual([song('x', { title: 'z' })]);
   });

@@ -1,10 +1,10 @@
 import { BackendService, SongGroupSortBy, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongsNext } from '../queue/queue-manager.ts';
 import { Song, SongMetadata, State } from '../types.ts';
-import editId3Tags from './id3-tag-editor/Id3TagEditor.ts';
+import editId3Tags, { Id3TagEditorResult } from './id3-tag-editor/Id3TagEditor.ts';
 import { SongDatabaseState } from './song-database.state.ts';
 import { browseFile, songsFromIds } from './addSongs.ts';
-import { saveUpdatedSongs } from './updateSongs.ts';
+import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './updateSongs.ts';
 
 export type GetCurrentGroupBy = () => SongMetadataAttribute | undefined;
 
@@ -49,9 +49,27 @@ export function createSongDatabaseActionHandler({
         return browseFileFn({ state, backendService, refreshDb });
 
       case 'edit-tags': {
-        const tagsToUpdate = (await editId3TagsFn(songs)) as Partial<SongMetadata> | null | undefined;
-        if (tagsToUpdate) {
-          const dbCopy = await saveUpdatedSongsFn(backendService, [...dbState.db], songs, tagsToUpdate);
+        const editResult = (await editId3TagsFn(songs, (songId: string) => backendService.getSongBpm(songId))) as
+          | Id3TagEditorResult
+          | null
+          | undefined;
+
+        if (editResult) {
+          const { updatedTags, analyzedBpms } = editResult;
+
+          let dbCopy = [...dbState.db];
+          if (Object.keys(updatedTags).length > 0) {
+            dbCopy = await saveUpdatedSongsFn(backendService, dbCopy, songs, updatedTags);
+          }
+
+          if (analyzedBpms && Object.keys(analyzedBpms).length > 0 && updatedTags.bpm === undefined) {
+            const updatesBySongId: Record<string, Partial<SongMetadata>> = {};
+            for (const [songId, bpm] of Object.entries(analyzedBpms)) {
+              updatesBySongId[songId] = { bpm };
+            }
+            dbCopy = await saveUpdatedSongsPerSong(backendService, dbCopy, updatesBySongId);
+          }
+
           dbState.db = dbCopy;
         }
         break;

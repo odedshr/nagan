@@ -36,4 +36,5 @@ env_logger = "0.10"
 dirs = "6.0"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+symphonia = { version = "0.5", features = ["aac", "alac", "flac", "mp3", "isomp4", "ogg", "vorbis", "wav"] }
 

@@ -38,3 +38,29 @@ export async function saveUpdatedSongs(
   }
   return dbCopy;
 }
+
+export async function saveUpdatedSongsPerSong(
+  backendService: BackendService,
+  dbCopy: Song[],
+  updatesBySongId: Record<string, Partial<SongMetadata>>
+): Promise<Song[]> {
+  let nextDb = [...dbCopy];
+
+  for (const [songId, metadata] of Object.entries(updatesBySongId)) {
+    const updatedSong = await backendService.updateSong({
+      id: songId,
+      metadata,
+      update_id3: true,
+    });
+
+    if (updatedSong) {
+      nextDb = nextDb.map(s => (s.id === updatedSong.id ? updatedSong : s));
+      continue;
+    }
+
+    // Fallback: merge locally if backend doesn't return the updated entity.
+    nextDb = nextDb.map(s => (s.id === songId ? ({ ...s, metadata: { ...s.metadata, ...metadata } } as Song) : s));
+  }
+
+  return nextDb;
+}

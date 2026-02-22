@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::database::Database;
 use crate::id3::Id3Manager;
 use crate::models::*;
+use crate::bpm;
 use crate::AppState;
 
 // Song Management Commands
@@ -116,6 +117,25 @@ pub async fn delete_song(
     }
 
     db.delete_song(&id).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_song_bpm(
+    song_id: String,
+    state: State<'_, AppState>,
+) -> Result<Option<f32>, String> {
+    // Fetch song path from DB, then drop the DB lock before doing heavy decoding.
+    let file_path = {
+        let db = state.db.lock().await;
+        let song = db
+            .get_song_by_id(&song_id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| format!("Song not found: {}", song_id))?;
+        song.url
+    };
+
+    bpm::estimate_bpm_from_file(&file_path)
 }
 
 #[tauri::command]

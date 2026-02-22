@@ -2,12 +2,20 @@ import { Song, SongMetadata } from '../../types.ts';
 import { openInModal } from '../../ui-components/modal/modal.ts';
 import Id3TagEditorUI from './Id3TagEditor.tsx';
 
+type GetSongBpm = (songId: string) => Promise<number | null>;
+
+export type Id3TagEditorResult = {
+  updatedTags: Partial<SongMetadata>;
+  analyzedBpms?: Record<string, number>;
+};
+
 interface Id3TagEditorProps {
   songs: Song[];
-  onSubmit: (updatedTags: Partial<SongMetadata> | null) => void;
+  getSongBpm: GetSongBpm;
+  onSubmit: (result: Id3TagEditorResult | null) => void;
 }
 
-function handleSubmit(e: SubmitEvent, onSubmit: (updatedTags: Partial<SongMetadata> | null) => void) {
+function handleSubmit(e: SubmitEvent, onSubmit: (result: Id3TagEditorResult | null) => void) {
   e.preventDefault();
   if (e.submitter && (e.submitter as HTMLButtonElement).getAttribute('data-value') === 'false') {
     onSubmit(null);
@@ -66,13 +74,31 @@ function handleSubmit(e: SubmitEvent, onSubmit: (updatedTags: Partial<SongMetada
     updatedTags.comment = comment;
   }
 
-  onSubmit(updatedTags);
+  const hasManualBpm = formData.get('tag-bpm-enabled') && updatedTags.bpm !== undefined;
+
+  let analyzedBpms: Record<string, number> | undefined = undefined;
+  if (!hasManualBpm) {
+    const rawAnalyzed = (formData.get('analyzed-bpms') as string) || '';
+    const trimmed = rawAnalyzed.trim();
+    if (trimmed) {
+      try {
+        const parsed = JSON.parse(trimmed) as Record<string, number>;
+        if (parsed && typeof parsed === 'object') {
+          analyzedBpms = parsed;
+        }
+      } catch {
+        // Ignore malformed analyzed BPM payload.
+      }
+    }
+  }
+
+  onSubmit({ updatedTags, analyzedBpms });
 }
 
-function Id3TagEditor({ songs, onSubmit }: Id3TagEditorProps) {
-  return Id3TagEditorUI(songs, (e: SubmitEvent) => handleSubmit(e, onSubmit));
+function Id3TagEditor({ songs, getSongBpm, onSubmit }: Id3TagEditorProps) {
+  return Id3TagEditorUI(songs, (e: SubmitEvent) => handleSubmit(e, onSubmit), getSongBpm);
 }
 
-export default async function editId3Tags(songs: Song[]): Promise<Partial<SongMetadata> | null> {
-  return openInModal(Id3TagEditor, { songs, onSubmit: () => {} });
+export default async function editId3Tags(songs: Song[], getSongBpm: GetSongBpm): Promise<Id3TagEditorResult | null> {
+  return openInModal(Id3TagEditor, { songs, getSongBpm, onSubmit: () => {} });
 }

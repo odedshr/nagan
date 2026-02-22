@@ -3,6 +3,9 @@
 import jsx from '../../jsx.js';
 
 import { Song, SongMetadata } from '../../types.ts';
+import openProgressModal from '../../ui-components/progress/progress.tsx';
+
+type GetSongBpm = (songId: string) => Promise<number | null>;
 
 function toggleField(e: Event) {
   const checkbox = e.target as HTMLInputElement;
@@ -11,7 +14,11 @@ function toggleField(e: Event) {
   input.disabled = !checkbox.checked;
 }
 
-export default function Id3TagEditor(songs: Song[], handleSubmit: (e: SubmitEvent) => void): HTMLFormElement {
+export default function Id3TagEditor(
+  songs: Song[],
+  handleSubmit: (e: SubmitEvent) => void,
+  getSongBpm?: GetSongBpm
+): HTMLFormElement {
   const commonTags: Partial<SongMetadata> = songs.reduce(
     (common, song) => {
       for (const key in common) {
@@ -34,8 +41,125 @@ export default function Id3TagEditor(songs: Song[], handleSubmit: (e: SubmitEven
   const bpmValue = commonTags.bpm ?? '';
   const commentValue = commonTags.comment ?? '';
 
+  const clearAnalyzedBpms = () => {
+    const hidden = document.getElementById('analyzed-bpms') as HTMLInputElement | null;
+    if (hidden) hidden.value = '';
+    const indicator = document.getElementById('bpm-analyzed-indicator') as HTMLSpanElement | null;
+    if (indicator) indicator.textContent = '';
+  };
+
+  const analyzeBpms = async (songsToAnalyze: Song[]): Promise<Record<string, number> | null> => {
+    if (!getSongBpm) return null;
+
+    const progress = openProgressModal('Analyzing BPM', songsToAnalyze.length);
+    const results: Record<string, number> = {};
+
+    try {
+      for (let i = 0; i < songsToAnalyze.length; i++) {
+        if (progress.isCancelled()) {
+          return null;
+        }
+
+        const s = songsToAnalyze[i];
+        progress.update(i + 1, songsToAnalyze.length, s.metadata.title || s.filename);
+
+        const bpm = await getSongBpm(s.id);
+
+        if (progress.isCancelled()) {
+          return null;
+        }
+
+        if (bpm !== null && bpm !== undefined && Number.isFinite(bpm)) {
+          results[s.id] = Math.round(bpm);
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Failed to analyze BPMs:', error);
+      return null;
+    } finally {
+      progress.close();
+    }
+  };
+
+  const onGetBpmClick = (e: MouseEvent) => {
+    e.preventDefault();
+    if (!getSongBpm) return;
+    if (songs.length !== 1) return;
+
+    const button = e.target as HTMLButtonElement;
+    button.disabled = true;
+
+    void (async () => {
+      try {
+        clearAnalyzedBpms();
+        const results = await analyzeBpms([songs[0]]);
+        if (!results || results[songs[0].id] === undefined) {
+          console.warn('Could not determine BPM for song', songs[0].id);
+          return;
+        }
+
+        const bpm = results[songs[0].id];
+
+        const enabledCheckbox = document.getElementById('tag-bpm-enabled') as HTMLInputElement | null;
+        const bpmInput = document.getElementById('tag-bpm') as HTMLInputElement | null;
+
+        if (enabledCheckbox) {
+          enabledCheckbox.checked = true;
+        }
+        if (bpmInput) {
+          bpmInput.disabled = false;
+          bpmInput.value = String(bpm);
+        }
+      } catch (error) {
+        console.error('Failed to analyze BPM:', error);
+      } finally {
+        button.disabled = false;
+      }
+    })();
+  };
+
+  const onAnalyzeBpmsClick = (e: MouseEvent) => {
+    e.preventDefault();
+    if (!getSongBpm) return;
+    if (songs.length <= 1) return;
+
+    const button = e.target as HTMLButtonElement;
+    button.disabled = true;
+
+    void (async () => {
+      try {
+        clearAnalyzedBpms();
+
+        const results = await analyzeBpms(songs);
+        if (!results) {
+          return;
+        }
+
+        const hidden = document.getElementById('analyzed-bpms') as HTMLInputElement | null;
+        if (hidden) {
+          hidden.value = JSON.stringify(results);
+        }
+
+        const indicator = document.getElementById('bpm-analyzed-indicator') as HTMLSpanElement | null;
+        if (indicator) {
+          indicator.textContent = 'Various';
+        }
+      } finally {
+        button.disabled = false;
+      }
+    })();
+  };
+
+  const onBpmManualChange = (_e: Event) => {
+    // Manual edit should override analyzed BPMs.
+    clearAnalyzedBpms();
+  };
+
   return (
     <form method="dialog" onsubmit={handleSubmit} class="modal-form id3-tags-editor-form">
+      <input type="hidden" id="analyzed-bpms" name="analyzed-bpms" value="" />
       <h2>{songs.length > 1 ? `${songs.length} Songs` : songs[0].metadata.title}</h2>
       <section class="tags-section">
         <div class="tag-field">
@@ -97,8 +221,22 @@ export default function Id3TagEditor(songs: Song[], handleSubmit: (e: SubmitEven
             id="tag-bpm"
             step="0.1"
             value={bpmValue}
+            onchange={onBpmManualChange}
+            oninput={onBpmManualChange}
             disabled={commonTags.bpm === undefined}
           />
+          <span id="bpm-analyzed-indicator" class="modal-message"></span>
+          {getSongBpm ? (
+            songs.length === 1 ? (
+              <button type="button" class="std-button" onclick={onGetBpmClick}>
+                Get BPM
+              </button>
+            ) : (
+              <button type="button" class="std-button" onclick={onAnalyzeBpmsClick}>
+                Analyze BPMs
+              </button>
+            )
+          ) : null}
         </div>
         <div class="tag-field">
           <input

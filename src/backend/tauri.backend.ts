@@ -70,6 +70,10 @@ export default class TauriBackendService implements BackendService {
     return invoke<boolean>('delete_song', { id });
   }
 
+  async getSongBpm(songId: string): Promise<number | null> {
+    return await invoke<number | null>('get_song_bpm', { songId });
+  }
+
   async bulkUpdateSongs(payload: BulkUpdateSongsPayload): Promise<number> {
     return await invoke<number>('bulk_update_songs', { payload });
   }

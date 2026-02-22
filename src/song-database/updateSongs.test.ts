@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { BackendService } from '../backend/backend.ts';
 import type { Song, SongMetadata } from '../types.ts';
-import { saveUpdatedSongs } from './updateSongs.ts';
+import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './updateSongs.ts';
 
 function song(id: string, metadata?: Partial<SongMetadata>): Song {
   return {
@@ -82,5 +82,24 @@ describe('updateSongs', () => {
     expect(result.find(s => s.id === '1')!.metadata.year).toBe(2020);
     expect(result.find(s => s.id === '3')!.metadata.year).toBe(2020);
     expect(result.find(s => s.id === '2')!.metadata.year).toBe(2000);
+  });
+
+  it('updates multiple songs per-song via updateSong', async () => {
+    const updateSong = vi.fn(async (payload: { id: string; metadata: Partial<SongMetadata> }) =>
+      song(payload.id, payload.metadata)
+    );
+    const backendService = { updateSong } as unknown as BackendService;
+
+    const db = [song('1', { title: 'a' }), song('2', { title: 'b' }), song('3', { title: 'c' })];
+
+    const result = await saveUpdatedSongsPerSong(backendService, [...db], {
+      '1': { bpm: 111 },
+      '3': { bpm: 133 },
+    });
+
+    expect(updateSong).toHaveBeenCalledTimes(2);
+    expect(result.find(s => s.id === '1')!.metadata.bpm).toBe(111);
+    expect(result.find(s => s.id === '3')!.metadata.bpm).toBe(133);
+    expect(result.find(s => s.id === '2')!.metadata.bpm).toBeUndefined();
   });
 });
