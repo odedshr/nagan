@@ -21,13 +21,16 @@ export default (
   selectedSongs: string[],
   columns: string[],
   onToggleSong: (song: Song, checked: boolean) => void,
-  onPlaySong: (song: Song) => void
+  onPlaySong: (song: Song) => void,
+  onSongCheckboxClick: (song: Song, checked: boolean, shiftKey: boolean, visibleSongs: Song[]) => void
 ) =>
   (
     <tbody>
       {songs.map(song => {
         const play = () => onPlaySong(song);
         const onChangeToggle = (e: Event) => onToggleSong(song, (e.target as HTMLInputElement).checked);
+        const onClickToggle = (e: MouseEvent) =>
+          onSongCheckboxClick(song, (e.target as HTMLInputElement).checked, e.shiftKey, songs);
         const artists = getArtistsString(song.metadata.artists);
         const genres = song.metadata.genres ? song.metadata.genres.join(', ') : '';
 
@@ -44,6 +47,7 @@ export default (
                         name="selected-song"
                         value={song.id}
                         checked={selectedSongs.includes(song.id)}
+                        onclick={onClickToggle}
                         onchange={onChangeToggle}
                       />
                     </td>

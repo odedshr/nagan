@@ -53,6 +53,41 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   const selectedSongs = new Set<Song>();
+  let selectionAnchorSongId: string | null = null;
+
+  const onSongCheckboxClick = (song: Song, checked: boolean, shiftKey: boolean, visibleSongs: Song[]) => {
+    if (!shiftKey || !selectionAnchorSongId) {
+      selectionAnchorSongId = song.id;
+      return;
+    }
+
+    const visibleSongIds = visibleSongs.map(s => s.id);
+    const anchorIndex = visibleSongIds.indexOf(selectionAnchorSongId);
+    const currentIndex = visibleSongIds.indexOf(song.id);
+
+    if (anchorIndex === -1 || currentIndex === -1) {
+      selectionAnchorSongId = song.id;
+      return;
+    }
+
+    const [from, to] = anchorIndex <= currentIndex ? [anchorIndex, currentIndex] : [currentIndex, anchorIndex];
+
+    const checkboxNodes = Array.from(document.querySelectorAll('tbody .select-song-checkbox')) as HTMLInputElement[];
+    const checkboxBySongId = new Map<string, HTMLInputElement>();
+    checkboxNodes.forEach(cb => checkboxBySongId.set(cb.value, cb));
+
+    for (let i = from; i <= to; i++) {
+      const songId = visibleSongIds[i];
+      const checkbox = checkboxBySongId.get(songId);
+      if (!checkbox) continue;
+      if (checkbox.checked === checked) continue;
+      checkbox.checked = checked;
+      checkbox.dispatchEvent(new Event('change'));
+    }
+
+    selectionAnchorSongId = song.id;
+  };
+
   const selectAll = (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
     (document.querySelectorAll('.select-song-checkbox') as NodeListOf<HTMLInputElement>).forEach(checkbox => {
@@ -77,7 +112,14 @@ export default function SongDatabase(state: State, backendService: BackendServic
   let addToPlaylist = AddToPlaylist(state.playlists);
   let groupByDropdown = GroupBy(getCurrentGroupBy());
   const columns = getColumns();
-  let tableBody = SongDatabaseTableBody(getVisibleSongs(), [] as string[], columns, onToggleSong, onSongSelected);
+  let tableBody = SongDatabaseTableBody(
+    getVisibleSongs(),
+    [] as string[],
+    columns,
+    onToggleSong,
+    onSongSelected,
+    onSongCheckboxClick
+  );
   let tableHeader = SongDatabaseTableHeader(columns, selectAll);
   let groups = Groups(dbState.groups);
   const elm = SongDatabaseUI(groups, columns, addToPlaylist, groupByDropdown, tableHeader, tableBody);
@@ -108,7 +150,8 @@ export default function SongDatabase(state: State, backendService: BackendServic
       Array.from(selectedSongIds),
       getColumns(),
       onToggleSong,
-      onSongSelected
+      onSongSelected,
+      onSongCheckboxClick
     );
     newContent.onsubmit = onFormSubmitted;
     tableBody = replaceWith(tableBody, newContent) as HTMLTableSectionElement;
