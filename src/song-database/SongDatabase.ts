@@ -135,13 +135,31 @@ export default function SongDatabase(state: State, backendService: BackendServic
       addToPlaylist = replaceWith(addToPlaylist, AddToPlaylist(playlists)) as HTMLDivElement;
     },
     onFilesDropped: (files: File[]) => {
-      files.forEach(async (file: File) => {
-        try {
-          console.log(`➕ Adding song from file: ${file.name}, ${(file as TauriFile).path}`);
-        } catch (error) {
-          console.error(`❌ Failed to add song from file ${file.name}:`, error);
+      void (async () => {
+        const uniqueFiles = new Map<string, File>();
+        files.forEach(file => {
+          const maybePath = (file as TauriFile).path;
+          const key = maybePath || `${file.name}-${file.size}`;
+          if (!uniqueFiles.has(key)) {
+            uniqueFiles.set(key, file);
+          }
+        });
+
+        for (const file of uniqueFiles.values()) {
+          const filePath = (file as TauriFile).path || file.name;
+          try {
+            console.log(`➕ Adding song from file: ${filePath}`);
+            await backendService.addSong(filePath);
+          } catch (error) {
+            console.error(`❌ Failed to add song from file ${filePath}:`, error);
+            state.lastEvent = new CustomEvent('notification', {
+              detail: { type: 'error', message: error },
+            });
+          }
         }
-      });
+
+        await refreshDb();
+      })();
     },
   });
 

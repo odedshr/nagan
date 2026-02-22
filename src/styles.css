@@ -27,6 +27,7 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
+  position: relative;
 
   grid-template-columns: 5rem 1fr;
   grid-template-rows: 1fr 15rem;
@@ -34,23 +35,48 @@ body {
   grid-template-areas:
     'main main'
     'nav player';
+
+  &.no-text-select,
+  &.no-text-select * {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  &.no-text-select input,
+  &.no-text-select textarea,
+  &.no-text-select [contenteditable='true'] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
 
-body.no-text-select,
-body.no-text-select * {
-  -webkit-user-select: none;
-  user-select: none;
-}
+body[data-dragged] {
+  &::before {
+    background: rgba(0, 0, 0, 0.5);
+    content: '';
+    position: absolute;
+    left: 0;
+    height: 100vh;
+    top: 0;
+    width: 100vw;
+    z-index: 100;
+  }
 
-body.no-text-select input,
-body.no-text-select textarea,
-body.no-text-select [contenteditable='true'] {
-  -webkit-user-select: text;
-  user-select: text;
+  &::after {
+    content: 'Dragging ' attr(data-dragged) ' file(s)';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2rem;
+    z-index: 101;
+  }
 }
 
 button {
   cursor: pointer;
+  white-space: nowrap;
 
   &.bare-button {
     background: none;

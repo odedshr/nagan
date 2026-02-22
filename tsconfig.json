@@ -18,6 +18,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
 
     "jsx": "react",           /* Specify what JSX code is generated. */
     "jsxFactory": "jsx",      /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
