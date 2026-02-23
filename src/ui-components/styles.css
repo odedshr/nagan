@@ -48,3 +48,11 @@
     padding: 0.7rem 1.7rem;
   }
 }
+
+.icon-button {
+  height: 3.2rem;
+  margin: 0;
+  min-width: auto;
+  padding: 0;
+  width: 3.2rem;
+}

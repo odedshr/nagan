@@ -1,5 +1,7 @@
 /// <reference path="../jsx.d.ts" />
 
+import BtnAddSong from '../assets/BtnAddSong.js';
+import BtnEditTag from '../assets/BtnEditTag.js';
 import jsx from '../jsx.js';
 
 export default (
@@ -14,11 +16,17 @@ export default (
   return (
     <form class="song-database-container">
       <div class="db-controls">
-        <button class="std-button" id="add-songs-button" data-action="add-songs">
-          Add Songs
+        <button class="std-button icon-button" data-action="add-songs">
+          {BtnAddSong()}
         </button>
-        <button class="std-button" disabled="true" data-target="song" id="edit-tags-button" data-action="edit-tags">
-          Edit tags
+        <button
+          class="std-button icon-button"
+          disabled="true"
+          data-target="song"
+          id="edit-tags-button"
+          data-action="edit-tags"
+        >
+          {BtnEditTag()}
         </button>
         {AddToPlaylist}
         <button class="std-button" disabled="true" data-target="song" id="play-now-button" data-action="play-now">

@@ -110,12 +110,15 @@ input[type='text'].position {
   gap: 0.5rem;
 }
 .player-button {
+  align-items: center;
   background-color: transparent;
   background-size: 3rem 3rem;
   background-repeat: no-repeat;
   background-position: center;
   border: none;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
   height: 4rem;
   width: 4rem;
   margin: 0 0.1rem;
