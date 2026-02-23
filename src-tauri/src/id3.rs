@@ -247,12 +247,15 @@ impl Id3Manager {
         if let Some(image_data_url) = &metadata.image {
             let (mime_type, data) = parse_base64_data_url(image_data_url)?;
             tag.remove_all_pictures();
-            tag.add_picture(Picture {
+            tag.add_frame(Frame::with_content(
+                "APIC",
+                Content::Picture(Picture {
                 mime_type,
                 picture_type: id3::frame::PictureType::CoverFront,
                 description: String::new(),
                 data,
-            });
+                }),
+            ));
         }
 
         tag.write_to_path(file_path, id3::Version::Id3v24)?;
