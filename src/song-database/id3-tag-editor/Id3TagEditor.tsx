@@ -3,8 +3,12 @@
 import jsx from '../../jsx.js';
 
 import { Song, SongMetadata } from '../../types.ts';
+import isTauri from '../../utils/is-tauri.ts';
 import openProgressModal, { ProgressModalHandle } from '../../ui-components/progress/Progress.tsx';
 import { Notifier, getNotify } from '../../ui-components/notification/notifier.ts';
+import loadFile from '../../files/load-file.ts';
+
+import { getClipboardImageFile, getDroppedImageFile, normalizeCoverImageToDataUrl } from './cover-image.ts';
 
 type GetSongBpm = (songId: string) => Promise<number | null>;
 type GetSongGenres = (songId: string) => Promise<string[] | null>;
@@ -46,6 +50,132 @@ export default function Id3TagEditor(
   const genresValue = commonTags.genres ? commonTags.genres.join(', ') : '';
   const bpmValue = commonTags.bpm ?? '';
   const commentValue = commonTags.comment ?? '';
+
+  const setCoverDataUrl = (dataUrl: string) => {
+    const hidden = document.getElementById('tag-image-data') as HTMLInputElement | null;
+    if (hidden) hidden.value = dataUrl;
+
+    const preview = document.getElementById('cover-preview') as HTMLImageElement | null;
+    if (preview) preview.src = dataUrl;
+
+    const indicator = document.getElementById('image-various-indicator') as HTMLSpanElement | null;
+    if (indicator) indicator.textContent = '';
+
+    const enabledCheckbox = document.getElementById('tag-image-enabled') as HTMLInputElement | null;
+    if (enabledCheckbox) enabledCheckbox.checked = true;
+
+    const fileInput = document.getElementById('tag-image') as HTMLInputElement | null;
+    if (fileInput) fileInput.disabled = false;
+  };
+
+  const onCoverImageChosen = async (file: File) => {
+    try {
+      const dataUrl = await normalizeCoverImageToDataUrl(file);
+      setCoverDataUrl(dataUrl);
+    } catch (error) {
+      notify({
+        type: 'error',
+        message: `Failed to load cover image: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  };
+
+  const onCoverBrowseClick = (e: MouseEvent) => {
+    e.preventDefault();
+    const enabledCheckbox = document.getElementById('tag-image-enabled') as HTMLInputElement | null;
+    const fileInput = document.getElementById('tag-image') as HTMLInputElement | null;
+    if (enabledCheckbox) enabledCheckbox.checked = true;
+    if (fileInput) {
+      fileInput.disabled = false;
+      fileInput.click();
+    }
+  };
+
+  const onCoverFileChange = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    void onCoverImageChosen(file);
+  };
+
+  const onCoverPaste = (e: ClipboardEvent) => {
+    const file = getClipboardImageFile(e);
+    if (!file) return;
+    e.preventDefault();
+    void onCoverImageChosen(file);
+  };
+
+  const onCoverDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    const dropzone = document.getElementById('cover-dropzone') as HTMLDivElement | null;
+    if (dropzone) dropzone.classList.add('drag-over');
+  };
+
+  const onCoverDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    const dropzone = document.getElementById('cover-dropzone') as HTMLDivElement | null;
+    if (dropzone) dropzone.classList.remove('drag-over');
+  };
+
+  const onCoverDrop = (e: DragEvent) => {
+    e.preventDefault();
+    const dropzone = document.getElementById('cover-dropzone') as HTMLDivElement | null;
+    if (dropzone) dropzone.classList.remove('drag-over');
+
+    const file = getDroppedImageFile(e);
+    if (!file) return;
+    void onCoverImageChosen(file);
+  };
+
+  const setupTauriCoverDropListener = async (): Promise<(() => void) | null> => {
+    if (!isTauri()) return null;
+
+    const { listen } = await import('@tauri-apps/api/event');
+
+    type TauriDragEvent = {
+      paths: string[];
+      position: { x: number; y: number };
+    };
+
+    const isImagePath = (p: string): boolean => {
+      const lower = p.toLowerCase();
+      return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp');
+    };
+
+    const unlisten = await listen<unknown>('tauri://drag-drop', async event => {
+      const payload = event.payload as unknown as TauriDragEvent;
+      const paths = payload?.paths || [];
+      const { x, y } = payload?.position || { x: -1, y: -1 };
+
+      const dropzone = document.getElementById('cover-dropzone') as HTMLDivElement | null;
+      if (!dropzone) return;
+
+      const rect = dropzone.getBoundingClientRect();
+      const inZone = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+      if (!inZone) return;
+
+      const path = paths.find(isImagePath);
+      if (!path) return;
+
+      try {
+        const file = await loadFile(path);
+        void onCoverImageChosen(file);
+      } catch (error) {
+        notify({
+          type: 'error',
+          message: `Failed to read dropped image: ${error instanceof Error ? error.message : String(error)}`,
+        });
+      }
+    });
+
+    return () => {
+      try {
+        unlisten();
+      } catch {
+        // ignore
+      }
+    };
+  };
 
   const clearAnalyzedBpms = () => {
     const hidden = document.getElementById('analyzed-bpms') as HTMLInputElement | null;
@@ -313,12 +443,64 @@ export default function Id3TagEditor(
     clearAnalyzedBpms();
   };
 
-  return (
-    <form method="dialog" onsubmit={handleSubmit} class="modal-form id3-tags-editor-form">
+  let cleanupTauriCoverDrop: (() => void) | null = null;
+  void setupTauriCoverDropListener().then(cleanup => {
+    cleanupTauriCoverDrop = cleanup;
+  });
+
+  const handleSubmitWithCleanup = (e: SubmitEvent) => {
+    if (cleanupTauriCoverDrop) cleanupTauriCoverDrop();
+    handleSubmit(e);
+  };
+
+  const form = (
+    <form method="dialog" onsubmit={handleSubmitWithCleanup} class="modal-form id3-tags-editor-form">
       <input type="hidden" id="analyzed-bpms" name="analyzed-bpms" value="" />
       <input type="hidden" id="analyzed-genres" name="analyzed-genres" value="" />
+      <input type="hidden" id="tag-image-data" name="image" value={commonTags.image || ''} />
       <h2>{songs.length > 1 ? `${songs.length} Songs` : songs[0].metadata.title}</h2>
       <section class="tags-section">
+        <div class="tag-field cover-field">
+          <input
+            type="checkbox"
+            name="tag-image-enabled"
+            id="tag-image-enabled"
+            checked={!!commonTags.image}
+            onchange={toggleField}
+          />
+          <label for="tag-image">Cover:</label>
+          <div class="cover-controls">
+            <img id="cover-preview" class="cover-preview" alt="Cover preview" src={commonTags.image || 'data:,'} />
+            <div
+              id="cover-dropzone"
+              class="cover-dropzone"
+              onpaste={onCoverPaste}
+              ondragover={onCoverDragOver}
+              ondragleave={onCoverDragLeave}
+              ondrop={onCoverDrop}
+              tabIndex={0}
+            >
+              Drop image, paste, or browse
+            </div>
+            <span id="image-various-indicator" class="modal-message">
+              {songs.length > 1 && !commonTags.image ? 'Various' : ''}
+            </span>
+            <div class="cover-buttons">
+              <input
+                type="file"
+                id="tag-image"
+                name="image-file"
+                accept="image/png,image/jpeg,image/webp"
+                onchange={onCoverFileChange}
+                style="display:none"
+                disabled={!commonTags.image}
+              />
+              <button type="button" class="std-button" onclick={onCoverBrowseClick}>
+                Browse…
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="tag-field">
           <input
             type="checkbox"
@@ -448,4 +630,9 @@ export default function Id3TagEditor(
       </div>
     </form>
   ) as HTMLFormElement;
+
+  // Ensure paste works even when focus isn't on the dropzone.
+  form.addEventListener('paste', onCoverPaste as unknown as EventListener);
+
+  return form;
 }

@@ -37,4 +37,42 @@
       cursor: not-allowed;
     }
   }
+
+  .cover-field {
+    align-items: flex-start;
+
+    .cover-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .cover-preview {
+      width: 9rem;
+      height: 9rem;
+      object-fit: cover;
+      background-color: var(--color-surface);
+      border: 0.1rem solid var(--color-border);
+      box-shadow:
+        inset -1px -1px 0 var(--color-shadow),
+        inset 1px 1px 0 var(--color-surface-alt);
+    }
+
+    .cover-dropzone {
+      padding: 0.5rem;
+      border: 0.1rem dashed var(--color-border);
+      background-color: var(--color-surface);
+      user-select: none;
+    }
+
+    .cover-dropzone.drag-over {
+      background-color: var(--color-surface-alt);
+    }
+
+    .cover-buttons {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+  }
 }

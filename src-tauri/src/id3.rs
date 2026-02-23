@@ -1,6 +1,6 @@
 use crate::models::SongMetadata;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use id3::frame::{Comment, Content};
+use id3::frame::{Comment, Content, Picture};
 use id3::{Frame, Tag, TagLike};
 use lofty::config::WriteOptions;
 use lofty::file::{AudioFile, TaggedFileExt};
@@ -8,6 +8,36 @@ use lofty::picture::PictureType;
 use lofty::tag::Accessor;
 use std::fs::File;
 use std::path::Path;
+
+fn parse_base64_data_url(data_url: &str) -> Result<(String, Vec<u8>), Box<dyn std::error::Error>> {
+    if !data_url.starts_with("data:") {
+        return Err("Expected data URL".into());
+    }
+
+    let rest = &data_url[5..];
+    let (meta, data) = rest
+        .split_once(',')
+        .ok_or_else(|| "Malformed data URL".to_string())?;
+
+    let mut mime_type = "application/octet-stream";
+    let mut is_base64 = false;
+
+    for (idx, part) in meta.split(';').enumerate() {
+        if idx == 0 && !part.is_empty() {
+            mime_type = part;
+        }
+        if part == "base64" {
+            is_base64 = true;
+        }
+    }
+
+    if !is_base64 {
+        return Err("Only base64 data URLs are supported".into());
+    }
+
+    let bytes = BASE64.decode(data.trim())?;
+    Ok((mime_type.to_string(), bytes))
+}
 
 pub struct Id3Manager;
 
@@ -213,6 +243,18 @@ impl Id3Manager {
             tag.add_frame(Frame::with_content("COMM", Content::Comment(comment_obj)));
         }
 
+        // Set cover art
+        if let Some(image_data_url) = &metadata.image {
+            let (mime_type, data) = parse_base64_data_url(image_data_url)?;
+            tag.remove_all_pictures();
+            tag.add_picture(Picture {
+                mime_type,
+                picture_type: id3::frame::PictureType::CoverFront,
+                description: String::new(),
+                data,
+            });
+        }
+
         tag.write_to_path(file_path, id3::Version::Id3v24)?;
         Ok(())
     }
@@ -244,6 +286,21 @@ impl Id3Manager {
 
             if let Some(comment) = &metadata.comment {
                 tag.set_comment(comment.clone());
+            }
+
+            if let Some(image_data_url) = &metadata.image {
+                let (_mime_type, data) = parse_base64_data_url(image_data_url)?;
+                // Lofty will infer/serialize the picture appropriately for the tag type.
+                while !tag.pictures().is_empty() {
+                    tag.remove_picture(0);
+                }
+                let picture = lofty::picture::Picture::new_unchecked(
+                    PictureType::CoverFront,
+                    None,
+                    None,
+                    data,
+                );
+                tag.push_picture(picture);
             }
 
             // Save changes

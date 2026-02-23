@@ -96,6 +96,92 @@ pub async fn update_song(
     payload: UpdateSongPayload,
     state: State<'_, AppState>,
 ) -> Result<Option<Song>, String> {
+    if payload.update_id3.unwrap_or(false) {
+        // Fetch song path + current metadata, then drop the DB lock before writing tags.
+        let (file_path, mut metadata) = {
+            let db = state.db.lock().await;
+            match db
+                .get_song_by_id(&payload.id)
+                .await
+                .map_err(|e| e.to_string())?
+            {
+                Some(song) => (song.url, song.metadata),
+                None => {
+                    // Unknown song id; preserve existing behavior.
+                    let db = state.db.lock().await;
+                    return db
+                        .update_song(&payload.id.clone(), payload)
+                        .await
+                        .map_err(|e| e.to_string());
+                }
+            }
+        };
+
+        if let Some(obj) = payload.metadata.as_object() {
+            if let Some(title) = obj.get("title").and_then(|v| v.as_str()) {
+                metadata.title = title.to_string();
+            }
+            if let Some(album) = obj.get("album").and_then(|v| v.as_str()) {
+                metadata.album = album.to_string();
+            }
+            if let Some(year) = obj.get("year").and_then(|v| v.as_i64()) {
+                metadata.year = i32::try_from(year).ok();
+            }
+            if let Some(track) = obj.get("track").and_then(|v| v.as_i64()) {
+                metadata.track = i32::try_from(track).ok();
+            }
+            if let Some(bpm) = obj.get("bpm").and_then(|v| v.as_f64()) {
+                if bpm.is_finite() {
+                    metadata.bpm = Some(bpm as f32);
+                }
+            }
+            if let Some(image) = obj.get("image").and_then(|v| v.as_str()) {
+                metadata.image = Some(image.to_string());
+            }
+
+            // Preferred: { artists: ["a", "b"] }, but also accept { artist: "single" }.
+            if let Some(artists) = obj.get("artists").and_then(|v| v.as_array()) {
+                metadata.artists = artists
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect();
+            } else if let Some(artist) = obj.get("artists").and_then(|v| v.as_str()) {
+                metadata.artists = vec![artist.to_string()];
+            } else if let Some(artist) = obj.get("artist").and_then(|v| v.as_str()) {
+                metadata.artists = vec![artist.to_string()];
+            }
+
+            // Preferred: { genres: ["a", "b"] }, but also accept { genre: "single" }.
+            if let Some(genres) = obj.get("genres").and_then(|v| v.as_array()) {
+                metadata.genres = genres
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect();
+            } else if let Some(genre) = obj.get("genres").and_then(|v| v.as_str()) {
+                metadata.genres = vec![genre.to_string()];
+            } else if let Some(genres) = obj.get("genre").and_then(|v| v.as_array()) {
+                metadata.genres = genres
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect();
+            } else if let Some(genre) = obj.get("genre").and_then(|v| v.as_str()) {
+                metadata.genres = vec![genre.to_string()];
+            }
+
+            if let Some(comment) = obj.get("comment").and_then(|v| v.as_str()) {
+                metadata.comment = Some(comment.to_string());
+            }
+        }
+
+        let id3_manager = Id3Manager::new();
+        id3_manager
+            .write_metadata(&file_path, &metadata)
+            .map_err(|e| format!("Failed to update file tags: {}", e))?;
+    }
+
     let db = state.db.lock().await;
     db.update_song(&payload.id.clone(), payload)
         .await
@@ -194,6 +280,12 @@ pub(crate) async fn bulk_update_songs_inner(
                 }
                 if let Some(comment) = updates_obj.get("comment").and_then(|v| v.as_str()) {
                     updated_metadata.comment = Some(comment.to_string());
+                }
+
+                if let Some(image) = updates_obj.get("image") {
+                    if let Some(s) = image.as_str() {
+                        updated_metadata.image = Some(s.to_string());
+                    }
                 }
             }
 

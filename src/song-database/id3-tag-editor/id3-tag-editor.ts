@@ -79,6 +79,12 @@ function handleSubmit(e: SubmitEvent, onSubmit: (result: Id3TagEditorResult | nu
     updatedTags.comment = comment;
   }
 
+  if (formData.get('tag-image-enabled')) {
+    const rawImage = (formData.get('image') as string) || '';
+    const trimmed = rawImage.trim();
+    updatedTags.image = trimmed ? trimmed : undefined;
+  }
+
   const hasManualBpm = formData.get('tag-bpm-enabled') && updatedTags.bpm !== undefined;
   const hasManualGenres = formData.get('tag-genres-enabled') && updatedTags.genres !== undefined;
 

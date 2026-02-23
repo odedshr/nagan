@@ -7,8 +7,21 @@ function isFileDrag(event: DragEvent): boolean {
   return Boolean(event.dataTransfer?.types?.includes('Files'));
 }
 
+function isAudioPath(path: string): boolean {
+  const lower = path.toLowerCase();
+  return (
+    lower.endsWith('.mp3') ||
+    lower.endsWith('.m4a') ||
+    lower.endsWith('.ogg') ||
+    lower.endsWith('.wav') ||
+    lower.endsWith('.flac') ||
+    lower.endsWith('.aac') ||
+    lower.endsWith('.webm')
+  );
+}
+
 async function handleTauriFileDrop(state: State, paths: string[]) {
-  const uniquePaths = [...new Set(paths)].filter(Boolean);
+  const uniquePaths = [...new Set(paths)].filter(Boolean).filter(isAudioPath);
   if (uniquePaths.length === 0) {
     return;
   }

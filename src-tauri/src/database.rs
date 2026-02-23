@@ -615,6 +615,7 @@ impl Database {
         let mut new_bpm: Option<f32> = None;
         let mut new_genres_json: Option<String> = None;
         let mut new_comment: Option<String> = None;
+        let mut new_image: Option<String> = None;
 
         if let Some(obj) = updates.metadata.as_object() {
             if let Some(title) = obj.get("title").and_then(|v| v.as_str()) {
@@ -682,6 +683,10 @@ impl Database {
             if let Some(comment) = obj.get("comment").and_then(|v| v.as_str()) {
                 new_comment = Some(comment.to_string());
             }
+
+            if let Some(image) = obj.get("image").and_then(|v| v.as_str()) {
+                new_image = Some(image.to_string());
+            }
         }
 
         sqlx::query(
@@ -695,6 +700,7 @@ impl Database {
                             bpm = COALESCE(?, bpm),
                             genres = COALESCE(?, genres),
                             comment = COALESCE(?, comment),
+                            image = COALESCE(?, image),
               filename = COALESCE(?, filename),
               updated_at = ?
             WHERE id = ?
@@ -707,6 +713,7 @@ impl Database {
                 .bind(new_bpm)
                 .bind(new_genres_json)
                 .bind(new_comment)
+                .bind(new_image)
         .bind(updates.filename)
         .bind(Utc::now())
         .bind(id)
