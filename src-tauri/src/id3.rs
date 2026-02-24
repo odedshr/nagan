@@ -243,19 +243,24 @@ impl Id3Manager {
             tag.add_frame(Frame::with_content("COMM", Content::Comment(comment_obj)));
         }
 
-        // Set cover art
-        if let Some(image_data_url) = &metadata.image {
-            let (mime_type, data) = parse_base64_data_url(image_data_url)?;
-            tag.remove_all_pictures();
-            tag.add_frame(Frame::with_content(
-                "APIC",
-                Content::Picture(Picture {
-                mime_type,
-                picture_type: id3::frame::PictureType::CoverFront,
-                description: String::new(),
-                data,
-                }),
-            ));
+        // Set/clear cover art
+        match &metadata.image {
+            Some(image_data_url) => {
+                let (mime_type, data) = parse_base64_data_url(image_data_url)?;
+                tag.remove_all_pictures();
+                tag.add_frame(Frame::with_content(
+                    "APIC",
+                    Content::Picture(Picture {
+                        mime_type,
+                        picture_type: id3::frame::PictureType::CoverFront,
+                        description: String::new(),
+                        data,
+                    }),
+                ));
+            }
+            None => {
+                tag.remove_all_pictures();
+            }
         }
 
         tag.write_to_path(file_path, id3::Version::Id3v24)?;
@@ -291,18 +296,13 @@ impl Id3Manager {
                 tag.set_comment(comment.clone());
             }
 
+            // Set/clear cover art
+            while !tag.pictures().is_empty() {
+                tag.remove_picture(0);
+            }
             if let Some(image_data_url) = &metadata.image {
                 let (_mime_type, data) = parse_base64_data_url(image_data_url)?;
-                // Lofty will infer/serialize the picture appropriately for the tag type.
-                while !tag.pictures().is_empty() {
-                    tag.remove_picture(0);
-                }
-                let picture = lofty::picture::Picture::new_unchecked(
-                    PictureType::CoverFront,
-                    None,
-                    None,
-                    data,
-                );
+                let picture = lofty::picture::Picture::new_unchecked(PictureType::CoverFront, None, None, data);
                 tag.push_picture(picture);
             }
 

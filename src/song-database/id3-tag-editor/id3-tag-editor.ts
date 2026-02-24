@@ -80,9 +80,15 @@ function handleSubmit(e: SubmitEvent, onSubmit: (result: Id3TagEditorResult | nu
   }
 
   if (formData.get('tag-image-enabled')) {
-    const rawImage = (formData.get('image') as string) || '';
-    const trimmed = rawImage.trim();
-    updatedTags.image = trimmed ? trimmed : undefined;
+    const didClear = ((formData.get('image-clear') as string) || '').trim() === 'true';
+    if (didClear) {
+      // Explicit clear should propagate as null (clears DB + embedded cover art).
+      (updatedTags as unknown as { image: null }).image = null;
+    } else {
+      const rawImage = (formData.get('image') as string) || '';
+      const trimmed = rawImage.trim();
+      updatedTags.image = trimmed ? trimmed : undefined;
+    }
   }
 
   const hasManualBpm = formData.get('tag-bpm-enabled') && updatedTags.bpm !== undefined;

@@ -135,8 +135,12 @@ pub async fn update_song(
                     metadata.bpm = Some(bpm as f32);
                 }
             }
-            if let Some(image) = obj.get("image").and_then(|v| v.as_str()) {
-                metadata.image = Some(image.to_string());
+            if let Some(image_value) = obj.get("image") {
+                if image_value.is_null() {
+                    metadata.image = None;
+                } else if let Some(image) = image_value.as_str() {
+                    metadata.image = Some(image.to_string());
+                }
             }
 
             // Preferred: { artists: ["a", "b"] }, but also accept { artist: "single" }.
@@ -283,7 +287,9 @@ pub(crate) async fn bulk_update_songs_inner(
                 }
 
                 if let Some(image) = updates_obj.get("image") {
-                    if let Some(s) = image.as_str() {
+                    if image.is_null() {
+                        updated_metadata.image = None;
+                    } else if let Some(s) = image.as_str() {
                         updated_metadata.image = Some(s.to_string());
                     }
                 }

@@ -616,6 +616,7 @@ impl Database {
         let mut new_genres_json: Option<String> = None;
         let mut new_comment: Option<String> = None;
         let mut new_image: Option<String> = None;
+        let mut clear_image: bool = false;
 
         if let Some(obj) = updates.metadata.as_object() {
             if let Some(title) = obj.get("title").and_then(|v| v.as_str()) {
@@ -684,8 +685,14 @@ impl Database {
                 new_comment = Some(comment.to_string());
             }
 
-            if let Some(image) = obj.get("image").and_then(|v| v.as_str()) {
-                new_image = Some(image.to_string());
+            if let Some(image_value) = obj.get("image") {
+                if image_value.is_null() {
+                    clear_image = true;
+                    new_image = None;
+                } else if let Some(image) = image_value.as_str() {
+                    clear_image = false;
+                    new_image = Some(image.to_string());
+                }
             }
         }
 
@@ -700,7 +707,7 @@ impl Database {
                             bpm = COALESCE(?, bpm),
                             genres = COALESCE(?, genres),
                             comment = COALESCE(?, comment),
-                            image = COALESCE(?, image),
+                            image = CASE WHEN ? = 1 THEN NULL ELSE COALESCE(?, image) END,
               filename = COALESCE(?, filename),
               updated_at = ?
             WHERE id = ?
@@ -713,7 +720,8 @@ impl Database {
                 .bind(new_bpm)
                 .bind(new_genres_json)
                 .bind(new_comment)
-                .bind(new_image)
+            .bind(if clear_image { 1 } else { 0 })
+            .bind(new_image)
         .bind(updates.filename)
         .bind(Utc::now())
         .bind(id)

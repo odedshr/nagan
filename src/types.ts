@@ -32,7 +32,7 @@ export interface SongMetadata {
   album: string;
   year?: number;
   track?: number;
-  image?: string;
+  image?: string | null;
   duration: number;
   artists: string | string[];
   instruments?: string[];

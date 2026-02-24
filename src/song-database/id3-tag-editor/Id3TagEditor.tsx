@@ -55,6 +55,9 @@ export default function Id3TagEditor(
     const hidden = document.getElementById('tag-image-data') as HTMLInputElement | null;
     if (hidden) hidden.value = dataUrl;
 
+    const clearFlag = document.getElementById('tag-image-clear') as HTMLInputElement | null;
+    if (clearFlag) clearFlag.value = '';
+
     const preview = document.getElementById('cover-preview') as HTMLImageElement | null;
     if (preview) preview.src = dataUrl;
 
@@ -66,6 +69,34 @@ export default function Id3TagEditor(
 
     const fileInput = document.getElementById('tag-image') as HTMLInputElement | null;
     if (fileInput) fileInput.disabled = false;
+  };
+
+  const clearCover = () => {
+    const hidden = document.getElementById('tag-image-data') as HTMLInputElement | null;
+    if (hidden) hidden.value = '';
+
+    const clearFlag = document.getElementById('tag-image-clear') as HTMLInputElement | null;
+    if (clearFlag) clearFlag.value = 'true';
+
+    const preview = document.getElementById('cover-preview') as HTMLImageElement | null;
+    if (preview) preview.src = 'data:,';
+
+    const indicator = document.getElementById('image-various-indicator') as HTMLSpanElement | null;
+    if (indicator) indicator.textContent = '';
+
+    const enabledCheckbox = document.getElementById('tag-image-enabled') as HTMLInputElement | null;
+    if (enabledCheckbox) enabledCheckbox.checked = true;
+
+    const fileInput = document.getElementById('tag-image') as HTMLInputElement | null;
+    if (fileInput) {
+      fileInput.disabled = false;
+      fileInput.value = '';
+    }
+  };
+
+  const onClearCoverClick = (e: MouseEvent) => {
+    e.preventDefault();
+    clearCover();
   };
 
   const onCoverImageChosen = async (file: File) => {
@@ -458,6 +489,7 @@ export default function Id3TagEditor(
       <input type="hidden" id="analyzed-bpms" name="analyzed-bpms" value="" />
       <input type="hidden" id="analyzed-genres" name="analyzed-genres" value="" />
       <input type="hidden" id="tag-image-data" name="image" value={commonTags.image || ''} />
+      <input type="hidden" id="tag-image-clear" name="image-clear" value="" />
       <h2>{songs.length > 1 ? `${songs.length} Songs` : songs[0].metadata.title}</h2>
       <section class="tags-section">
         <div class="tag-field cover-field">
@@ -497,6 +529,9 @@ export default function Id3TagEditor(
               />
               <button type="button" class="std-button" onclick={onCoverBrowseClick}>
                 Browse…
+              </button>
+              <button type="button" class="std-button" onclick={onClearCoverClick}>
+                Clear cover
               </button>
             </div>
           </div>
