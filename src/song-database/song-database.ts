@@ -1,6 +1,6 @@
 import { BackendService, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
-import { Playlist, Song, State, TauriFile } from '../types.ts';
+import { Playlist, Song, State } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
 import GroupBy from './groups/GroupBy.tsx';
@@ -12,7 +12,6 @@ import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 import Groups from './groups/Groups.tsx';
 import replaceWith from '../utils/replace-with.ts';
 import { createSongDatabaseState } from './song-database-state.ts';
-import { browseFile } from './add-songs.ts';
 import { addSongsToPlaylist as addSongsToPlaylistImpl } from './add-songs-to-playlist.ts';
 import { createSongDatabaseActionHandler } from './action-handler.ts';
 import { attachSongDatabaseStateListeners } from './state-listener.ts';

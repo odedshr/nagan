@@ -44,7 +44,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     history: [],
     currentPlaylist: null,
     playlistSongs: [],
-    cssTheme: 'default',
+    preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: false },
   };
 
   return Context<StateBase>({ ...base, ...overrides }) as unknown as State;
@@ -86,7 +86,6 @@ describe('actionHandler', () => {
       dbState,
       backendService,
       getCurrentGroupBy: () => [],
-      refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
       saveUpdatedSongsFn,
@@ -125,7 +124,6 @@ describe('actionHandler', () => {
       dbState,
       backendService: {} as BackendService,
       getCurrentGroupBy: () => ['artists'],
-      refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
     });
@@ -153,7 +151,6 @@ describe('actionHandler', () => {
       dbState,
       backendService: {} as BackendService,
       getCurrentGroupBy: () => ['album'],
-      refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
     });
@@ -181,7 +178,6 @@ describe('actionHandler', () => {
       dbState,
       backendService: {} as BackendService,
       getCurrentGroupBy: () => ['album'],
-      refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
     });
@@ -210,7 +206,6 @@ describe('actionHandler', () => {
       dbState,
       backendService: {} as BackendService,
       getCurrentGroupBy: () => [],
-      refreshDb: vi.fn(async () => undefined),
       onRemoveSong: vi.fn(async () => undefined),
       addSongsToPlaylist: vi.fn(async () => undefined),
       enqueueSongsNextFn,

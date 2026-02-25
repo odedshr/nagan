@@ -24,7 +24,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     history: [],
     currentPlaylist: null,
     playlistSongs: [],
-    cssTheme: 'default',
+    preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: false },
   };
 
   return Context<StateBase>({ ...base, ...overrides }) as unknown as State;
@@ -48,6 +48,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
+      onFilesDropped: vi.fn(),
       getCurrentGroupBy: () => [],
     });
 
@@ -74,6 +75,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
+      onFilesDropped: vi.fn(),
       getCurrentGroupBy: () => [],
     });
 
@@ -113,6 +115,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange,
       onGroupsChanged,
       onPlaylistsChanged: vi.fn(),
+      onFilesDropped: vi.fn(),
       getCurrentGroupBy: () => ['album'],
     });
 
@@ -144,6 +147,7 @@ describe('stateListener', () => {
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
       onPlaylistsChanged: vi.fn(),
+      onFilesDropped: vi.fn(),
       getCurrentGroupBy: () => [],
     });
 
