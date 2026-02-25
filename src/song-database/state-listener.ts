@@ -13,7 +13,7 @@ export type SongDatabaseListenerDeps = {
   onGroupByDropdownChange: (current: SongMetadataAttribute[]) => void;
   onGroupsChanged: (groups: SongGroupsResponseItem[]) => void;
   onPlaylistsChanged: (playlists: Playlist[]) => void;
-  onFilesDropped?: (files: File[]) => void;
+  onFilesDropped: (files: File[]) => void;
   getCurrentGroupBy: () => SongMetadataAttribute[];
 };
 
@@ -42,9 +42,7 @@ export function attachSongDatabaseStateListeners({
         break;
       case 'files-dropped': {
         const files = (event as FileDropEvent).detail.files as File[];
-        if (onFilesDropped) {
-          onFilesDropped(files);
-        }
+        onFilesDropped(files);
         break;
       }
     }

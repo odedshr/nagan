@@ -2,31 +2,20 @@ import { listen } from '@tauri-apps/api/event';
 
 import { State } from '../types';
 import loadFile from './load-file.tauri';
-
+import { isAudioPath } from './is-audio-file';
+import expandFoldersRecursively from './expand-folder';
 function isFileDrag(event: DragEvent): boolean {
   return Boolean(event.dataTransfer?.types?.includes('Files'));
 }
 
-function isAudioPath(path: string): boolean {
-  const lower = path.toLowerCase();
-  return (
-    lower.endsWith('.mp3') ||
-    lower.endsWith('.m4a') ||
-    lower.endsWith('.ogg') ||
-    lower.endsWith('.wav') ||
-    lower.endsWith('.flac') ||
-    lower.endsWith('.aac') ||
-    lower.endsWith('.webm')
-  );
-}
-
 async function handleTauriFileDrop(state: State, paths: string[]) {
-  const uniquePaths = [...new Set(paths)].filter(Boolean).filter(isAudioPath);
+  const expandedPaths = await expandFoldersRecursively(paths);
+  const uniquePaths = [...new Set(expandedPaths)].filter(isAudioPath);
   if (uniquePaths.length === 0) {
     return;
   }
 
-  const results = await Promise.allSettled(uniquePaths.map(path => loadFile(path)));
+  const results = await Promise.allSettled(uniquePaths.map(loadFile));
 
   const files: File[] = [];
   const failures: Array<{ path: string; reason: unknown }> = [];
@@ -41,15 +30,6 @@ async function handleTauriFileDrop(state: State, paths: string[]) {
       failures.push({ path, reason: result.reason });
     }
   });
-
-  console.group('Tauri file drop');
-  uniquePaths.forEach(path => console.log('Path:', path));
-  files.forEach(file => {
-    const maybePath = (file as File & { path?: string }).path;
-    console.log('File:', { path: maybePath, name: file.name, size: file.size, type: file.type });
-  });
-  failures.forEach(f => console.warn('Failed to load dropped path:', f.path, f.reason));
-  console.groupEnd();
 
   if (files.length > 0) {
     state.lastEvent = new CustomEvent('files-dropped', { detail: { files } });

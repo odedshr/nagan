@@ -12,11 +12,13 @@ import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
 import Groups from './groups/Groups.tsx';
 import replaceWith from '../utils/replace-with.ts';
 import { createSongDatabaseState } from './song-database-state.ts';
-import { addSongsToPlaylist as addSongsToPlaylistImpl, browseFile as browseFileImpl } from './add-songs.ts';
+import { browseFile } from './add-songs.ts';
+import { addSongsToPlaylist as addSongsToPlaylistImpl } from './add-songs-to-playlist.ts';
 import { createSongDatabaseActionHandler } from './action-handler.ts';
 import { attachSongDatabaseStateListeners } from './state-listener.ts';
 import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
 import { createLastEventNotifier } from '../ui-components/notification/notifier.ts';
+import processSongs from './process-songs.ts';
 
 const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
 
@@ -145,8 +147,6 @@ export default function SongDatabase(state: State, backendService: BackendServic
     getCurrentGroupBy,
     onRemoveSong,
     addSongsToPlaylist,
-    refreshDb,
-    browseFileFn: browseFileImpl,
     editId3TagsFn: editId3Tags,
     enqueueSongsNextFn: enqueueSongsNext,
   });
@@ -190,32 +190,10 @@ export default function SongDatabase(state: State, backendService: BackendServic
     onPlaylistsChanged: (playlists: Playlist[]) => {
       addToPlaylist = replaceWith(addToPlaylist, AddToPlaylist(playlists)) as HTMLDivElement;
     },
-    onFilesDropped: (files: File[]) => {
-      void (async () => {
-        const uniqueFiles = new Map<string, File>();
-        files.forEach(file => {
-          const maybePath = (file as TauriFile).path;
-          const key = maybePath || `${file.name}-${file.size}`;
-          if (!uniqueFiles.has(key)) {
-            uniqueFiles.set(key, file);
-          }
-        });
-
-        for (const file of uniqueFiles.values()) {
-          const filePath = (file as TauriFile).path || file.name;
-          try {
-            console.log(`➕ Adding song from file: ${filePath}`);
-            await backendService.addSong(filePath);
-          } catch (error) {
-            console.error(`❌ Failed to add song from file ${filePath}:`, error);
-            state.lastEvent = new CustomEvent('notification', {
-              detail: { type: 'error', message: error },
-            });
-          }
-        }
-
-        await refreshDb();
-      })();
+    onFilesDropped: async (files: File[]) => {
+      console.log(files);
+      await processSongs(files, state, backendService);
+      await refreshDb();
     },
   });
 

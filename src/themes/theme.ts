@@ -1,4 +1,6 @@
-import { State } from '../types';
+import { Preferences, State } from '../types';
+
+let currentTheme: string = 'default';
 
 function loadTheme(themeName: string): void {
   // Remove existing theme
@@ -17,11 +19,14 @@ function loadTheme(themeName: string): void {
 }
 
 export function applyTheme(state: State): void {
-  const themeName = state.cssTheme || 'default';
+  const themeName = state.preferences.cssTheme || 'default';
 
   loadTheme(themeName);
 
-  state.addListener('cssTheme', (newTheme: string) => {
-    loadTheme(newTheme);
+  state.addListener('preferences', (newPreferences: Preferences) => {
+    if (newPreferences.cssTheme != currentTheme) {
+      loadTheme(currentTheme || 'default');
+      currentTheme = newPreferences.cssTheme;
+    }
   });
 }

@@ -1,12 +1,6 @@
 # TODO
 
-- fix knob for safari
-- consolidate modal css
-- handle backend errors
-- queue
-- play straight away
-- coming up next
-
+===
 Using Proxy for state and event management
 events, if needed are set into the proxy "lastEvent" variable with designated type
 type=notifications issues toast notifications
@@ -24,7 +18,12 @@ PromptComponent
 
 Tasks
 
-1. rearrange columns
-2. filter
-3. sort
-4. show/hide columns
+1. file-drop should use processFile method
+2. state.lock
+3. handle folders
+4. rearrange columns
+5. filter mechanism
+6. using columns to sort
+7. show/hide columns
+8. handle backend errors
+9. updatable notifications

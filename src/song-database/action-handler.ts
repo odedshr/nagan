@@ -3,7 +3,7 @@ import { enqueueSongsNext } from '../queue/queue-manager.ts';
 import { DbSortDirection, DbSortItem, DbSortKey, Song, SongMetadata, State } from '../types.ts';
 import editId3Tags, { Id3TagEditorResult } from './id3-tag-editor/id3-tag-editor.ts';
 import { SongDatabaseState } from './song-database-state.ts';
-import { browseFile, songsFromIds } from './add-songs.ts';
+import { browseFile } from './add-songs.ts';
 import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './update-songs.ts';
 import { getMusicBrainzGenres } from '../utils/musicbrainz.ts';
 import { Notifier } from '../ui-components/notification/notifier.ts';
@@ -22,8 +22,6 @@ export type SongDatabaseActionHandlerDeps = {
   enqueueSongsNextFn?: typeof enqueueSongsNext;
   onRemoveSong: (song: Song) => Promise<void>;
   addSongsToPlaylist: (playlistId: string | null, songs: Song[]) => Promise<void>;
-  refreshDb: () => Promise<void>;
-  songsFromIdsFn?: typeof songsFromIds;
 };
 
 export function createSongDatabaseActionHandler({
@@ -34,23 +32,21 @@ export function createSongDatabaseActionHandler({
   getCurrentGroupBy,
   onRemoveSong,
   addSongsToPlaylist,
-  refreshDb,
   browseFileFn = browseFile,
   editId3TagsFn = editId3Tags,
   saveUpdatedSongsFn = saveUpdatedSongs,
   enqueueSongsNextFn = enqueueSongsNext,
-  songsFromIdsFn = songsFromIds,
 }: SongDatabaseActionHandlerDeps) {
   return async (e: SubmitEvent) => {
     e.preventDefault();
 
     const songIds = new FormData(e.target as HTMLFormElement).getAll('selected-song');
-    const songs = songsFromIdsFn(dbState.db, songIds);
+    const songs = songsFromIds(dbState.db, songIds);
 
     const action = (e.submitter as HTMLButtonElement).getAttribute('data-action');
     switch (action) {
       case 'add-songs':
-        return browseFileFn({ state, backendService, refreshDb });
+        return browseFileFn(state, backendService);
 
       case 'edit-tags': {
         const getSongGenres = async (songId: string): Promise<string[] | null> => {
@@ -252,4 +248,8 @@ export function createSongDatabaseActionHandler({
 
     return false;
   };
+}
+
+function songsFromIds(db: Song[], songIds: FormDataEntryValue[]): Song[] {
+  return songIds.map(songId => db.find(s => s.id === songId)).filter(s => s !== undefined) as Song[];
 }

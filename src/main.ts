@@ -39,13 +39,13 @@ export async function initApp() {
     queue: [],
     currentSection: null,
     history: [],
-    cssTheme: 'default',
+    preferences: { cssTheme: 'default', autoAnalyzeBpm: true, autoAnalyzeGenres: true },
   };
 
   const state = Context(loadPersistedState(defaultState)) as State;
 
   // Set up persistence with debounced save on key changes
-  persist(state, ['volume', 'playbackRate', 'repeat', 'mode', 'currentPlaylistId', 'queue', 'history', 'cssTheme']);
+  persist(state, ['volume', 'playbackRate', 'repeat', 'mode', 'currentPlaylistId', 'queue', 'history', 'preferences']);
 
   state.compute('currentPlaylist', state => state.playlists.find(pl => pl.id === state.currentPlaylistId) || null);
 

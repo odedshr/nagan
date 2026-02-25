@@ -118,6 +118,12 @@ export type DbSortItem = {
   direction: DbSortDirection;
 };
 
+export type Preferences = {
+  cssTheme: string;
+  autoAnalyzeBpm: boolean;
+  autoAnalyzeGenres: boolean;
+};
+
 export type StateBase = {
   mode: 'database' | 'playlist' | 'notes';
   currentTrack: Song | null;
@@ -139,7 +145,7 @@ export type StateBase = {
   // computed items:
   currentPlaylist: Playlist | null;
   playlistSongs: Song[];
-  cssTheme: string;
+  preferences: Preferences;
 };
 
 export type State = StateTemplate<StateBase>;
