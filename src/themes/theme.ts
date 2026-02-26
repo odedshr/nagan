@@ -1,4 +1,4 @@
-import { Preferences, State } from '../types';
+import { State } from '../types';
 
 let currentTheme: string = 'default';
 
@@ -23,10 +23,10 @@ export function applyTheme(state: State): void {
 
   loadTheme(themeName);
 
-  state.addListener('preferences', (newPreferences: Preferences) => {
-    if (newPreferences.cssTheme != currentTheme) {
-      loadTheme(currentTheme || 'default');
-      currentTheme = newPreferences.cssTheme;
+  state.preferences.addListener('cssTheme', (newTheme: string) => {
+    if (newTheme != currentTheme) {
+      loadTheme(newTheme || 'default');
+      currentTheme = newTheme;
     }
   });
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { Context } from '../utils/context.ts';
+import { initState } from '../utils/init-state.ts';
 import type { Song, SongMetadata, State, StateBase } from '../types.ts';
 import type { BackendService } from '../backend/backend.ts';
 import processSongs from './process-songs.ts';
@@ -54,10 +54,14 @@ function createState(overrides: Partial<StateBase> = {}): State {
     history: [],
     currentPlaylist: null,
     playlistSongs: [],
-    preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: false },
+    preferences: initState({
+      cssTheme: 'default',
+      autoAnalyzeBpm: false,
+      autoAnalyzeGenres: false,
+    }),
   };
 
-  return Context<StateBase>({ ...base, ...overrides }) as unknown as State;
+  return initState<StateBase>({ ...base, ...overrides }) as unknown as State;
 }
 
 describe('addSongs', () => {
@@ -116,7 +120,11 @@ describe('addSongs', () => {
 
   it('processSongs auto-analyzes genres when enabled and song has none', async () => {
     const state = createState({
-      preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: true },
+      preferences: initState({
+        cssTheme: 'default',
+        autoAnalyzeBpm: false,
+        autoAnalyzeGenres: true,
+      }),
     });
 
     const backendService = {
@@ -135,7 +143,11 @@ describe('addSongs', () => {
 
   it('processSongs auto-analyzes BPM when enabled and song has none', async () => {
     const state = createState({
-      preferences: { cssTheme: 'default', autoAnalyzeBpm: true, autoAnalyzeGenres: false },
+      preferences: initState({
+        cssTheme: 'default',
+        autoAnalyzeBpm: true,
+        autoAnalyzeGenres: false,
+      }),
     });
 
     const backendService = {

@@ -1,7 +1,7 @@
 import SongDatabase from './song-database/song-database';
 import PlaylistManager from './playlist-manager/playlist-manager';
 import Player from './player/player';
-import { Context } from './utils/context';
+import { initState } from './utils/init-state';
 import { Mode, RepeatMode, State } from './types';
 import { BackendService, getBackendService } from './backend/backend';
 import initNotifications from './ui-components/notification/init-notifications';
@@ -39,10 +39,11 @@ export async function initApp() {
     queue: [],
     currentSection: null,
     history: [],
-    preferences: { cssTheme: 'default', autoAnalyzeBpm: true, autoAnalyzeGenres: true },
+    preferences: initState({ cssTheme: 'default', autoAnalyzeBpm: true, autoAnalyzeGenres: true }),
   };
 
-  const state = Context(loadPersistedState(defaultState)) as State;
+  const state = initState(loadPersistedState(defaultState)) as State;
+  state.subState('preferences');
 
   // Set up persistence with debounced save on key changes
   persist(state, ['volume', 'playbackRate', 'repeat', 'mode', 'currentPlaylistId', 'queue', 'history', 'preferences']);

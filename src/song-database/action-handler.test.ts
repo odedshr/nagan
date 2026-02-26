@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { Context } from '../utils/context.ts';
+import { initState } from '../utils/init-state.ts';
 import type { Song, SongMetadata, State, StateBase } from '../types.ts';
 import type { BackendService, SongMetadataAttribute } from '../backend/backend.ts';
 import { createSongDatabaseState } from './song-database-state.ts';
@@ -44,10 +44,14 @@ function createState(overrides: Partial<StateBase> = {}): State {
     history: [],
     currentPlaylist: null,
     playlistSongs: [],
-    preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: false },
+    preferences: initState({
+      cssTheme: 'default',
+      autoAnalyzeBpm: false,
+      autoAnalyzeGenres: false,
+    }),
   };
 
-  return Context<StateBase>({ ...base, ...overrides }) as unknown as State;
+  return initState<StateBase>({ ...base, ...overrides }) as unknown as State;
 }
 
 function submitEvent(form: HTMLFormElement, submitter: HTMLButtonElement): SubmitEvent {

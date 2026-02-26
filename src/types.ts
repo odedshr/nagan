@@ -1,5 +1,5 @@
 import { SongGroupsQueryItem } from './backend/backend';
-import { StateTemplate } from './utils/context';
+import { StateTemplate } from './utils/init-state';
 
 export interface Player {
   setMetadata(data: { title: string; artist: string; image?: string; duration: number }): void;
@@ -118,7 +118,7 @@ export type DbSortItem = {
   direction: DbSortDirection;
 };
 
-export type Preferences = {
+export type PreferenceBase = {
   cssTheme: string;
   autoAnalyzeBpm: boolean;
   autoAnalyzeGenres: boolean;
@@ -145,7 +145,7 @@ export type StateBase = {
   // computed items:
   currentPlaylist: Playlist | null;
   playlistSongs: Song[];
-  preferences: Preferences;
+  preferences: StateTemplate<PreferenceBase>;
 };
 
 export type State = StateTemplate<StateBase>;

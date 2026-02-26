@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { BackendService } from '../backend/backend.ts';
 import type { Song, SongMetadata, State, StateBase } from '../types.ts';
-import { Context } from '../utils/context.ts';
+import { initState } from '../utils/init-state.ts';
 import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
 
 function song(id: string, metadata?: Partial<SongMetadata>): Song {
@@ -43,10 +43,14 @@ function createState(overrides: Partial<StateBase> = {}): State {
     history: [],
     currentPlaylist: null,
     playlistSongs: [],
-    preferences: { cssTheme: 'default', autoAnalyzeBpm: false, autoAnalyzeGenres: false },
+    preferences: initState({
+      cssTheme: 'default',
+      autoAnalyzeBpm: false,
+      autoAnalyzeGenres: false,
+    }),
   };
 
-  return Context<StateBase>({ ...base, ...overrides }) as unknown as State;
+  return initState<StateBase>({ ...base, ...overrides }) as unknown as State;
 }
 
 describe('songQueries', () => {

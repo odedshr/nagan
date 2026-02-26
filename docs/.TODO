@@ -18,12 +18,11 @@ PromptComponent
 
 Tasks
 
-1. file-drop should use processFile method
-2. state.lock
-3. handle folders
-4. rearrange columns
-5. filter mechanism
-6. using columns to sort
-7. show/hide columns
-8. handle backend errors
-9. updatable notifications
+1. Take analayzeGenre/BPM from id3Editor
+2. pagination
+3. rearrange columns
+4. filter mechanism
+5. using columns to sort
+6. show/hide columns
+7. handle backend errors
+8. updatable notifications

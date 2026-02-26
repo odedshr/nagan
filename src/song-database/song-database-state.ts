@@ -1,5 +1,5 @@
 import { SongGroupsResponseItem } from '../backend/backend.ts';
-import { Context, StateTemplate } from '../utils/context.ts';
+import { initState, StateTemplate } from '../utils/init-state.ts';
 import { Song } from '../types.ts';
 
 export type SongDatabaseStateBase = {
@@ -11,7 +11,7 @@ export type SongDatabaseStateBase = {
 export type SongDatabaseState = StateTemplate<SongDatabaseStateBase>;
 
 export function createSongDatabaseState(initial?: Partial<SongDatabaseStateBase>): SongDatabaseState {
-  return Context({
+  return initState({
     db: [],
     groups: [],
     artistFilter: '',

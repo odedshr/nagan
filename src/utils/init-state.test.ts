@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { Context } from './context';
+import { initState, StateTemplate } from './init-state';
 
-describe('Context', () => {
+describe('initState', () => {
   it('notifies listeners on property set', () => {
-    const state = Context({ mode: 'a' as string, count: 0 as number });
+    const state = initState({ mode: 'a' as string, count: 0 as number });
 
     const onMode = vi.fn();
     state.addListener('mode', onMode);
@@ -18,7 +18,7 @@ describe('Context', () => {
   });
 
   it('removeListener stops notifications', () => {
-    const state = Context({ mode: 'a' as string });
+    const state = initState({ mode: 'a' as string });
 
     const onMode = vi.fn();
     state.addListener('mode', onMode);
@@ -31,7 +31,7 @@ describe('Context', () => {
 
   it('compute returns derived values dynamically', () => {
     type BaseState = { a: number; b: number; sum?: number };
-    const state = Context<BaseState>({ a: 2, b: 3 });
+    const state = initState<BaseState>({ a: 2, b: 3 });
 
     state.compute('sum', s => s.a + s.b);
 
@@ -43,7 +43,7 @@ describe('Context', () => {
 
   it('deleteProperty clears a computed property', () => {
     type BaseState = { a: number; b: number; sum?: number };
-    const state = Context<BaseState>({ a: 1, b: 2 });
+    const state = initState<BaseState>({ a: 1, b: 2 });
 
     state.compute('sum', s => s.a + s.b);
     expect(state.sum).toBe(3);
@@ -56,7 +56,7 @@ describe('Context', () => {
   });
 
   it('bidi sets initial attribute, updates state on event, and updates element on state change', () => {
-    const state = Context({ name: 'Alice' as string });
+    const state = initState({ name: 'Alice' as string });
 
     const input = document.createElement('input');
     state.bidi('name', input);
@@ -74,7 +74,7 @@ describe('Context', () => {
   });
 
   it('bidi supports custom attribute and event', () => {
-    const state = Context({ enabled: false as boolean });
+    const state = initState({ enabled: false as boolean });
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -89,5 +89,70 @@ describe('Context', () => {
 
     state.enabled = false;
     expect(checkbox.checked).toBe(false);
+  });
+
+  it('lock prevents setting a property and unlock restores it', () => {
+    const state = initState({ mode: 'a' as string });
+
+    const onMode = vi.fn();
+    state.addListener('mode', onMode);
+
+    state.lock('mode');
+    expect(() => {
+      state.mode = 'b';
+    }).toThrow(TypeError);
+
+    expect(state.mode).toBe('a');
+    expect(onMode).not.toHaveBeenCalled();
+
+    state.unlock('mode');
+    state.mode = 'c';
+
+    expect(state.mode).toBe('c');
+    expect(onMode).toHaveBeenCalledTimes(1);
+    expect(onMode).toHaveBeenCalledWith('c');
+  });
+
+  it('lock prevents deleting a property and unlock allows deletion', () => {
+    const state = initState({ mode: 'a' as string });
+
+    state.lock('mode');
+    expect(() => {
+      // delete needs any-cast since initState() returns a typed object.
+      delete (
+        state as StateTemplate<{
+          mode?: string;
+        }>
+      ).mode;
+    }).toThrow(TypeError);
+    expect(state.mode).toBe('a');
+
+    state.unlock('mode');
+    expect(
+      delete (
+        state as StateTemplate<{
+          mode?: string;
+        }>
+      ).mode
+    ).toBe(true);
+    expect(
+      (
+        state as StateTemplate<{
+          mode: string;
+        }>
+      ).mode
+    ).toBeUndefined();
+  });
+
+  it('subState makes nested object reactive and bubbles changes', () => {
+    const state = initState({ preferences: { cssTheme: 'default' as string } });
+
+    const onPreferences = vi.fn();
+    state.addListener('preferences', onPreferences);
+
+    state.subState('preferences');
+    state.preferences.cssTheme = 'green';
+
+    expect(onPreferences).toHaveBeenCalledTimes(1);
   });
 });
