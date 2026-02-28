@@ -1,9 +1,27 @@
-import { BackendService } from '../backend/backend.ts';
-import { State } from '../types.ts';
+import { Song } from '../types.ts';
 import selectFile from '../files/select-file.ts';
 import processSongs from './process-songs.ts';
+import { OnEventFn } from '../utils/on-event.ts';
 
-export async function browseFile(state: State, backendService: BackendService) {
-  const files: File[] = (await selectFile()) || [];
-  return await processSongs(files, state, backendService);
+export type BrowseFilesParams = {
+  onEvent: OnEventFn;
+  addSong: (filePath: string) => Promise<Song>;
+  updateSong: (payload: {
+    id: string;
+    metadata: Partial<Song['metadata']>;
+    update_id3: boolean;
+  }) => Promise<Song | null>;
+  analyzeGenres?: (addedSongs: Song[]) => Promise<Song[]>;
+  analyzeBpm?: (addedSongs: Song[]) => Promise<Song[]>;
+};
+
+export async function browseFiles({ onEvent, addSong, updateSong, analyzeGenres, analyzeBpm }: BrowseFilesParams) {
+  return await processSongs({
+    files: ((await selectFile()) || []) as File[],
+    onEvent,
+    addSong,
+    updateSong,
+    analyzeGenres,
+    analyzeBpm,
+  });
 }

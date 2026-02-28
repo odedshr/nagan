@@ -18,6 +18,9 @@ import { attachSongDatabaseStateListeners } from './state-listener.ts';
 import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
 import { createLastEventNotifier } from '../ui-components/notification/notifier.ts';
 import processSongs from './process-songs.ts';
+import getOnEvent from '../utils/on-event.ts';
+import { getSongsGenres } from './analyze-genres.ts';
+import { getSongsBPMs } from './analyze-bpm.ts';
 
 const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
 
@@ -191,7 +194,16 @@ export default function SongDatabase(state: State, backendService: BackendServic
     },
     onFilesDropped: async (files: File[]) => {
       console.log(files);
-      await processSongs(files, state, backendService);
+      await processSongs({
+        files,
+        onEvent: getOnEvent(state),
+        addSong: backendService.addSong,
+        updateSong: backendService.updateSong,
+        analyzeGenres: state.preferences.autoAnalyzeGenres ? (songs: Song[]) => getSongsGenres(songs) : undefined,
+        analyzeBpm: state.preferences.autoAnalyzeBpm
+          ? (songs: Song[]) => getSongsBPMs(songs, backendService.getSongBpm)
+          : undefined,
+      });
       await refreshDb();
     },
   });

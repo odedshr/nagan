@@ -60,7 +60,9 @@ export function createLastEventNotifier(
   };
 }
 
-export function getNotify(notifier?: Notifier): (payload: NotifyPayload) => void {
+export type notifyFn = (payload: NotifyPayload) => void;
+
+export function getNotify(notifier?: Notifier): notifyFn {
   if (notifier) {
     return notifier.notify;
   }

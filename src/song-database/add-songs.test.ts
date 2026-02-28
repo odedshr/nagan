@@ -1,20 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { initState } from '../utils/init-state.ts';
+import getOnEvent from '../utils/on-event.ts';
 import type { Song, SongMetadata, State, StateBase } from '../types.ts';
 import type { BackendService } from '../backend/backend.ts';
 import processSongs from './process-songs.ts';
-import autoAnalyzeGenresForSong from './analyze-genres.ts';
-import { autoAnalyzeBpmForSong } from './analyze-bpm.ts';
 import { addSongsToPlaylist } from './add-songs-to-playlist.ts';
-
-vi.mock('./analyze-genres.ts', () => ({
-  default: vi.fn(async () => null),
-}));
-
-vi.mock('./analyze-bpm.ts', () => ({
-  autoAnalyzeBpmForSong: vi.fn(async () => null),
-}));
 
 function song(id: string, metadata?: Partial<SongMetadata>): Song {
   return {
@@ -65,11 +56,15 @@ function createState(overrides: Partial<StateBase> = {}): State {
 }
 
 describe('addSongs', () => {
-  it('browseFile delegates to selectFile + processSongs', async () => {
+  it('browseFiles delegates to selectFile + processSongs', async () => {
     vi.resetModules();
 
     const state = createState();
-    const backendService = {} as unknown as BackendService;
+    const backendService = {
+      addSong: vi.fn(),
+      updateSong: vi.fn(),
+      getSongBpm: vi.fn(),
+    } as unknown as BackendService;
 
     const file = new File(['x'], 'a.mp3', { type: 'audio/mpeg' });
     const selectFileMock = vi.fn(async () => [file]);
@@ -79,11 +74,23 @@ describe('addSongs', () => {
     vi.doMock('../files/select-file.ts', () => ({ default: selectFileMock }));
     vi.doMock('./process-songs.ts', () => ({ default: processSongsMock }));
 
-    const { browseFile } = await import('./add-songs.ts');
-    const result = await browseFile(state, backendService);
+    const { browseFiles } = await import('./add-songs.ts');
+    const onEvent = getOnEvent(state);
+    const result = await browseFiles({
+      onEvent,
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+    });
 
     expect(selectFileMock).toHaveBeenCalledTimes(1);
-    expect(processSongsMock).toHaveBeenCalledWith([file], state, backendService);
+    expect(processSongsMock).toHaveBeenCalledWith({
+      files: [file],
+      onEvent,
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+      analyzeGenres: undefined,
+      analyzeBpm: undefined,
+    });
     expect(result).toEqual(processed);
   });
 
@@ -91,12 +98,18 @@ describe('addSongs', () => {
     const state = createState();
     const backendService = {
       addSong: vi.fn(async () => song('1')),
+      updateSong: vi.fn(async () => null),
     } as unknown as BackendService;
 
     const f1 = new File(['x'], 'a.mp3', { type: 'audio/mpeg' });
     const f2 = new File(['x'], 'a.mp3', { type: 'audio/mpeg' });
 
-    const result = await processSongs([f1, f2], state, backendService);
+    const result = await processSongs({
+      files: [f1, f2],
+      onEvent: getOnEvent(state),
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+    });
 
     expect(backendService.addSong).toHaveBeenCalledTimes(1);
     expect(backendService.addSong).toHaveBeenCalledWith('a.mp3');
@@ -110,58 +123,68 @@ describe('addSongs', () => {
       addSong: vi.fn(async () => {
         throw new Error('boom');
       }),
+      updateSong: vi.fn(async () => null),
     } as unknown as BackendService;
 
-    const result = await processSongs([new File(['x'], 'bad.mp3', { type: 'audio/mpeg' })], state, backendService);
+    const result = await processSongs({
+      files: [new File(['x'], 'bad.mp3', { type: 'audio/mpeg' })],
+      onEvent: getOnEvent(state),
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+    });
 
     expect(state.lastEvent?.type).toBe('notification');
     expect(result).toEqual([]);
   });
 
-  it('processSongs auto-analyzes genres when enabled and song has none', async () => {
-    const state = createState({
-      preferences: initState({
-        cssTheme: 'default',
-        autoAnalyzeBpm: false,
-        autoAnalyzeGenres: true,
-      }),
-    });
-
+  it('processSongs runs analyzeGenres and persists genres via updateSong', async () => {
+    const state = createState();
     const backendService = {
       addSong: vi.fn(async () => song('1', { genres: [] })),
+      updateSong: vi.fn(async () => null),
     } as unknown as BackendService;
 
-    const autoAnalyzeGenresMock = vi.mocked(autoAnalyzeGenresForSong);
-    autoAnalyzeGenresMock.mockClear();
+    const analyzeGenres = vi.fn(async (songs: Song[]) =>
+      songs.map(s => ({ ...s, metadata: { ...s.metadata, genres: ['rock'] } }))
+    );
 
-    await processSongs([new File(['x'], 'a.mp3', { type: 'audio/mpeg' })], state, backendService);
-
-    expect(autoAnalyzeGenresMock).toHaveBeenCalledTimes(1);
-    expect(autoAnalyzeGenresMock.mock.calls[0]?.[0]).toBe(backendService);
-    expect(autoAnalyzeGenresMock.mock.calls[0]?.[1]?.id).toBe('1');
-  });
-
-  it('processSongs auto-analyzes BPM when enabled and song has none', async () => {
-    const state = createState({
-      preferences: initState({
-        cssTheme: 'default',
-        autoAnalyzeBpm: true,
-        autoAnalyzeGenres: false,
-      }),
+    await processSongs({
+      files: [new File(['x'], 'a.mp3', { type: 'audio/mpeg' })],
+      onEvent: getOnEvent(state),
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+      analyzeGenres,
     });
 
+    expect(analyzeGenres).toHaveBeenCalledTimes(1);
+    expect(backendService.updateSong).toHaveBeenCalledWith({
+      id: '1',
+      metadata: { genres: ['rock'] },
+      update_id3: true,
+    });
+  });
+
+  it('processSongs runs analyzeBpm and persists bpm via updateSong', async () => {
+    const state = createState();
     const backendService = {
       addSong: vi.fn(async () => song('1', { bpm: undefined })),
+      updateSong: vi.fn(async () => null),
     } as unknown as BackendService;
 
-    const autoAnalyzeBpmMock = vi.mocked(autoAnalyzeBpmForSong);
-    autoAnalyzeBpmMock.mockClear();
+    const analyzeBpm = vi.fn(async (songs: Song[]) =>
+      songs.map(s => ({ ...s, metadata: { ...s.metadata, bpm: 120 } }))
+    );
 
-    await processSongs([new File(['x'], 'a.mp3', { type: 'audio/mpeg' })], state, backendService);
+    await processSongs({
+      files: [new File(['x'], 'a.mp3', { type: 'audio/mpeg' })],
+      onEvent: getOnEvent(state),
+      addSong: backendService.addSong,
+      updateSong: backendService.updateSong,
+      analyzeBpm,
+    });
 
-    expect(autoAnalyzeBpmMock).toHaveBeenCalledTimes(1);
-    expect(autoAnalyzeBpmMock.mock.calls[0]?.[0]).toBe(backendService);
-    expect(autoAnalyzeBpmMock.mock.calls[0]?.[1]?.id).toBe('1');
+    expect(analyzeBpm).toHaveBeenCalledTimes(1);
+    expect(backendService.updateSong).toHaveBeenCalledWith({ id: '1', metadata: { bpm: 120 }, update_id3: true });
   });
 
   it('addSongsToPlaylist routes queue to enqueueSongsFn', async () => {

@@ -3,10 +3,13 @@ import { enqueueSongsNext } from '../queue/queue-manager.ts';
 import { DbSortDirection, DbSortItem, DbSortKey, Song, SongMetadata, State } from '../types.ts';
 import editId3Tags, { Id3TagEditorResult } from './id3-tag-editor/id3-tag-editor.ts';
 import { SongDatabaseState } from './song-database-state.ts';
-import { browseFile } from './add-songs.ts';
+import { browseFiles } from './add-songs.ts';
 import { saveUpdatedSongs, saveUpdatedSongsPerSong } from './update-songs.ts';
 import { getMusicBrainzGenres } from '../utils/musicbrainz.ts';
 import { Notifier } from '../ui-components/notification/notifier.ts';
+import getOnEvent from '../utils/on-event.ts';
+import { getSongsGenres } from './analyze-genres.ts';
+import { getSongsBPMs } from './analyze-bpm.ts';
 
 export type GetCurrentGroupBy = () => SongMetadataAttribute[];
 
@@ -16,7 +19,7 @@ export type SongDatabaseActionHandlerDeps = {
   backendService: BackendService;
   notifier?: Notifier;
   getCurrentGroupBy: GetCurrentGroupBy;
-  browseFileFn?: typeof browseFile;
+  browseFilesFn?: typeof browseFiles;
   editId3TagsFn?: typeof editId3Tags;
   saveUpdatedSongsFn?: typeof saveUpdatedSongs;
   enqueueSongsNextFn?: typeof enqueueSongsNext;
@@ -32,7 +35,7 @@ export function createSongDatabaseActionHandler({
   getCurrentGroupBy,
   onRemoveSong,
   addSongsToPlaylist,
-  browseFileFn = browseFile,
+  browseFilesFn = browseFiles,
   editId3TagsFn = editId3Tags,
   saveUpdatedSongsFn = saveUpdatedSongs,
   enqueueSongsNextFn = enqueueSongsNext,
@@ -46,7 +49,15 @@ export function createSongDatabaseActionHandler({
     const action = (e.submitter as HTMLButtonElement).getAttribute('data-action');
     switch (action) {
       case 'add-songs':
-        return browseFileFn(state, backendService);
+        return browseFilesFn({
+          onEvent: getOnEvent(state),
+          addSong: backendService.addSong,
+          updateSong: backendService.updateSong,
+          analyzeGenres: state.preferences.autoAnalyzeGenres ? songs => getSongsGenres(songs) : undefined,
+          analyzeBpm: state.preferences.autoAnalyzeBpm
+            ? songs => getSongsBPMs(songs, backendService.getSongBpm)
+            : undefined,
+        });
 
       case 'edit-tags': {
         const getSongGenres = async (songId: string): Promise<string[] | null> => {

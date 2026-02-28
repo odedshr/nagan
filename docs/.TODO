@@ -16,6 +16,9 @@ Dialog is Modal(Component(resolve,reject))
 ConfirmComponent
 PromptComponent
 
+limit who has access to backendService, if needed pass just the methods required;
+limit who has access to DOM elements, send CustomEvents() to communicate with the elements
+
 Tasks
 
 1. Take analayzeGenre/BPM from id3Editor

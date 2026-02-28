@@ -1,7 +1,5 @@
-import { BackendService } from '../backend/backend.ts';
-import { Song, State, TauriFile } from '../types.ts';
-import { autoAnalyzeBpmForSong } from './analyze-bpm.ts';
-import autoAnalyzeGenresForSong from './analyze-genres.ts';
+import { Song, TauriFile } from '../types.ts';
+import { OnEventFn } from '../utils/on-event.ts';
 import { isAudioFile } from '../files/is-audio-file.ts';
 
 function getFileIdentityKey(file: File): string {
@@ -23,7 +21,27 @@ function getUniqueFiles(files: File[]): File[] {
   return [...uniqueFiles.values()];
 }
 
-export default async function processSongs(files: File[], state: State, backendService: BackendService) {
+export type processSongsParams = {
+  files: File[];
+  onEvent: OnEventFn;
+  addSong: (filePath: string) => Promise<Song>;
+  updateSong: (payload: {
+    id: string;
+    metadata: Partial<Song['metadata']>;
+    update_id3: boolean;
+  }) => Promise<Song | null>;
+  analyzeGenres?: (addedSongs: Song[]) => Promise<Song[]>;
+  analyzeBpm?: (addedSongs: Song[]) => Promise<Song[]>;
+};
+
+export default async function processSongs({
+  files,
+  onEvent,
+  addSong,
+  updateSong,
+  analyzeGenres,
+  analyzeBpm,
+}: processSongsParams): Promise<Song[]> {
   const filesToProcess = getUniqueFiles(files.filter(isAudioFile));
   const addedSongs: Song[] = [];
 
@@ -31,27 +49,24 @@ export default async function processSongs(files: File[], state: State, backendS
     const file = filesToProcess.shift()!;
     try {
       const filePath = (file as Partial<TauriFile>).path || file.name;
-      const addedSong = await backendService.addSong(filePath);
-      state.lastEvent = new CustomEvent('file-loaded', { detail: { file } });
+      const addedSong = await addSong(filePath);
+      onEvent('file-loaded', { file });
       addedSongs.push(addedSong);
     } catch (error) {
-      state.lastEvent = new CustomEvent('notification', { detail: { type: 'error', message: error } });
+      onEvent('notification', { type: 'error', message: error } as const);
     }
   }
 
-  if (state.preferences?.autoAnalyzeGenres) {
-    await Promise.all(
-      addedSongs
-        .filter(song => song.metadata.genres === undefined || song.metadata.genres.length === 0)
-        .map(song => autoAnalyzeGenresForSong(backendService, song))
+  if (analyzeGenres) {
+    const updatedSongs = await analyzeGenres(addedSongs);
+    updatedSongs.forEach(song =>
+      updateSong({ id: song.id, metadata: { genres: song.metadata.genres }, update_id3: true })
     );
   }
-  if (state.preferences?.autoAnalyzeBpm) {
-    await Promise.all(
-      addedSongs
-        .filter(song => typeof song.metadata.bpm === 'undefined')
-        .map(song => autoAnalyzeBpmForSong(backendService, song))
-    );
+
+  if (analyzeBpm) {
+    const updatedSongs = await analyzeBpm(addedSongs);
+    updatedSongs.forEach(song => updateSong({ id: song.id, metadata: { bpm: song.metadata.bpm }, update_id3: true }));
   }
   return addedSongs;
 }
