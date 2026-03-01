@@ -38,7 +38,10 @@ export default class TauriBackendService implements BackendService {
   }
 
   async removeSongFromPlaylist(payload: RemoveSongFromPlaylistPayload): Promise<boolean> {
-    return await invoke<boolean>('remove_song_from_playlist', { payload });
+    console.log('Removing song from playlist with payload', payload);
+    const result = await invoke<boolean>('remove_song_from_playlist', { payload });
+    console.log('Result of remove_song_from_playlist', result);
+    return result;
   }
 
   async reorderPlaylistSongs(payload: ReorderPlaylistSongsPayload): Promise<boolean> {

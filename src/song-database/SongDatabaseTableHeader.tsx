@@ -12,15 +12,15 @@ export type SongDatabaseTableHeaderProps = {
   columns: string[];
   sortBy: DbSortItem[];
   selectAll: (e: PointerEvent) => void;
-  onColumnOrderChanged: (columns: string[]) => void;
+  onReorder: (columns: string[]) => void;
   onChangeSort: (key: DbSortItem['key']) => void;
 };
 
-export default ({ columns, sortBy, selectAll, onColumnOrderChanged, onChangeSort }: SongDatabaseTableHeaderProps) => {
+export default ({ columns, sortBy, selectAll, onReorder, onChangeSort }: SongDatabaseTableHeaderProps) => {
   let setDragIndex: (index?: number) => void;
   let fixY: (y?: number) => void;
 
-  initDragAndDrop(columns, onColumnOrderChanged).then(({ setDragIndex: s, fixY: f }) => {
+  initDragAndDrop({ name: 'tableHeader', items: columns, onReorder }).then(({ setDragIndex: s, fixY: f }) => {
     setDragIndex = s;
     fixY = f;
   });

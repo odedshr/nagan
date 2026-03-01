@@ -3,7 +3,7 @@ import selectFile from '../files/select-file.ts';
 import processSongs from './process-songs.ts';
 import { OnEventFn } from '../utils/on-event.ts';
 
-export type BrowseFilesParams = {
+export type BrowseFilesProps = {
   onEvent: OnEventFn;
   addSong: (filePath: string) => Promise<Song>;
   updateSong: (payload: {
@@ -15,7 +15,7 @@ export type BrowseFilesParams = {
   analyzeBpm?: (addedSongs: Song[]) => Promise<Song[]>;
 };
 
-export async function browseFiles({ onEvent, addSong, updateSong, analyzeGenres, analyzeBpm }: BrowseFilesParams) {
+export async function browseFiles({ onEvent, addSong, updateSong, analyzeGenres, analyzeBpm }: BrowseFilesProps) {
   return await processSongs({
     files: ((await selectFile()) || []) as File[],
     onEvent,

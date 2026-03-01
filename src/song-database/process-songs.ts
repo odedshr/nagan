@@ -21,7 +21,7 @@ function getUniqueFiles(files: File[]): File[] {
   return [...uniqueFiles.values()];
 }
 
-export type processSongsParams = {
+export type processSongsProps = {
   files: File[];
   onEvent: OnEventFn;
   addSong: (filePath: string) => Promise<Song>;
@@ -41,7 +41,7 @@ export default async function processSongs({
   updateSong,
   analyzeGenres,
   analyzeBpm,
-}: processSongsParams): Promise<Song[]> {
+}: processSongsProps): Promise<Song[]> {
   const filesToProcess = getUniqueFiles(files.filter(isAudioFile));
   const addedSongs: Song[] = [];
 

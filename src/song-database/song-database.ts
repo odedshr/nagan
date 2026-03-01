@@ -149,7 +149,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     columns,
     sortBy: state.dbSort,
     selectAll,
-    onColumnOrderChanged,
+    onReorder: onColumnOrderChanged,
     onChangeSort,
   });
   let footer = SongDatabaseTableFooter({ columns, totalSongs: dbState.db.length, selectedSongs: selectedSongs.size });
@@ -190,7 +190,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
         columns: getColumns(),
         sortBy: state.dbSort,
         selectAll,
-        onColumnOrderChanged,
+        onReorder: onColumnOrderChanged,
         onChangeSort,
       })
     ) as HTMLTableSectionElement;

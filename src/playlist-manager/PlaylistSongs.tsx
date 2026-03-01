@@ -3,72 +3,27 @@
 import { prettyTime } from '../utils/formatters.js';
 import jsx from '../jsx.js';
 import { QueueItem, Song, SongQueueItem } from '../types.js';
+import initDragAndDrop from '../utils/elm-drag-and-drop.js';
 
-export default (
-  songs: QueueItem[],
-  onSongSelected: (song: Song) => void,
-  onReorder: (oldPosition: number, newPosition: number) => void
-) => {
-  let draggedIndex: number | null = null;
+export type PlaylistSongsProps = {
+  songs: QueueItem[];
+  onSelected: (song: Song) => void;
+  onReorder: (songs: QueueItem[]) => void;
+};
 
-  const handleDragStart = (e: DragEvent, index: number) => {
-    draggedIndex = index;
-    const row = (e.target as HTMLElement).closest('tr');
-    if (row) {
-      row.classList.add('dragging');
-    }
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', index.toString());
-    }
-  };
+export default ({ songs, onSelected, onReorder }: PlaylistSongsProps) => {
+  let setDragIndex: (index?: number) => void;
+  let fixX: (x?: number) => void;
 
-  const handleDragEnd = (e: DragEvent) => {
-    const row = (e.target as HTMLElement).closest('tr');
-    if (row) {
-      row.classList.remove('dragging');
-    }
-    draggedIndex = null;
-    // Remove drag-over class from all rows
-    document.querySelectorAll('.playlist-songs tr.drag-over').forEach(row => {
-      row.classList.remove('drag-over');
-    });
-  };
+  initDragAndDrop({ name: 'playlistSongs', items: songs, onReorder }).then(({ setDragIndex: s, fixX: f }) => {
+    setDragIndex = s;
+    fixX = f;
+  });
 
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = 'move';
-    }
-  };
-
-  const handleDragEnter = (e: DragEvent) => {
-    e.preventDefault();
-    const target = (e.target as HTMLElement).closest('tr');
-    if (target) {
-      target.classList.add('drag-over');
-    }
-  };
-
-  const handleDragLeave = (e: DragEvent) => {
-    const target = (e.target as HTMLElement).closest('tr');
-    if (target) {
-      target.classList.remove('drag-over');
-    }
-  };
-
-  const handleDrop = (e: DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    const target = (e.target as HTMLElement).closest('tr');
-    if (target) {
-      target.classList.remove('drag-over');
-    }
-
-    console.log(`Dropped on index: ${dropIndex}`);
-    if (draggedIndex !== null && draggedIndex !== dropIndex) {
-      onReorder(draggedIndex, dropIndex);
-    }
-    draggedIndex = null;
+  const onDragStart = (e: DragEvent) => {
+    const target = (e.target as HTMLTableCellElement).parentElement as HTMLTableRowElement;
+    setDragIndex(target.parentElement ? Array.from(target.parentElement.children).indexOf(target) : undefined);
+    fixX(e.clientX);
   };
 
   return (
@@ -78,26 +33,16 @@ export default (
           return null; // Skip non-song items
         }
         const song = (queueItem as SongQueueItem).song;
-        const onSelected = () => onSongSelected(song);
+        const selectSong = () => onSelected(song);
         return (
-          <tr
-            ondragover={handleDragOver}
-            ondragenter={handleDragEnter}
-            ondragleave={handleDragLeave}
-            ondrop={(e: DragEvent) => handleDrop(e, index)}
-          >
-            <td
-              class="drag-handle"
-              draggable={true}
-              ondragstart={(e: DragEvent) => handleDragStart(e, index)}
-              ondragend={handleDragEnd}
-            >
+          <tr data-drop="playlist-song">
+            <td class="drag-handle" draggable="true" ondragstart={onDragStart}>
               ⠿
             </td>
-            <td onclick={onSelected}>{song.metadata.artists}</td>
-            <td onclick={onSelected}>{song.metadata.title}</td>
-            <td onclick={onSelected}>{song.metadata.album}</td>
-            <td onclick={onSelected}>{prettyTime(song.metadata.duration)}</td>
+            <td onclick={selectSong}>{song.metadata.artists}</td>
+            <td onclick={selectSong}>{song.metadata.title}</td>
+            <td onclick={selectSong}>{song.metadata.album}</td>
+            <td onclick={selectSong}>{prettyTime(song.metadata.duration)}</td>
             <td>
               <button class="remove-song-btn" data-action="remove-item" value={index}>
                 [x]

@@ -24,12 +24,15 @@ export function wirePlayerState(
   const onPlaybackRate = (value: number) => deps.audio.setPlaybackRate(value / 100);
 
   const onCurrentTrack = async (song: Song | null) => {
+    const isPlaying = !deps.audio.isPaused();
     if (!song) return;
 
     deps.setDuration(song.metadata.duration);
     deps.audio.setSourceFromFile(await deps.loadFile(song.url));
     renderTrackMetadata(deps.elms, song.metadata);
-    await deps.audio.play();
+    if (isPlaying) {
+      await deps.audio.play();
+    }
   };
 
   let unSubSectionTimeUpdate: (() => void) | null = null;

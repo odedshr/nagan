@@ -552,7 +552,7 @@ pub async fn remove_song_from_playlist(
     payload: RemoveSongFromPlaylistPayload,
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    // If both song_id and position are not provided, return false
+    // If both song_id and position are not provided, return false.
     if payload.song_id.is_none() && payload.position.is_none() {
         return Ok(false);
     }
@@ -561,18 +561,20 @@ pub async fn remove_song_from_playlist(
 
     // If song_id is provided, remove all instances of the song
     if let Some(song_id) = &payload.song_id {
-        return db
+        let result = db
             .remove_song_from_playlist_by_song_id(&payload.playlist_id, song_id)
             .await
             .map_err(|e| e.to_string());
+        return result;
     }
 
     // If position is provided, remove the song at that position
     if let Some(position) = payload.position {
-        return db
+        let result = db
             .remove_song_from_playlist_by_position(&payload.playlist_id, position)
             .await
             .map_err(|e| e.to_string());
+        return result;
     }
 
     Ok(false)

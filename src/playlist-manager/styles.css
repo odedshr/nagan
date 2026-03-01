@@ -43,6 +43,11 @@
   margin: 0;
 }
 
+.playlist-songs-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
 /* Drag and drop styles for playlist songs */
 .playlist-songs .drag-handle {
   cursor: grab;
@@ -64,7 +69,7 @@
   background-color: var(--color-highlight);
 }
 
-.playlist-songs tr.drag-over {
-  border-top: 2px solid var(--color-accent);
+.playlist-songs tr.drag-over td {
+  border-top: 0.1rem solid var(--color-accent);
   background-color: var(--color-hover-bg);
 }

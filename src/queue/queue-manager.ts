@@ -79,3 +79,24 @@ export function shuffleQueue(state: State): void {
   }
   state.queue = copy;
 }
+
+export function sortQueueByColumn(state: State, column: string, asc: boolean): void {
+  const sorted = [...state.queue].sort((a, b) => {
+    if (a.type !== 'song' || b.type !== 'song') return 0; // Only sort songs
+
+    const aValue = a.song.metadata[column as keyof typeof a.song.metadata];
+    const bValue = b.song.metadata[column as keyof typeof b.song.metadata];
+
+    if (aValue === bValue) return 0;
+    if (aValue === undefined || aValue === null) return 1;
+    if (bValue === undefined || bValue === null) return -1;
+
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return aValue - bValue;
+    }
+
+    return String(aValue).localeCompare(String(bValue));
+  });
+
+  state.queue = asc ? sorted : sorted.reverse();
+}

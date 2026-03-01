@@ -3,6 +3,7 @@ use chrono::Utc;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::Row;
 use sqlx::SqlitePool;
+use std::collections::{HashMap, VecDeque};
 use std::str::FromStr;
 
 pub struct Database {
@@ -967,32 +968,59 @@ impl Database {
         playlist_id: &str,
         song_ids: &[String],
     ) -> Result<bool, sqlx::Error> {
-        // First, set all positions to negative temporary values to avoid UNIQUE constraint conflicts
-        for (index, song_id) in song_ids.iter().enumerate() {
-            let temp_position = -(index as i32) - 1; // -1, -2, -3, etc.
-            sqlx::query(
-                "UPDATE playlist_songs SET position = ? WHERE playlist_id = ? AND song_id = ?"
-            )
-            .bind(temp_position)
+        // IMPORTANT: playlists can contain the same song multiple times. Updating by song_id would
+        // affect multiple rows and break ordering. We rebuild the playlist_songs rows in the
+        // requested order, preserving each original row's `added_at` (stable for duplicates).
+
+        let current_rows: Vec<DbPlaylistSong> = sqlx::query_as(
+            "SELECT id, playlist_id, song_id, position, added_at FROM playlist_songs WHERE playlist_id = ? ORDER BY position",
+        )
+        .bind(playlist_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        if current_rows.len() != song_ids.len() {
+            return Ok(false);
+        }
+
+        let mut rows_by_song: HashMap<String, VecDeque<DbPlaylistSong>> = HashMap::new();
+        for row in current_rows {
+            rows_by_song.entry(row.song_id.clone()).or_default().push_back(row);
+        }
+
+        let mut ordered_rows: Vec<DbPlaylistSong> = Vec::with_capacity(song_ids.len());
+        for song_id in song_ids {
+            let Some(queue) = rows_by_song.get_mut(song_id) else {
+                return Ok(false);
+            };
+            let Some(row) = queue.pop_front() else {
+                return Ok(false);
+            };
+            ordered_rows.push(row);
+        }
+
+        let mut tx = self.pool.begin().await?;
+
+        // Clear all entries for this playlist, then re-insert in the new order.
+        sqlx::query("DELETE FROM playlist_songs WHERE playlist_id = ?")
             .bind(playlist_id)
-            .bind(song_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
+            .await?;
+
+        for (index, row) in ordered_rows.into_iter().enumerate() {
+            sqlx::query(
+                "INSERT INTO playlist_songs (id, playlist_id, song_id, position, added_at) VALUES (?, ?, ?, ?, ?)",
+            )
+            .bind(row.id)
+            .bind(row.playlist_id)
+            .bind(row.song_id)
+            .bind(index as i32)
+            .bind(row.added_at)
+            .execute(&mut *tx)
             .await?;
         }
 
-        // Then, set the actual new positions
-        for (index, song_id) in song_ids.iter().enumerate() {
-            let position = index as i32;
-            sqlx::query(
-                "UPDATE playlist_songs SET position = ? WHERE playlist_id = ? AND song_id = ?"
-            )
-            .bind(position)
-            .bind(playlist_id)
-            .bind(song_id)
-            .execute(&self.pool)
-            .await?;
-        }
-
+        tx.commit().await?;
         Ok(true)
     }
 
@@ -1385,6 +1413,112 @@ mod tests {
         let playlists = db.get_playlists(query).await.unwrap();
         assert_eq!(playlists.len(), 1);
         assert_eq!(playlists[0].name, "Test Playlist");
+    }
+
+    #[tokio::test]
+    async fn test_reorder_playlist_with_duplicate_song() {
+        let db = setup_test_db().await;
+
+        // Create two songs
+        let song_a = Song {
+            id: "song-a".to_string(),
+            url: "/tmp/a.mp3".to_string(),
+            filename: "a.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "A".to_string(),
+                album: "Album".to_string(),
+                year: None,
+                track: None,
+                image: None,
+                duration: 10.0,
+                artists: vec!["Artist".to_string()],
+                instruments: None,
+                bpm: None,
+                genres: vec!["Rock".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        let song_b = Song {
+            id: "song-b".to_string(),
+            url: "/tmp/b.mp3".to_string(),
+            filename: "b.mp3".to_string(),
+            metadata: SongMetadata {
+                title: "B".to_string(),
+                album: "Album".to_string(),
+                year: None,
+                track: None,
+                image: None,
+                duration: 10.0,
+                artists: vec!["Artist".to_string()],
+                instruments: None,
+                bpm: None,
+                genres: vec!["Rock".to_string()],
+                comment: None,
+                tags: vec![],
+                file_exists: true,
+                times_played: 0,
+            },
+            available: true,
+        };
+
+        db.create_song(song_a.clone()).await.unwrap();
+        db.create_song(song_b.clone()).await.unwrap();
+
+        // Create playlist
+        let playlist = Playlist {
+            id: "pl-dup".to_string(),
+            name: "Dup".to_string(),
+            tags: vec![],
+            total_duration: 0.0,
+        };
+        db.create_playlist(playlist).await.unwrap();
+
+        // Add A, B, A (duplicate)
+        db.add_song_to_playlist("ps-1", "pl-dup", "song-a", 0)
+            .await
+            .unwrap();
+        db.add_song_to_playlist("ps-2", "pl-dup", "song-b", 1)
+            .await
+            .unwrap();
+        db.add_song_to_playlist("ps-3", "pl-dup", "song-a", 2)
+            .await
+            .unwrap();
+
+        // Reorder to A, A, B
+        let ok = db
+            .reorder_playlist_songs(
+                "pl-dup",
+                &vec!["song-a".to_string(), "song-a".to_string(), "song-b".to_string()],
+            )
+            .await
+            .unwrap();
+        assert!(ok);
+
+        let rows: Vec<(String, i32)> = sqlx::query_as(
+            "SELECT song_id, position FROM playlist_songs WHERE playlist_id = ? ORDER BY position",
+        )
+        .bind("pl-dup")
+        .fetch_all(&db.pool)
+        .await
+        .unwrap();
+
+        assert_eq!(rows.len(), 3);
+        assert_eq!(rows[0].0, "song-a");
+        assert_eq!(rows[1].0, "song-a");
+        assert_eq!(rows[2].0, "song-b");
+        assert_eq!(rows[0].1, 0);
+        assert_eq!(rows[1].1, 1);
+        assert_eq!(rows[2].1, 2);
+
+        // And the joined query returns duplicates in correct order
+        let songs = db.get_playlist_songs("pl-dup", None).await.unwrap();
+        let ids: Vec<String> = songs.into_iter().map(|s| s.id).collect();
+        assert_eq!(ids, vec!["song-a", "song-a", "song-b"]);
     }
 
     #[tokio::test]

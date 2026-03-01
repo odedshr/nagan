@@ -7,7 +7,8 @@ import PlaylistUi from './PlaylistManager.tsx';
 import PlaylistEditor from './PlaylistEditor.tsx';
 import PlaylistSongs from './PlaylistSongs.tsx';
 import { BackendService } from '../backend/backend.ts';
-import { shuffleQueue } from '../queue/queue-manager.ts';
+import { shuffleQueue, sortQueueByColumn } from '../queue/queue-manager.ts';
+import replaceWith from '../utils/replace-with.ts';
 
 async function refreshPlaylists(state: State, backendService: BackendService) {
   try {
@@ -59,49 +60,71 @@ export default function PlaylistManager(state: State, backendService: BackendSer
       state.queue = state.queue.filter((_, i) => i !== position);
       return;
     } else {
-      await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!, position: position + 1 });
+      // Playlist song positions are 0-based in the DB.
+      await backendService.removeSongFromPlaylist({ playlistId: state.currentPlaylistId!, position });
       state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
     }
   };
 
-  const onReorder = async (oldPosition: number, newPosition: number) => {
+  const onReorder = async (songs: QueueItem[]) => {
     if (!state.currentPlaylistId) {
       // reorder queue
-      const updatedQueue = [...state.queue];
-      const [movedItem] = updatedQueue.splice(oldPosition, 1);
-      updatedQueue.splice(newPosition, 0, movedItem);
-      state.queue = updatedQueue;
+      state.queue = songs;
       return;
     }
 
-    const songIds = state.playlistSongs.map(s => s.id);
-    const [movedSongId] = songIds.splice(oldPosition, 1);
-    songIds.splice(newPosition, 0, movedSongId);
+    const songIds = songs.map(s => (s.type === 'song' ? s.song.id : null)).filter(id => id !== null) as string[];
+
     await backendService.reorderPlaylistSongs({ playlistId: state.currentPlaylistId!, songIds: songIds });
     state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
   };
 
-  const onOrderBy = async (column?: string, asec?: boolean) => {
+  const orderSongsByColumn = (column: string, asc: boolean) => {
+    const sortedSongs = [...state.playlistSongs].sort((a, b) => {
+      const aValue = a.metadata[column as keyof typeof a.metadata];
+      const bValue = b.metadata[column as keyof typeof b.metadata];
+
+      if (aValue === bValue) return 0;
+      if (aValue === undefined || aValue === null) return 1;
+      if (bValue === undefined || bValue === null) return -1;
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return aValue - bValue;
+      }
+
+      return String(aValue).localeCompare(String(bValue));
+    });
+
+    return asc ? sortedSongs : sortedSongs.reverse();
+  };
+  const onOrderBy = async (column?: string, asc = true) => {
     if (!state.currentPlaylistId) {
-      shuffleQueue(state);
+      if (column) {
+        sortQueueByColumn(state, column, asc);
+      } else {
+        shuffleQueue(state);
+      }
       return;
     }
-    if (!column) {
+    if (column) {
+      await backendService.reorderPlaylistSongs({
+        playlistId: state.currentPlaylistId!,
+        songIds: orderSongsByColumn(column, asc).map(s => s.id),
+      });
+    } else {
       await backendService.shufflePlaylist(state.currentPlaylistId!);
     }
-    console.log(`Ordering by ${column} ${asec ? 'asc' : 'desc'}`);
     state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
   };
 
-  const form = PlaylistUi(
-    state.playlists,
-    state.currentPlaylist,
-    state.currentPlaylist ? songListToQueueItems(state.playlistSongs) : state.queue,
-    onPlaylistSelected,
-    onSongSelected,
+  let playlistList: HTMLUListElement = PlaylistList(state.playlists, onPlaylistSelected);
+  let playlistSongs = PlaylistSongs({
+    songs: state.currentPlaylist ? songListToQueueItems(state.playlistSongs) : state.queue,
+    onSelected: onSongSelected,
     onReorder,
-    onOrderBy
-  );
+  });
+  let playlistEditor = PlaylistEditor({ playlist: state.currentPlaylist, playlistSongs, onOrderBy });
+  const form = PlaylistUi({ playlistList, playlistEditor });
 
   form.onsubmit = (e: SubmitEvent) => {
     e.preventDefault();
@@ -133,25 +156,31 @@ export default function PlaylistManager(state: State, backendService: BackendSer
               break;
           }
         }
-        console.log('Playlist form submitted' + e.submitter?.id);
     }
   };
 
-  state.addListener('playlists', () =>
-    form.querySelector('.playlists')!.replaceWith(PlaylistList(state.playlists, onPlaylistSelected))
-  );
+  state.addListener('playlists', () => {
+    playlistList = replaceWith(playlistList, PlaylistList(state.playlists, onPlaylistSelected)) as HTMLUListElement;
+  });
 
   state.addListener('currentPlaylistId', async () => {
-    form
-      .querySelector('.playlist-editor')!
-      .replaceWith(PlaylistEditor(state.currentPlaylist, [], onSongSelected, onReorder, onOrderBy));
     state.playlistSongs = await backendService.getPlaylistSongs({ playlistId: state.currentPlaylistId! });
+    playlistEditor = replaceWith(
+      playlistEditor,
+      PlaylistEditor({ playlist: state.currentPlaylist, playlistSongs, onOrderBy })
+    ) as HTMLDivElement;
   });
 
   state.addListener('playlistSongs', () => {
-    form
-      .querySelector('.playlist-songs')!
-      .replaceWith(PlaylistSongs(songListToQueueItems(state.playlistSongs), onSongSelected, onReorder));
+    playlistSongs = replaceWith(
+      playlistSongs,
+      PlaylistSongs({
+        songs: state.currentPlaylist ? songListToQueueItems(state.playlistSongs) : state.queue,
+        onSelected: onSongSelected,
+        onReorder,
+      })
+    ) as HTMLTableSectionElement;
+
     // if no current song, set to first song in playlist
     if (!state.currentTrack) {
       state.currentTrack = state.playlistSongs[0] || null;
@@ -160,7 +189,9 @@ export default function PlaylistManager(state: State, backendService: BackendSer
 
   state.addListener('queue', () => {
     if (!state.currentPlaylistId) {
-      form.querySelector('.playlist-songs')!.replaceWith(PlaylistSongs(state.queue, onSongSelected, onReorder));
+      form
+        .querySelector('.playlist-songs')!
+        .replaceWith(PlaylistSongs({ songs: state.queue, onSelected: onSongSelected, onReorder }));
     }
   });
 

@@ -8,23 +8,27 @@ type TauriEventPayload = {
   };
 };
 
-type getDropTargetParams = {
+type getDropTargetProps = {
   payload: TauriEventPayload;
   fixedY?: number;
   fixedX?: number;
 };
-const listeners: (() => void)[] = [];
+const listeners: Record<string, (() => void)[]> = {};
 let dropTarget: HTMLElement | null = null;
 
-function removeOldListeners() {
-  while (listeners.length > 0) {
-    listeners.pop()?.();
+function removeOldListeners(name: string) {
+  while (listeners[name]?.length > 0) {
+    listeners[name].pop()?.();
   }
 }
 
-function getDropTarget({ payload, fixedY, fixedX }: getDropTargetParams): HTMLElement | null {
+function getDropTarget({ payload, fixedY, fixedX }: getDropTargetProps): HTMLElement | null {
   const elementsAtPoint = document.elementsFromPoint(fixedX || payload.position.x, fixedY || payload.position.y);
-  return (elementsAtPoint.find(el => el.hasAttribute('data-drop')) as HTMLElement) || null;
+  const tableCell = elementsAtPoint.find(el => el.tagName === 'TD' || el.tagName === 'TH') as HTMLElement | undefined;
+  if (tableCell) {
+    elementsAtPoint.push(tableCell.parentElement as HTMLElement); // Also consider the entire row as a drop target
+  }
+  return elementsAtPoint.find(el => el.hasAttribute('data-drop')) as HTMLElement | null;
 }
 
 const moveItem = <T>(items: T[], fromIndex: number, toIndex: number): T[] => {
@@ -34,27 +38,42 @@ const moveItem = <T>(items: T[], fromIndex: number, toIndex: number): T[] => {
   return next;
 };
 
-export default async function initDragAndDrop(items: string[], onChanged: (columns: string[]) => void) {
+type initDragAndDropProps<T> = {
+  name: string;
+  items: T[];
+  onReorder?: (items: T[]) => void;
+  onChanged?: (from: number, to: number) => void;
+};
+
+export default async function initDragAndDrop<T>({ name, items, onReorder, onChanged }: initDragAndDropProps<T>) {
   let dragIndex: number | undefined = undefined;
   let fixedY: number | undefined = undefined;
   let fixedX: number | undefined = undefined;
 
   if (isTauri()) {
-    removeOldListeners();
+    removeOldListeners(name);
+    if (!listeners[name]) {
+      listeners[name] = [];
+    }
 
-    listeners.push(
+    listeners[name].push(
       await listen<TauriEventPayload>('tauri://drag-drop', event => {
         const elm = getDropTarget({ payload: event.payload, fixedY, fixedX });
         if (elm && dragIndex !== undefined) {
           const dropIndex = Array.from(elm.parentElement!.children).indexOf(elm);
           if (dropIndex !== -1) {
-            onChanged(moveItem(items, dragIndex, dropIndex));
+            onReorder?.(moveItem(items, dragIndex, dropIndex));
+            onChanged?.(dragIndex, dropIndex);
           }
+        }
+        if (dropTarget) {
+          dropTarget.classList.remove('drag-over');
+          dropTarget = null;
         }
       })
     );
 
-    listeners.push(
+    listeners[name].push(
       await listen<TauriEventPayload>('tauri://drag-over', event => {
         const elm = getDropTarget({ payload: event.payload, fixedY, fixedX });
         if (elm && dropTarget !== elm) {
@@ -67,7 +86,7 @@ export default async function initDragAndDrop(items: string[], onChanged: (colum
       })
     );
 
-    listeners.push(
+    listeners[name].push(
       await listen<TauriEventPayload>('tauri://drag-leave', () => {
         if (dropTarget) {
           dropTarget.classList.remove('drag-over');
