@@ -5,7 +5,6 @@ import { Song } from '../types.ts';
 export type SongDatabaseStateBase = {
   db: Song[];
   groups: SongGroupsResponseItem[];
-  artistFilter: string;
 };
 
 export type SongDatabaseState = StateTemplate<SongDatabaseStateBase>;
@@ -14,7 +13,6 @@ export function createSongDatabaseState(initial?: Partial<SongDatabaseStateBase>
   return initState({
     db: [],
     groups: [],
-    artistFilter: '',
     ...initial,
   }) as SongDatabaseState;
 }

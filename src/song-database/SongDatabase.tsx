@@ -4,15 +4,27 @@ import BtnAddSong from '../assets/BtnAddSong.js';
 import BtnEditTag from '../assets/BtnEditTag.js';
 import jsx from '../jsx.js';
 
-export default (
-  groups: HTMLDivElement,
-  columns: string[],
-  AddToPlaylist: HTMLDivElement,
-  sortByDropdown: HTMLDivElement,
-  groupByDropdown: HTMLDivElement,
-  songDatabaseTableHeader: HTMLTableSectionElement,
-  songDatabaseTableBody: HTMLTableSectionElement
-) => {
+export type SongDatabaseProps = {
+  groups: HTMLDivElement;
+  columns: string[];
+  addToPlaylist: HTMLDivElement;
+  sortByDropdown: HTMLDivElement;
+  groupByDropdown: HTMLDivElement;
+  header: HTMLTableSectionElement;
+  body: HTMLTableSectionElement;
+  footer: HTMLTableSectionElement;
+};
+
+export default ({
+  groups,
+  columns,
+  addToPlaylist,
+  sortByDropdown,
+  groupByDropdown,
+  header,
+  body,
+  footer,
+}: SongDatabaseProps) => {
   return (
     <form class="song-database-container">
       <div class="db-controls">
@@ -28,7 +40,7 @@ export default (
         >
           {BtnEditTag()}
         </button>
-        {AddToPlaylist}
+        {addToPlaylist}
         <button class="std-button" disabled="true" data-target="song" id="play-now-button" data-action="play-now">
           Play now
         </button>
@@ -48,8 +60,9 @@ export default (
               <col class={`${column}-col`}></col>
             ))}
           </colgroup>
-          {songDatabaseTableHeader}
-          {songDatabaseTableBody}
+          {header}
+          {body}
+          {footer}
         </table>
       </div>
     </form>

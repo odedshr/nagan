@@ -1,6 +1,6 @@
 import { BackendService, SongMetadataAttribute } from '../backend/backend.ts';
 import { enqueueSongs, enqueueSongsNext } from '../queue/queue-manager.ts';
-import { Playlist, Song, State } from '../types.ts';
+import { Playlist, Song, State, DbSortItem } from '../types.ts';
 import confirm from '../ui-components/confirm/confirm.ts';
 import AddToPlaylist from './AddToPlaylist.tsx';
 import GroupBy from './groups/GroupBy.tsx';
@@ -9,20 +9,21 @@ import editId3Tags from './id3-tag-editor/id3-tag-editor.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
 import SongDatabaseTableHeader from './SongDatabaseTableHeader.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
+import SongDatabaseTableFooter from './SongDatabaseTableFooter.tsx';
 import Groups from './groups/Groups.tsx';
 import replaceWith from '../utils/replace-with.ts';
 import { createSongDatabaseState } from './song-database-state.ts';
 import { addSongsToPlaylist as addSongsToPlaylistImpl } from './add-songs-to-playlist.ts';
 import { createSongDatabaseActionHandler } from './action-handler.ts';
 import { attachSongDatabaseStateListeners } from './state-listener.ts';
-import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
+import { fetchSongs } from './song-queries.ts';
 import { createLastEventNotifier } from '../ui-components/notification/notifier.ts';
 import processSongs from './process-songs.ts';
 import getOnEvent from '../utils/on-event.ts';
 import { getSongsGenres } from './analyze-genres.ts';
 import { getSongsBPMs } from './analyze-bpm.ts';
 
-const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
+// const allColumns = ['select', 'artwork', 'title', 'artists', 'album', 'genre', 'year', 'bpm', 'duration', 'comment'];
 
 export default function SongDatabase(state: State, backendService: BackendService) {
   const dbState = createSongDatabaseState();
@@ -39,11 +40,9 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   const getColumns = () =>
-    allColumns.filter(column => !dbState.groups.map(group => group.name as string).includes(column));
+    state.dbColumns.filter(column => !dbState.groups.map(group => group.name as string).includes(column));
 
-  const getVisibleSongs = () => {
-    return filterSongsByArtist(dbState.db, dbState.artistFilter);
-  };
+  const getVisibleSongs = () => dbState.db;
 
   const getCurrentGroupBy = (): SongMetadataAttribute[] => {
     return state.groupBy.map(g => g.name as SongMetadataAttribute);
@@ -102,10 +101,39 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   const selectAll = (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
-    (document.querySelectorAll('.select-song-checkbox') as NodeListOf<HTMLInputElement>).forEach(checkbox => {
+    (tableBody.querySelectorAll('.select-song-checkbox') as NodeListOf<HTMLInputElement>).forEach(checkbox => {
       checkbox.checked = checked;
       checkbox.dispatchEvent(new Event('change'));
     });
+  };
+
+  const onColumnOrderChanged = (visibleColumns: string[]) => {
+    const visibleSet = new Set(visibleColumns);
+    const oldColumns = state.dbColumns;
+
+    const visibleOld = oldColumns.filter(c => visibleSet.has(c));
+    if (visibleOld.length !== visibleColumns.length) {
+      console.warn('Ignoring column reorder due to mismatch', { visibleOld, visibleColumns });
+      return;
+    }
+
+    let visibleIndex = 0;
+    state.dbColumns = oldColumns.map(c => (visibleSet.has(c) ? visibleColumns[visibleIndex++] : c));
+    refreshTable();
+  };
+
+  const onChangeSort = (key: DbSortItem['key']) => {
+    const oldSort = state.dbSort;
+    const existing = oldSort.find(s => s.key === key);
+    let newSort: DbSortItem[];
+    if (existing) {
+      const toggled: DbSortItem = { ...existing, direction: existing.direction === 'asc' ? 'desc' : 'asc' };
+      newSort = oldSort.map(s => (s.key === key ? toggled : s));
+    } else {
+      newSort = [{ key, direction: 'asc' }, ...oldSort.slice(0, 2)]; // Limit to 3 sort keys
+    }
+
+    state.dbSort = newSort; // this will trigger dbState to recompute the sorted songs and re-render
   };
 
   const onToggleSong = (song: Song, checked: boolean) => {
@@ -116,9 +144,11 @@ export default function SongDatabase(state: State, backendService: BackendServic
     }
 
     const anySongsSelected = selectedSongs.size > 0;
-    document
+    tableBody
       .querySelectorAll('button[data-target="song"]')
       .forEach(btn => ((btn as HTMLButtonElement).disabled = !anySongsSelected));
+
+    refreshFooter();
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
@@ -133,9 +163,25 @@ export default function SongDatabase(state: State, backendService: BackendServic
     onSongSelected,
     onSongCheckboxClick
   );
-  let tableHeader = SongDatabaseTableHeader(columns, selectAll);
+  let header = SongDatabaseTableHeader({
+    columns,
+    sortBy: state.dbSort,
+    selectAll,
+    onColumnOrderChanged,
+    onChangeSort,
+  });
+  let footer = SongDatabaseTableFooter({ columns, totalSongs: dbState.db.length, selectedSongs: selectedSongs.size });
   let groups = Groups(dbState.groups);
-  const elm = SongDatabaseUI(groups, columns, addToPlaylist, sortByDropdown, groupByDropdown, tableHeader, tableBody);
+  const elm = SongDatabaseUI({
+    groups,
+    columns,
+    addToPlaylist,
+    sortByDropdown,
+    groupByDropdown,
+    header,
+    body: tableBody,
+    footer,
+  });
 
   const addSongsToPlaylist = async (playlistId: string | null, songs: Song[]) => {
     return addSongsToPlaylistImpl({ playlistId, songs, backendService, state, enqueueSongsFn: enqueueSongs });
@@ -155,7 +201,20 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   elm.onsubmit = onFormSubmitted;
 
-  const rerenderTableBody = () => {
+  const refreshHeader = () => {
+    header = replaceWith(
+      header,
+      SongDatabaseTableHeader({
+        columns: getColumns(),
+        sortBy: state.dbSort,
+        selectAll,
+        onColumnOrderChanged,
+        onChangeSort,
+      })
+    ) as HTMLTableSectionElement;
+  };
+
+  const refreshBody = () => {
     const selectedSongIds = new Set(Array.from(selectedSongs).map(s => s.id));
     const newContent = SongDatabaseTableBody(
       getVisibleSongs(),
@@ -167,18 +226,31 @@ export default function SongDatabase(state: State, backendService: BackendServic
     );
     newContent.onsubmit = onFormSubmitted;
     tableBody = replaceWith(tableBody, newContent) as HTMLTableSectionElement;
-    tableHeader = replaceWith(tableHeader, SongDatabaseTableHeader(getColumns(), selectAll)) as HTMLTableSectionElement;
   };
 
-  const artistFilterInput = elm.querySelector('input[name="artist-filter"]') as HTMLInputElement;
+  const refreshFooter = () => {
+    footer = replaceWith(
+      footer,
+      SongDatabaseTableFooter({
+        columns: getColumns(),
+        totalSongs: dbState.db.length,
+        selectedSongs: selectedSongs.size,
+      })
+    ) as HTMLTableSectionElement;
+  };
+
+  const refreshTable = () => {
+    refreshHeader();
+    refreshBody();
+    refreshFooter();
+  };
 
   attachSongDatabaseStateListeners({
     state,
     dbState,
     backendService,
-    artistFilterInput,
     refreshDb,
-    rerenderTableBody,
+    refreshTable,
     getCurrentGroupBy,
     onSortByDropdownChange: current => {
       sortByDropdown = replaceWith(sortByDropdown, SortBy(current)) as HTMLDivElement;

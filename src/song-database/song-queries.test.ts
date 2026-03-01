@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { BackendService } from '../backend/backend.ts';
 import type { Song, SongMetadata, State, StateBase } from '../types.ts';
 import { initState } from '../utils/init-state.ts';
-import { fetchSongs, filterSongsByArtist } from './song-queries.ts';
+import { fetchSongs } from './song-queries.ts';
 
 function song(id: string, metadata?: Partial<SongMetadata>): Song {
   return {
@@ -33,6 +33,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     volume: 1,
     lastEvent: undefined,
     groupBy: [],
+    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
     dbFilters: {},
     dbSort: [],
     playlists: [],
@@ -83,18 +84,5 @@ describe('songQueries', () => {
     expect(songs).toEqual([]);
 
     consoleError.mockRestore();
-  });
-
-  it('filterSongsByArtist returns original list when filter blank', () => {
-    const songs = [song('1'), song('2')];
-    expect(filterSongsByArtist(songs, '  ')).toBe(songs);
-  });
-
-  it('filterSongsByArtist matches case-insensitively across artists array', () => {
-    const songs = [song('1', { artists: ['John Coltrane', 'Miles Davis'] }), song('2', { artists: 'Herbie Hancock' })];
-
-    const result = filterSongsByArtist(songs, 'miles');
-
-    expect(result.map(s => s.id)).toEqual(['1']);
   });
 });

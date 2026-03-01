@@ -56,14 +56,22 @@ export default function initFileDragAndDropTauri(state: State) {
     position: { x: number; y: number };
   };
 
-  listen<string[]>('tauri://drag-enter', event =>
-    document.body.setAttribute('data-dragged', String((event.payload as unknown as TauriDragEvent).paths?.length))
+  listen<string[]>(
+    'tauri://drag-enter',
+    event =>
+      isFileDrag(event as unknown as DragEvent) &&
+      document.body.setAttribute('data-dragged', String((event.payload as unknown as TauriDragEvent).paths?.length))
   );
 
-  listen<string[]>('tauri://drag-leave', () => document.body.removeAttribute('data-dragged'));
+  listen<string[]>(
+    'tauri://drag-leave',
+    event => isFileDrag(event as unknown as DragEvent) && document.body.removeAttribute('data-dragged')
+  );
 
   listen<string[]>('tauri://drag-drop', event => {
-    document.body.removeAttribute('data-dragged');
-    handleTauriFileDrop(state, (event.payload as unknown as TauriDragEvent).paths);
+    if (isFileDrag(event as unknown as DragEvent)) {
+      document.body.removeAttribute('data-dragged');
+      handleTauriFileDrop(state, (event.payload as unknown as TauriDragEvent).paths);
+    }
   });
 }

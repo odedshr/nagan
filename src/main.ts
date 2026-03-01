@@ -30,6 +30,7 @@ export async function initApp() {
     currentTrack: null,
     // DB
     groupBy: [],
+    dbColumns: ['select', 'title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
     dbFilters: {},
     dbSort: [],
     playlists: [],

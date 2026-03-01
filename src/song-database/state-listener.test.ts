@@ -14,6 +14,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     volume: 1,
     lastEvent: undefined,
     groupBy: [],
+    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
     dbFilters: {},
     dbSort: [],
     playlists: [],
@@ -35,19 +36,18 @@ function createState(overrides: Partial<StateBase> = {}): State {
 }
 
 describe('stateListener', () => {
-  it('rerenders table body when db or artistFilter changes', () => {
+  it('rerenders table body when db changes', () => {
     const state = createState();
     const dbState = createSongDatabaseState();
 
-    const rerenderTableBody = vi.fn();
+    const refreshTable = vi.fn();
 
     attachSongDatabaseStateListeners({
       state,
       dbState,
       backendService: { getSongsGroups: vi.fn(async () => ({ groups: [] })) } as unknown as BackendService,
-      artistFilterInput: document.createElement('input'),
       refreshDb: vi.fn(async () => undefined),
-      rerenderTableBody,
+      refreshTable,
       onSortByDropdownChange: vi.fn(),
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
@@ -57,9 +57,8 @@ describe('stateListener', () => {
     });
 
     dbState.db = [];
-    dbState.artistFilter = 'x';
 
-    expect(rerenderTableBody).toHaveBeenCalledTimes(2);
+    expect(refreshTable).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes on dbFilters change', () => {
@@ -72,9 +71,8 @@ describe('stateListener', () => {
       state,
       dbState,
       backendService: { getSongsGroups: vi.fn(async () => ({ groups: [] })) } as unknown as BackendService,
-      artistFilterInput: document.createElement('input'),
       refreshDb,
-      rerenderTableBody: vi.fn(),
+      refreshTable: vi.fn(),
       onSortByDropdownChange: vi.fn(),
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),
@@ -112,9 +110,8 @@ describe('stateListener', () => {
       state,
       dbState,
       backendService,
-      artistFilterInput: document.createElement('input'),
       refreshDb: vi.fn(async () => undefined),
-      rerenderTableBody: vi.fn(),
+      refreshTable: vi.fn(),
       onSortByDropdownChange: vi.fn(),
       onGroupByDropdownChange,
       onGroupsChanged,
@@ -144,9 +141,8 @@ describe('stateListener', () => {
       state,
       dbState,
       backendService: { getSongsGroups: vi.fn(async () => ({ groups: [] })) } as unknown as BackendService,
-      artistFilterInput: document.createElement('input'),
       refreshDb,
-      rerenderTableBody: vi.fn(),
+      refreshTable: vi.fn(),
       onSortByDropdownChange: vi.fn(),
       onGroupByDropdownChange: vi.fn(),
       onGroupsChanged: vi.fn(),

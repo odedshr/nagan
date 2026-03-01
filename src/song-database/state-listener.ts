@@ -6,9 +6,8 @@ export type SongDatabaseListenerDeps = {
   state: State;
   dbState: SongDatabaseState;
   backendService: BackendService;
-  artistFilterInput: HTMLInputElement;
   refreshDb: () => Promise<void>;
-  rerenderTableBody: () => void;
+  refreshTable: () => void;
   onSortByDropdownChange: (current: DbSortItem[]) => void;
   onGroupByDropdownChange: (current: SongMetadataAttribute[]) => void;
   onGroupsChanged: (groups: SongGroupsResponseItem[]) => void;
@@ -21,9 +20,8 @@ export function attachSongDatabaseStateListeners({
   state,
   dbState,
   backendService,
-  artistFilterInput,
   refreshDb,
-  rerenderTableBody,
+  refreshTable,
   onSortByDropdownChange,
   onGroupByDropdownChange,
   onGroupsChanged,
@@ -48,12 +46,12 @@ export function attachSongDatabaseStateListeners({
     }
   });
 
-  dbState.addListener('db', rerenderTableBody);
-  dbState.addListener('artistFilter', rerenderTableBody);
+  dbState.addListener('db', refreshTable);
 
   state.addListener('dbFilters', refreshDb);
 
   state.addListener('dbSort', () => {
+    console.log('Sort changed:', state.dbSort);
     onSortByDropdownChange(state.dbSort);
     refreshDb();
   });
@@ -73,6 +71,4 @@ export function attachSongDatabaseStateListeners({
   state.addListener('playlists', (playlists: Playlist[]) => {
     onPlaylistsChanged(playlists);
   });
-
-  dbState.bidi('artistFilter', artistFilterInput, 'value', 'input');
 }

@@ -132,6 +132,7 @@ export type StateBase = {
   lastEvent?: CustomEvent;
   // DB system
   groupBy: SongGroupsQueryItem[];
+  dbColumns: string[];
   dbFilters: Record<string, unknown>;
   dbSort: DbSortItem[];
   // Playlist system

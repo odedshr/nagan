@@ -63,6 +63,18 @@
     z-index: 1;
   }
 
+  & tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+
+    td {
+      background: var(--color-surface);
+      border-top: 0.1rem solid var(--color-border);
+      border-bottom: 0;
+    }
+  }
+
   & thead th {
     background: var(--color-surface);
 
@@ -174,6 +186,14 @@
       padding: 0;
       text-align: center;
     }
+  }
+
+  & th[draggable='true'] {
+    cursor: pointer;
+  }
+
+  & th.drag-over {
+    border-left: 0.3rem solid var(--color-primary);
   }
 
   tbody tr:has(input[type='checkbox']:checked) {

@@ -21,11 +21,10 @@ limit who has access to DOM elements, send CustomEvents() to communicate with th
 
 Tasks
 
-1. Take analayzeGenre/BPM from id3Editor
-2. pagination
-3. rearrange columns
+1. state.dbQuery + state.dbResults
+2. Take analayzeGenre/BPM from id3Editor
+3. pagination
 4. filter mechanism
-5. using columns to sort
-6. show/hide columns
-7. handle backend errors
-8. updatable notifications
+5. show/hide columns
+6. handle backend errors
+7. updatable notifications

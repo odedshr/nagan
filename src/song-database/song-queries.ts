@@ -14,16 +14,3 @@ export async function fetchSongs(state: State, backendService: BackendService): 
 
   return [];
 }
-
-export function filterSongsByArtist(songs: Song[], artistFilter: string): Song[] {
-  const filter = artistFilter.trim().toLowerCase();
-  if (!filter) {
-    return songs;
-  }
-
-  return songs.filter(song => {
-    const artists = song.metadata.artists;
-    const artistsText = Array.isArray(artists) ? artists.join(', ') : artists;
-    return artistsText.toLowerCase().includes(filter);
-  });
-}

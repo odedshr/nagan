@@ -34,6 +34,7 @@ function createState(overrides: Partial<StateBase> = {}): State {
     volume: 1,
     lastEvent: undefined,
     groupBy: [],
+    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
     dbFilters: {},
     dbSort: [],
     playlists: [],
