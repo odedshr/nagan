@@ -67,44 +67,26 @@ export default function SongDatabase(state: State, backendService: BackendServic
   let selectionAnchorSongId: string | null = null;
 
   const onSongCheckboxClick = (song: Song, checked: boolean, shiftKey: boolean, visibleSongs: Song[]) => {
-    if (!shiftKey || !selectionAnchorSongId) {
-      selectionAnchorSongId = song.id;
-      return;
-    }
+    if (shiftKey && selectionAnchorSongId) {
+      const visibleSongIds = visibleSongs.map(s => s.id);
+      const anchorIndex = visibleSongIds.indexOf(selectionAnchorSongId);
+      const currentIndex = visibleSongIds.indexOf(song.id);
 
-    const visibleSongIds = visibleSongs.map(s => s.id);
-    const anchorIndex = visibleSongIds.indexOf(selectionAnchorSongId);
-    const currentIndex = visibleSongIds.indexOf(song.id);
-
-    if (anchorIndex === -1 || currentIndex === -1) {
-      selectionAnchorSongId = song.id;
-      return;
-    }
-
-    const [from, to] = anchorIndex <= currentIndex ? [anchorIndex, currentIndex] : [currentIndex, anchorIndex];
-
-    const checkboxNodes = Array.from(document.querySelectorAll('tbody .select-song-checkbox')) as HTMLInputElement[];
-    const checkboxBySongId = new Map<string, HTMLInputElement>();
-    checkboxNodes.forEach(cb => checkboxBySongId.set(cb.value, cb));
-
-    for (let i = from; i <= to; i++) {
-      const songId = visibleSongIds[i];
-      const checkbox = checkboxBySongId.get(songId);
-      if (!checkbox) continue;
-      if (checkbox.checked === checked) continue;
-      checkbox.checked = checked;
-      checkbox.dispatchEvent(new Event('change'));
+      if (anchorIndex > -1 && currentIndex > -1) {
+        const [from, to] = anchorIndex <= currentIndex ? [anchorIndex, currentIndex] : [currentIndex, anchorIndex];
+        tableBody.dispatchEvent(new CustomEvent('select-multiple-songs', { detail: { from, to, checked } }));
+      }
     }
 
     selectionAnchorSongId = song.id;
   };
 
-  const selectAll = (e: Event) => {
-    const checked = (e.target as HTMLInputElement).checked;
-    (tableBody.querySelectorAll('.select-song-checkbox') as NodeListOf<HTMLInputElement>).forEach(checkbox => {
-      checkbox.checked = checked;
-      checkbox.dispatchEvent(new Event('change'));
-    });
+  const selectAll = (e: PointerEvent) => {
+    const modifierPressed = e.metaKey || e.ctrlKey;
+    const checked = !modifierPressed ? (e.target as HTMLInputElement).checked : undefined;
+    tableBody.dispatchEvent(
+      new CustomEvent('select-multiple-songs', { detail: { from: 0, to: dbState.db.length - 1, checked } })
+    );
   };
 
   const onColumnOrderChanged = (visibleColumns: string[]) => {

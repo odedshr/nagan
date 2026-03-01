@@ -11,7 +11,7 @@ function arrow(direction: 'asc' | 'desc'): string {
 export type SongDatabaseTableHeaderProps = {
   columns: string[];
   sortBy: DbSortItem[];
-  selectAll: (e: Event) => void;
+  selectAll: (e: PointerEvent) => void;
   onColumnOrderChanged: (columns: string[]) => void;
   onChangeSort: (key: DbSortItem['key']) => void;
 };
@@ -48,12 +48,7 @@ export default ({ columns, sortBy, selectAll, onColumnOrderChanged, onChangeSort
             case 'select':
               return (
                 <th class="select-song-col">
-                  <input
-                    type="checkbox"
-                    id="select-all"
-                    onchange={(e: Event) => selectAll(e)}
-                    placeholder="Select All"
-                  />
+                  <input type="checkbox" id="select-all" onclick={selectAll} placeholder="Select All" />
                 </th>
               );
             case 'artwork':

@@ -23,8 +23,8 @@ export default (
   onToggleSong: (song: Song, checked: boolean) => void,
   onPlaySong: (song: Song) => void,
   onSongCheckboxClick: (song: Song, checked: boolean, shiftKey: boolean, visibleSongs: Song[]) => void
-) =>
-  (
+) => {
+  const tableBody = (
     <tbody>
       {songs.map(song => {
         const play = () => onPlaySong(song);
@@ -134,3 +134,23 @@ export default (
       })}
     </tbody>
   ) as HTMLTableSectionElement;
+
+  tableBody.addEventListener('select-multiple-songs', (e: Event) => {
+    const { from, to, checked } = (e as CustomEvent).detail;
+    const checkboxes = Array.from(tableBody.querySelectorAll('.select-song-checkbox')) as HTMLInputElement[];
+    console.log(`Selecting songs from index ${from} to ${to}, checked: ${checked}`);
+    for (let i = from; i <= to; i++) {
+      const checkbox = checkboxes[i];
+      if (!checkbox) continue;
+      if (checked === undefined) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      } else if (checkbox.checked !== checked) {
+        checkbox.checked = checked;
+        checkbox.dispatchEvent(new Event('change'));
+      }
+    }
+  });
+
+  return tableBody;
+};
