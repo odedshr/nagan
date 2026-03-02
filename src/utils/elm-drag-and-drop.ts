@@ -1,5 +1,4 @@
 import isTauri from '../utils/is-tauri.js';
-import { listen } from '@tauri-apps/api/event';
 
 type TauriEventPayload = {
   position: {
@@ -51,6 +50,7 @@ export default async function initDragAndDrop<T>({ name, items, onReorder, onCha
   let fixedX: number | undefined = undefined;
 
   if (isTauri()) {
+    const { listen } = await import('@tauri-apps/api/event');
     removeOldListeners(name);
     if (!listeners[name]) {
       listeners[name] = [];

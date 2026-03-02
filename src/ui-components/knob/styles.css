@@ -93,7 +93,7 @@ body.knob-grabbing {
   font-family: 'ClockDigits';
   src:
     local('☺'),
-    url('assets/fonts/E1234-G3KXD.ttf') format('truetype');
+    url('../../assets/fonts/E1234-G3KXD.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

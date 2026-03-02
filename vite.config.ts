@@ -32,5 +32,18 @@ export default defineConfig(async () => ({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "**/*.d.ts",
+        "src/**/*.test.ts",
+        "src/assets/**",
+        "src-tauri/**",
+        "**/out/**",
+        "eslint.config.js",
+      ],
+    },
   },
 }));
