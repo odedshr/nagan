@@ -40,12 +40,12 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   const getColumns = () =>
-    state.dbColumns.filter(column => !dbState.groups.map(group => group.name as string).includes(column));
+    state.dbQuery.columns.filter(column => !dbState.groups.map(group => group.name as string).includes(column));
 
   const getVisibleSongs = () => dbState.db;
 
   const getCurrentGroupBy = (): SongMetadataAttribute[] => {
-    return state.groupBy.map(g => g.name as SongMetadataAttribute);
+    return state.dbQuery.groupBy.map(g => g.name as SongMetadataAttribute);
   };
 
   const onSongSelected = (song: Song) => {
@@ -91,7 +91,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   const onColumnOrderChanged = (visibleColumns: string[]) => {
     const visibleSet = new Set(visibleColumns);
-    const oldColumns = state.dbColumns;
+    const oldColumns = state.dbQuery.columns;
 
     const visibleOld = oldColumns.filter(c => visibleSet.has(c));
     if (visibleOld.length !== visibleColumns.length) {
@@ -100,12 +100,12 @@ export default function SongDatabase(state: State, backendService: BackendServic
     }
 
     let visibleIndex = 0;
-    state.dbColumns = oldColumns.map(c => (visibleSet.has(c) ? visibleColumns[visibleIndex++] : c));
+    state.dbQuery.columns = oldColumns.map(c => (visibleSet.has(c) ? visibleColumns[visibleIndex++] : c));
     refreshTable();
   };
 
   const onChangeSort = (key: DbSortItem['key']) => {
-    const oldSort = state.dbSort;
+    const oldSort = state.dbQuery.sort;
     const existing = oldSort.find(s => s.key === key);
     let newSort: DbSortItem[];
     if (existing) {
@@ -115,7 +115,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
       newSort = [{ key, direction: 'asc' }, ...oldSort.slice(0, 2)]; // Limit to 3 sort keys
     }
 
-    state.dbSort = newSort; // this will trigger dbState to recompute the sorted songs and re-render
+    state.dbQuery.sort = newSort; // this will trigger dbState to recompute the sorted songs and re-render
   };
 
   const onToggleSong = (song: Song, checked: boolean) => {
@@ -134,7 +134,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
-  let sortByDropdown = SortBy(state.dbSort);
+  let sortByDropdown = SortBy(state.dbQuery.sort);
   let groupByDropdown = GroupBy(getCurrentGroupBy());
   const columns = getColumns();
   let tableBody = SongDatabaseTableBody(
@@ -147,7 +147,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
   );
   let header = SongDatabaseTableHeader({
     columns,
-    sortBy: state.dbSort,
+    sortBy: state.dbQuery.sort,
     selectAll,
     onReorder: onColumnOrderChanged,
     onChangeSort,
@@ -188,7 +188,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
       header,
       SongDatabaseTableHeader({
         columns: getColumns(),
-        sortBy: state.dbSort,
+        sortBy: state.dbQuery.sort,
         selectAll,
         onReorder: onColumnOrderChanged,
         onChangeSort,

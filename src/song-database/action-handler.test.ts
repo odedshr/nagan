@@ -33,10 +33,12 @@ function createState(overrides: Partial<StateBase> = {}): State {
     playbackRate: 1,
     volume: 1,
     lastEvent: undefined,
-    groupBy: [],
-    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
-    dbFilters: {},
-    dbSort: [],
+    dbQuery: initState({
+      groupBy: [],
+      columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+      filters: {},
+      sort: [],
+    }),
     playlists: [],
     currentPlaylistId: null,
     queue: [],
@@ -119,8 +121,12 @@ describe('actionHandler', () => {
 
   it('group-by-option removes previous filter and sets state.groupBy', async () => {
     const state = createState({
-      groupBy: [{ name: 'artists' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
-      dbFilters: { artists: 'Miles', other: 1 },
+      dbQuery: initState({
+        groupBy: [{ name: 'artists' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
+        columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+        filters: { artists: 'Miles', other: 1 },
+        sort: [],
+      }),
     });
     const dbState = createSongDatabaseState({ db: [] });
 
@@ -140,14 +146,18 @@ describe('actionHandler', () => {
 
     await handler(submitEvent(form, btn));
 
-    expect(state.dbFilters).toEqual({ other: 1 });
-    expect(state.groupBy[0].name).toBe('album');
+    expect(state.dbQuery.filters).toEqual({ other: 1 });
+    expect(state.dbQuery.groupBy[0].name).toBe('album');
   });
 
   it('group-by-option ctrl-click does not add secondary when primary has no selection', async () => {
     const state = createState({
-      groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
-      dbFilters: {},
+      dbQuery: initState({
+        groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
+        columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+        filters: {},
+        sort: [],
+      }),
     });
     const dbState = createSongDatabaseState({ db: [] });
 
@@ -168,13 +178,17 @@ describe('actionHandler', () => {
 
     await handler(submitEvent(form, btn));
 
-    expect(state.groupBy.map(g => g.name)).toEqual(['album']);
+    expect(state.dbQuery.groupBy.map(g => g.name)).toEqual(['album']);
   });
 
   it('group-by-option ctrl-click adds secondary after primary selection', async () => {
     const state = createState({
-      groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
-      dbFilters: {},
+      dbQuery: initState({
+        groupBy: [{ name: 'album' as SongMetadataAttribute, selected: null, sortBy: 'valueAsec' }],
+        columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+        filters: {},
+        sort: [],
+      }),
     });
     const dbState = createSongDatabaseState({ db: [] });
 
@@ -193,11 +207,11 @@ describe('actionHandler', () => {
     btn.setAttribute('data-group-by', 'artists');
     btn.dataset.multi = '1';
 
-    state.dbFilters = { album: 'Kind of Blue' };
+    state.dbQuery.filters = { album: 'Kind of Blue' };
 
     btn.dataset.multi = '1';
     await handler(submitEvent(form, btn));
-    expect(state.groupBy.map(g => g.name)).toEqual(['album', 'artists']);
+    expect(state.dbQuery.groupBy.map(g => g.name)).toEqual(['album', 'artists']);
   });
 
   it('play-now enqueues next and emits next-song event', async () => {

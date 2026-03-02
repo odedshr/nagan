@@ -13,10 +13,12 @@ function createState(overrides: Partial<StateBase> = {}): State {
     playbackRate: 1,
     volume: 1,
     lastEvent: undefined,
-    groupBy: [],
-    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
-    dbFilters: {},
-    dbSort: [],
+    dbQuery: initState({
+      groupBy: [],
+      columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+      filters: {},
+      sort: [],
+    }),
     playlists: [],
     currentPlaylistId: null,
     queue: [],
@@ -66,6 +68,7 @@ describe('stateListener', () => {
     const dbState = createSongDatabaseState();
 
     const refreshDb = vi.fn(async () => undefined);
+    state.subState('dbQuery');
 
     attachSongDatabaseStateListeners({
       state,
@@ -81,7 +84,7 @@ describe('stateListener', () => {
       getCurrentGroupBy: () => [],
     });
 
-    state.dbFilters = { a: 1 };
+    state.dbQuery.filters = { a: 1 };
 
     expect(refreshDb).toHaveBeenCalledTimes(1);
   });
@@ -121,7 +124,7 @@ describe('stateListener', () => {
     });
 
     const groupBy: SongGroupsQueryItem[] = [{ name: 'album', selected: null, sortBy: 'valueAsec' }];
-    state.groupBy = groupBy;
+    state.dbQuery.groupBy = groupBy;
 
     await new Promise(r => setTimeout(r, 0));
 

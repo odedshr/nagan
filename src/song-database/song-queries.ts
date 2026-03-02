@@ -4,8 +4,8 @@ import { dbSortToOrderBy } from './sort/db-sort.ts';
 
 export async function fetchSongs(state: State, backendService: BackendService): Promise<Song[]> {
   try {
-    const sort = dbSortToOrderBy(state.dbSort);
-    const query: GetSongsQuery = { filters: state.dbFilters, ...(sort ? { sort } : {}) };
+    const sort = dbSortToOrderBy(state.dbQuery.sort);
+    const query: GetSongsQuery = { filters: state.dbQuery.filters, ...(sort ? { sort } : {}) };
     const response = await backendService.getSongs(query);
     return response.songs;
   } catch (error) {

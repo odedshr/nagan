@@ -32,10 +32,12 @@ function createState(overrides: Partial<StateBase> = {}): State {
     playbackRate: 1,
     volume: 1,
     lastEvent: undefined,
-    groupBy: [],
-    dbColumns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
-    dbFilters: {},
-    dbSort: [],
+    dbQuery: initState({
+      groupBy: [],
+      columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+      filters: {},
+      sort: [],
+    }),
     playlists: [],
     currentPlaylistId: null,
     queue: [],
@@ -56,7 +58,14 @@ function createState(overrides: Partial<StateBase> = {}): State {
 
 describe('songQueries', () => {
   it('fetchSongs passes dbFilters to backendService.getSongs and returns songs', async () => {
-    const state = createState({ dbFilters: { album: 'Kind of Blue' } });
+    const state = createState({
+      dbQuery: initState({
+        groupBy: [],
+        columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+        filters: { album: 'Kind of Blue' },
+        sort: [],
+      }),
+    });
 
     const backendService = {
       getSongs: vi.fn(async () => ({ songs: [song('1')], total: 1 })),

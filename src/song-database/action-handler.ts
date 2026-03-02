@@ -139,7 +139,7 @@ export function createSongDatabaseActionHandler({
             // Toggle off secondary.
             nextNames = [prevNames[0]];
           } else if (prevNames.length === 1) {
-            const primaryFilter = state.dbFilters?.[prevNames[0]];
+            const primaryFilter = state.dbQuery.filters?.[prevNames[0]];
             const primaryHasSelection = typeof primaryFilter === 'string' || typeof primaryFilter === 'number';
 
             // If the primary group has no selected item yet, ignore the secondary selection for now.
@@ -153,17 +153,17 @@ export function createSongDatabaseActionHandler({
 
         const removed = prevNames.filter(name => !nextNames.includes(name));
         if (removed.length > 0) {
-          const nextFilters = { ...state.dbFilters };
+          const nextFilters = { ...state.dbQuery.filters };
           for (const name of removed) {
             delete nextFilters[name];
           }
-          state.dbFilters = nextFilters;
+          state.dbQuery.filters = nextFilters;
         }
 
-        const prevByName = new Map(state.groupBy.map(g => [g.name, g] as const));
-        state.groupBy = nextNames.map(name => {
+        const prevByName = new Map(state.dbQuery.groupBy.map(g => [g.name, g] as const));
+        state.dbQuery.groupBy = nextNames.map(name => {
           const existing = prevByName.get(name);
-          const filterVal = state.dbFilters[name];
+          const filterVal = state.dbQuery.filters[name];
           const selected = typeof filterVal === 'string' || typeof filterVal === 'number' ? filterVal : null;
           return {
             name,
@@ -179,7 +179,9 @@ export function createSongDatabaseActionHandler({
         const sortBy = (e.submitter as HTMLButtonElement).getAttribute('data-sort-by') as SongGroupSortBy;
         const sortGroupName = (e.submitter as HTMLButtonElement).getAttribute('data-group') as SongMetadataAttribute;
         if (sortGroupName && sortBy) {
-          state.groupBy = state.groupBy.map(group => (group.name === sortGroupName ? { ...group, sortBy } : group));
+          state.dbQuery.groupBy = state.dbQuery.groupBy.map(group =>
+            group.name === sortGroupName ? { ...group, sortBy } : group
+          );
         }
         return;
       }
@@ -189,21 +191,21 @@ export function createSongDatabaseActionHandler({
         const itemName = button.getAttribute('title');
         const groupName = button.getAttribute('data-group');
         if (groupName && itemName) {
-          const nextFilters = { ...state.dbFilters, [groupName]: itemName };
+          const nextFilters = { ...state.dbQuery.filters, [groupName]: itemName };
 
-          const idx = state.groupBy.findIndex(g => g.name === groupName);
+          const idx = state.dbQuery.groupBy.findIndex(g => g.name === groupName);
           if (idx >= 0) {
             // If a preceding group changes selection, clear selections/filters of following groups.
-            for (const g of state.groupBy.slice(idx + 1)) {
+            for (const g of state.dbQuery.groupBy.slice(idx + 1)) {
               delete nextFilters[g.name];
             }
 
-            state.groupBy = state.groupBy.map((g, i) =>
+            state.dbQuery.groupBy = state.dbQuery.groupBy.map((g, i) =>
               i < idx ? g : i === idx ? { ...g, selected: itemName } : { ...g, selected: null }
             );
           }
 
-          state.dbFilters = nextFilters;
+          state.dbQuery.filters = nextFilters;
         }
         return;
       }
@@ -216,11 +218,11 @@ export function createSongDatabaseActionHandler({
         delete button.dataset.multi;
 
         if (!sortKey) {
-          state.dbSort = [];
+          state.dbQuery.sort = [];
           return;
         }
 
-        const prev = state.dbSort ?? [];
+        const prev = state.dbQuery.sort ?? [];
         const existingIdx = prev.findIndex(s => s.key === sortKey);
         const existing = existingIdx >= 0 ? prev[existingIdx] : undefined;
 
@@ -234,16 +236,16 @@ export function createSongDatabaseActionHandler({
           } else {
             next[existingIdx] = { ...next[existingIdx], direction: toggledDirection };
           }
-          state.dbSort = next;
+          state.dbQuery.sort = next;
           return;
         }
 
         if (existingIdx === 0) {
-          state.dbSort = [{ key: sortKey, direction: toggledDirection } satisfies DbSortItem];
+          state.dbQuery.sort = [{ key: sortKey, direction: toggledDirection } satisfies DbSortItem];
           return;
         }
 
-        state.dbSort = [
+        state.dbQuery.sort = [
           {
             key: sortKey,
             direction: existing?.direction ?? 'asc',

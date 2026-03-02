@@ -118,6 +118,13 @@ export type DbSortItem = {
   direction: DbSortDirection;
 };
 
+export type DbQueryBase = {
+  groupBy: SongGroupsQueryItem[];
+  columns: string[];
+  filters: Record<string, unknown>;
+  sort: DbSortItem[];
+};
+
 export type PreferenceBase = {
   cssTheme: string;
   autoAnalyzeBpm: boolean;
@@ -131,10 +138,7 @@ export type StateBase = {
   volume: number;
   lastEvent?: CustomEvent;
   // DB system
-  groupBy: SongGroupsQueryItem[];
-  dbColumns: string[];
-  dbFilters: Record<string, unknown>;
-  dbSort: DbSortItem[];
+  dbQuery: StateTemplate<DbQueryBase>;
   // Playlist system
   playlists: Playlist[];
   currentPlaylistId: string | null;

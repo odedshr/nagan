@@ -29,6 +29,8 @@ export function attachSongDatabaseStateListeners({
   onFilesDropped,
   getCurrentGroupBy,
 }: SongDatabaseListenerDeps) {
+  const dbQuery = state.dbQuery;
+
   state.addListener('lastEvent', async (event?: CustomEvent) => {
     if (!event) {
       return;
@@ -46,29 +48,29 @@ export function attachSongDatabaseStateListeners({
     }
   });
 
-  dbState.addListener('db', refreshTable);
-
-  state.addListener('dbFilters', refreshDb);
-
-  state.addListener('dbSort', () => {
-    console.log('Sort changed:', state.dbSort);
-    onSortByDropdownChange(state.dbSort);
-    refreshDb();
-  });
-
-  state.addListener('groupBy', async () => {
-    onGroupByDropdownChange(getCurrentGroupBy());
-
-    const response =
-      state.groupBy.length > 0 ? await backendService.getSongsGroups({ groups: state.groupBy }) : { groups: [] };
-    dbState.groups = response.groups;
-  });
-
   dbState.addListener('groups', () => {
     onGroupsChanged(dbState.groups);
   });
 
-  state.addListener('playlists', (playlists: Playlist[]) => {
-    onPlaylistsChanged(playlists);
+  dbQuery.addListener('sort', () => {
+    console.log('Sort changed:', dbQuery.sort);
+    onSortByDropdownChange(dbQuery.sort);
+    refreshDb();
   });
+
+  dbQuery.addListener('groupBy', async () => {
+    onGroupByDropdownChange(getCurrentGroupBy());
+
+    const groups = dbQuery.groupBy;
+    const response = groups.length > 0 ? await backendService.getSongsGroups({ groups }) : { groups: [] };
+    dbState.groups = response.groups;
+  });
+
+  state.addListener('playlists', (playlists: Playlist[]) => onPlaylistsChanged(playlists));
+
+  // Any dbQuery update should refresh the view.
+  state.addListener('dbQuery', refreshDb);
+
+  // When db changes, refresh the table to reflect any changes in groups, playlists, etc.
+  dbState.addListener('db', refreshTable);
 }

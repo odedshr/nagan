@@ -29,10 +29,12 @@ export async function initApp() {
     mode: 'database' as Mode,
     currentTrack: null,
     // DB
-    groupBy: [],
-    dbColumns: ['select', 'title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
-    dbFilters: {},
-    dbSort: [],
+    dbQuery: initState({
+      groupBy: [],
+      columns: ['select', 'title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
+      filters: {},
+      sort: [],
+    }),
     playlists: [],
     currentPlaylist: null,
     playlistSongs: [],
@@ -44,10 +46,21 @@ export async function initApp() {
   };
 
   const state = initState(loadPersistedState(defaultState)) as State;
+  state.subState('dbQuery');
   state.subState('preferences');
 
   // Set up persistence with debounced save on key changes
-  persist(state, ['volume', 'playbackRate', 'repeat', 'mode', 'currentPlaylistId', 'queue', 'history', 'preferences']);
+  persist(state, [
+    'volume',
+    'playbackRate',
+    'repeat',
+    'mode',
+    'currentPlaylistId',
+    'dbQuery',
+    'queue',
+    'history',
+    'preferences',
+  ]);
 
   state.compute('currentPlaylist', state => state.playlists.find(pl => pl.id === state.currentPlaylistId) || null);
 
