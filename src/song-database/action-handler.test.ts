@@ -38,6 +38,8 @@ function createState(overrides: Partial<StateBase> = {}): State {
       columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
       filters: {},
       sort: [],
+      pageSize: 10,
+      pageNumber: 0,
     }),
     playlists: [],
     currentPlaylistId: null,
@@ -126,6 +128,8 @@ describe('actionHandler', () => {
         columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
         filters: { artists: 'Miles', other: 1 },
         sort: [],
+        pageSize: 10,
+        pageNumber: 0,
       }),
     });
     const dbState = createSongDatabaseState({ db: [] });
@@ -157,6 +161,8 @@ describe('actionHandler', () => {
         columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
         filters: {},
         sort: [],
+        pageSize: 10,
+        pageNumber: 0,
       }),
     });
     const dbState = createSongDatabaseState({ db: [] });
@@ -188,6 +194,8 @@ describe('actionHandler', () => {
         columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
         filters: {},
         sort: [],
+        pageSize: 10,
+        pageNumber: 0,
       }),
     });
     const dbState = createSongDatabaseState({ db: [] });

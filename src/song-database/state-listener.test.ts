@@ -18,6 +18,8 @@ function createState(overrides: Partial<StateBase> = {}): State {
       columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
       filters: {},
       sort: [],
+      pageSize: 10,
+      pageNumber: 0,
     }),
     playlists: [],
     currentPlaylistId: null,

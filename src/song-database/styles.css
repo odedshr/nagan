@@ -52,6 +52,7 @@
   border-spacing: 0;
   font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
   font-size: 1.2rem;
+  height: 100%;
   image-rendering: pixelated;
   line-height: 1.2;
   table-layout: fixed;
@@ -72,6 +73,21 @@
       background: var(--color-surface);
       border-top: 0.1rem solid var(--color-border);
       border-bottom: 0;
+      padding: 0;
+    }
+
+    .table-footer {
+      align-items: center;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem;
+      width: 100vw;
+    }
+    .pagination {
+      align-items: center;
+      display: inline-flex;
+      gap: 0.5rem;
     }
   }
 
@@ -199,6 +215,10 @@
   tbody tr:has(input[type='checkbox']:checked) {
     background-color: var(--color-selection-bg);
     color: var(--color-selection-text);
+  }
+
+  .spacer-row {
+    height: 100%;
   }
 }
 

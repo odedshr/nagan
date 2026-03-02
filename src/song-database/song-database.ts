@@ -35,8 +35,61 @@ export default function SongDatabase(state: State, backendService: BackendServic
     { logInDev: true }
   );
 
+  const getHeader = () =>
+    SongDatabaseTableHeader({
+      columns: getColumns(),
+      sortBy: state.dbQuery.sort,
+      selectAll,
+      onReorder: onColumnOrderChanged,
+      onChangeSort,
+    });
+
+  const getBody = () => {
+    const selectedSongIds = new Set(Array.from(selectedSongs).map(s => s.id));
+    const newContent = SongDatabaseTableBody(
+      getVisibleSongs(),
+      Array.from(selectedSongIds),
+      getColumns(),
+      onToggleSong,
+      onSongSelected,
+      onSongCheckboxClick
+    );
+    newContent.onsubmit = onFormSubmitted;
+    return newContent;
+  };
+
+  const getFooter = () =>
+    SongDatabaseTableFooter({
+      columns: getColumns(),
+      totalSongs: dbState.totalSongs,
+      selectedSongs: selectedSongs.size,
+      pageNumber: state.dbQuery.pageNumber,
+      pageSize: state.dbQuery.pageSize,
+    });
+
+  const refreshHeader = () => {
+    header = replaceWith(header, getHeader()) as HTMLTableSectionElement;
+  };
+
+  const refreshBody = () => {
+    tableBody = replaceWith(tableBody, getBody()) as HTMLTableSectionElement;
+  };
+
+  const refreshFooter = () => {
+    footer = replaceWith(footer, getFooter()) as HTMLTableSectionElement;
+  };
+
+  const refreshTable = () => {
+    refreshHeader();
+    refreshBody();
+    refreshFooter();
+  };
+
   const refreshDb = async () => {
-    dbState.db = await fetchSongs(state, backendService);
+    const { songs, total } = await fetchSongs(state, backendService);
+    // update totalSongs first because updating db will trigger a re-render which relies on totalSongs to determine pagination
+    dbState.totalSongs = total;
+    dbState.db = songs;
   };
 
   const getColumns = () =>
@@ -152,7 +205,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     onReorder: onColumnOrderChanged,
     onChangeSort,
   });
-  let footer = SongDatabaseTableFooter({ columns, totalSongs: dbState.db.length, selectedSongs: selectedSongs.size });
+  let footer = getFooter();
   let groups = Groups(dbState.groups);
   const elm = SongDatabaseUI({
     groups,
@@ -182,50 +235,6 @@ export default function SongDatabase(state: State, backendService: BackendServic
   });
 
   elm.onsubmit = onFormSubmitted;
-
-  const refreshHeader = () => {
-    header = replaceWith(
-      header,
-      SongDatabaseTableHeader({
-        columns: getColumns(),
-        sortBy: state.dbQuery.sort,
-        selectAll,
-        onReorder: onColumnOrderChanged,
-        onChangeSort,
-      })
-    ) as HTMLTableSectionElement;
-  };
-
-  const refreshBody = () => {
-    const selectedSongIds = new Set(Array.from(selectedSongs).map(s => s.id));
-    const newContent = SongDatabaseTableBody(
-      getVisibleSongs(),
-      Array.from(selectedSongIds),
-      getColumns(),
-      onToggleSong,
-      onSongSelected,
-      onSongCheckboxClick
-    );
-    newContent.onsubmit = onFormSubmitted;
-    tableBody = replaceWith(tableBody, newContent) as HTMLTableSectionElement;
-  };
-
-  const refreshFooter = () => {
-    footer = replaceWith(
-      footer,
-      SongDatabaseTableFooter({
-        columns: getColumns(),
-        totalSongs: dbState.db.length,
-        selectedSongs: selectedSongs.size,
-      })
-    ) as HTMLTableSectionElement;
-  };
-
-  const refreshTable = () => {
-    refreshHeader();
-    refreshBody();
-    refreshFooter();
-  };
 
   attachSongDatabaseStateListeners({
     state,

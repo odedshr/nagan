@@ -123,6 +123,8 @@ export type DbQueryBase = {
   columns: string[];
   filters: Record<string, unknown>;
   sort: DbSortItem[];
+  pageSize: number;
+  pageNumber: number;
 };
 
 export type PreferenceBase = {

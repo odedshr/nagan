@@ -254,6 +254,26 @@ export function createSongDatabaseActionHandler({
         return;
       }
 
+      case 'first-page':
+        state.dbQuery.pageNumber = 0;
+        return;
+
+      case 'previous-page':
+        state.dbQuery.pageNumber = Math.max(0, (state.dbQuery.pageNumber ?? 1) - 1);
+        return;
+
+      case 'next-page':
+        state.dbQuery.pageNumber = (state.dbQuery.pageNumber ?? 0) + 1;
+        return;
+
+      case 'last-page':
+        // calculate last page
+        const lastPage = state.dbQuery.pageSize
+          ? Math.ceil(dbState.totalSongs / state.dbQuery.pageSize) - 1
+          : Number.MAX_SAFE_INTEGER;
+        state.dbQuery.pageNumber = lastPage >= 0 ? lastPage : 0;
+        return;
+
       default:
         console.warn('Unknown action:', action);
         break;

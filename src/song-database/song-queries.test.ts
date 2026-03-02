@@ -37,6 +37,8 @@ function createState(overrides: Partial<StateBase> = {}): State {
       columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
       filters: {},
       sort: [],
+      pageSize: 10,
+      pageNumber: 0,
     }),
     playlists: [],
     currentPlaylistId: null,
@@ -64,6 +66,8 @@ describe('songQueries', () => {
         columns: ['title', 'album', 'artists', 'duration', 'genre', 'bpm', 'comment'],
         filters: { album: 'Kind of Blue' },
         sort: [],
+        pageSize: 10,
+        pageNumber: 0,
       }),
     });
 
@@ -71,9 +75,9 @@ describe('songQueries', () => {
       getSongs: vi.fn(async () => ({ songs: [song('1')], total: 1 })),
     } as unknown as BackendService;
 
-    const songs = await fetchSongs(state, backendService);
+    const { songs } = await fetchSongs(state, backendService);
 
-    expect(backendService.getSongs).toHaveBeenCalledWith({ filters: { album: 'Kind of Blue' } });
+    expect(backendService.getSongs).toHaveBeenCalledWith({ filters: { album: 'Kind of Blue' }, limit: 10, offset: 0 });
     expect(songs).toHaveLength(1);
     expect(songs[0].id).toBe('1');
   });
@@ -89,7 +93,7 @@ describe('songQueries', () => {
       }),
     } as unknown as BackendService;
 
-    const songs = await fetchSongs(state, backendService);
+    const { songs } = await fetchSongs(state, backendService);
     expect(songs).toEqual([]);
 
     consoleError.mockRestore();

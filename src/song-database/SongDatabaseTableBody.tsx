@@ -132,13 +132,16 @@ export default (
           </tr>
         );
       })}
+      <tr class="spacer-row">
+        <td colspan={columns.length}></td>
+      </tr>
     </tbody>
   ) as HTMLTableSectionElement;
 
   tableBody.addEventListener('select-multiple-songs', (e: Event) => {
     const { from, to, checked } = (e as CustomEvent).detail;
     const checkboxes = Array.from(tableBody.querySelectorAll('.select-song-checkbox')) as HTMLInputElement[];
-    console.log(`Selecting songs from index ${from} to ${to}, checked: ${checked}`);
+
     for (let i = from; i <= to; i++) {
       const checkbox = checkboxes[i];
       if (!checkbox) continue;
