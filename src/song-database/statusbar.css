@@ -1,0 +1,25 @@
+.status-bar {
+  grid-area: 'status';
+  background: var(--color-surface);
+  border-top: 0.1rem solid var(--color-border);
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  font-size: 1.4rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  position: sticky;
+  left: 0;
+  width: 100vw;
+
+  .selection {
+    color: var(--color-text-muted);
+    flex: auto;
+  }
+
+  .pagination {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.5rem;
+  }
+}

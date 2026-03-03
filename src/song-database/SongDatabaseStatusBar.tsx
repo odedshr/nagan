@@ -11,7 +11,7 @@ export type StatusBarProps = {
 };
 
 export default ({ totalSongs, selectedSongs, pageNumber, pageSize, bidiPageSizeSelector }: StatusBarProps) => {
-  const totalPages = pageSize ? Math.ceil((totalSongs ?? 0) / pageSize) : 0;
+  const totalPages = +pageSize > 0 ? Math.ceil((totalSongs ?? 0) / pageSize) : 0;
   const elm = (
     <div class="status-bar">
       <span class="selection">

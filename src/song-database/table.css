@@ -1,0 +1,145 @@
+.db-table-scroll {
+  grid-area: songs;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+}
+
+.db-table {
+  border-spacing: 0;
+  font-family: 'ChicagoFLF', 'ChiKareGo', monospace;
+  font-size: 1.2rem;
+  height: 100%;
+  image-rendering: pixelated;
+  line-height: 1.2;
+  table-layout: fixed;
+  width: 100%;
+
+  & thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  & thead th {
+    background: var(--color-surface);
+
+    &.buttons-row {
+      padding: 0.5rem 0.5rem;
+      text-align: left;
+      height: 3.5rem;
+
+      button {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+.db-table {
+  .select-song-col {
+    width: 1.6rem;
+    text-align: center;
+  }
+  .artwork-col {
+    width: 3.3rem;
+  }
+  .title-col {
+    width: 20rem;
+  }
+  .artists-col {
+    width: 15rem;
+  }
+  .album-col {
+    width: 15rem;
+  }
+  .genre-col {
+    width: 10rem;
+  }
+  .year-col {
+    width: 5rem;
+  }
+  .album-artist-col {
+    width: 15rem;
+  }
+  .bpm-col {
+    width: 4rem;
+  }
+  .duration-col {
+    width: 5rem;
+  }
+  .track-col {
+    width: 5rem;
+  }
+  .tracks-total-col {
+    width: 5rem;
+  }
+  .comment-col {
+    width: 20rem;
+  }
+  .file-name-col {
+    width: 30rem;
+  }
+
+  & th,
+  & td {
+    padding: 0.5rem;
+    border-bottom: 0.1rem solid var(--color-border-muted);
+    border-left: 0.1rem solid var(--color-border-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.artwork-cell {
+      padding: 0;
+      text-align: center;
+    }
+  }
+
+  & th[draggable='true'] {
+    cursor: pointer;
+  }
+
+  & th.drag-over {
+    border-left: 0.3rem solid var(--color-primary);
+  }
+
+  tbody tr:has(input[type='checkbox']:checked) {
+    background-color: var(--color-selection-bg);
+    color: var(--color-selection-text);
+  }
+
+  .spacer-row {
+    height: 100%;
+  }
+}
+
+.number-cell {
+  text-align: right;
+}
+
+.artwork-thumbnail {
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--color-border);
+  height: 2.4rem;
+  margin-top: 0.2rem;
+  object-fit: cover;
+  /* image-rendering: auto; */
+  width: 2.4rem;
+}
+
+.filter-label {
+  list-style: none;
+  cursor: pointer;
+}
+
+.filter-options {
+  position: absolute;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0.2rem -0.5rem var(--color-shadow);
+  border-radius: 0.4rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
