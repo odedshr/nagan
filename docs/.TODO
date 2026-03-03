@@ -21,11 +21,10 @@ limit who has access to DOM elements, send CustomEvents() to communicate with th
 
 Tasks
 
-- remove selectQuery from songs-database (select checkbox)
 - Take analayzeGenre/BPM from id3Editor
-- pagination: set page size
 - filter mechanism
 - show/hide columns
 - handle backend errors
 - updatable notifications
 - responsiveness
+- state bidi to support textarea, checkbox and radio buttons

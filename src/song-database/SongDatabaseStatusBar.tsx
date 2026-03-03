@@ -5,13 +5,14 @@ import jsx from '../jsx.js';
 export type StatusBarProps = {
   totalSongs?: number;
   selectedSongs?: number;
+  bidiPageSizeSelector: (selectElm: HTMLSelectElement) => void;
   pageNumber: number;
   pageSize: number;
 };
 
-export default ({ totalSongs, selectedSongs, pageNumber, pageSize }: StatusBarProps) => {
+export default ({ totalSongs, selectedSongs, pageNumber, pageSize, bidiPageSizeSelector }: StatusBarProps) => {
   const totalPages = pageSize ? Math.ceil((totalSongs ?? 0) / pageSize) : 0;
-  return (
+  const elm = (
     <div class="status-bar">
       <span class="selection">
         {totalSongs} song{totalSongs === 1 ? '' : 's'}
@@ -36,6 +37,15 @@ export default ({ totalSongs, selectedSongs, pageNumber, pageSize }: StatusBarPr
       ) : (
         ''
       )}
+      <select class="page-size-select" name="page-size">
+        {[20, 50, 100, 500, 0].map(size => (
+          <option value={size} selected={+pageSize === size}>
+            {size === 0 ? 'All' : `${size} per page`}
+          </option>
+        ))}
+      </select>
     </div>
   ) as HTMLDivElement;
+  bidiPageSizeSelector(elm.querySelector('.page-size-select') as HTMLSelectElement);
+  return elm;
 };

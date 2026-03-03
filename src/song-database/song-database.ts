@@ -63,6 +63,7 @@ export default function SongDatabase(state: State, backendService: BackendServic
     StatusBar({
       totalSongs: dbState.totalSongs,
       selectedSongs: selectedSongs.size,
+      bidiPageSizeSelector: state.dbQuery.bidi('pageSize') as (selectElm: HTMLSelectElement) => void,
       pageNumber: state.dbQuery.pageNumber,
       pageSize: state.dbQuery.pageSize,
     });

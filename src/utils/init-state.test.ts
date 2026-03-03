@@ -73,22 +73,30 @@ describe('initState', () => {
     expect(input.value).toBe('Carol');
   });
 
-  it('bidi supports custom attribute and event', () => {
-    const state = initState({ enabled: false as boolean });
+  it('bidi supports select elements', () => {
+    const state = initState({ color: 'blue' as string });
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
+    const select = document.createElement('select');
+    const optRed = document.createElement('option');
+    optRed.value = 'red';
+    optRed.textContent = 'Red';
+    const optBlue = document.createElement('option');
+    optBlue.value = 'blue';
+    optBlue.textContent = 'Blue';
+    select.append(optRed, optBlue);
+    expect(select.value).toBe('red'); // default to first option
 
-    state.bidi('enabled', checkbox, 'checked', 'input');
+    state.bidi('color', select);
+    expect(select.value).toBe('red');
 
-    expect(checkbox.getAttribute('checked')).toBe('');
+    // Element -> state
+    select.value = 'blue';
+    select.dispatchEvent(new Event('change'));
+    expect(state.color).toBe('blue');
 
-    checkbox.checked = true;
-    checkbox.dispatchEvent(new Event('input'));
-    expect(state.enabled).toBe(true);
-
-    state.enabled = false;
-    expect(checkbox.checked).toBe(false);
+    // State -> element
+    state.color = 'red';
+    expect(select.value).toBe('red');
   });
 
   it('lock prevents setting a property and unlock restores it', () => {

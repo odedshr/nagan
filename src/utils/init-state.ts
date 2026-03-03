@@ -4,7 +4,12 @@ type StateHelpers<T> = {
   removeListener<K extends keyof T>(key: K, fn: (value: T[K]) => void): void;
   removeListener(key: '*', fn: (payload: { key: string; value: unknown }) => void): void;
   compute<K extends string>(key: K, fn: (state: T) => unknown): void;
-  bidi(prop: keyof T, elm: HTMLElement, attribute?: string, event?: string): void;
+  bidi(
+    prop: keyof T,
+    elm?: HTMLElement,
+    attribute?: string,
+    event?: string
+  ): void | ((elm: HTMLElement, attribute?: string, event?: string) => void);
   touch<K extends keyof T>(prop: K): void;
   subState<K extends keyof T>(prop: K): StateTemplate<Extract<T[K], object>>;
   lock(prop: string): void;
@@ -77,7 +82,10 @@ export function initState<T extends object>(initial: T): StateTemplate<T> {
     return computed.set(prop, fn);
   };
 
-  proxy.bidi = (prop: keyof T, elm: HTMLElement, attribute = 'value', event = 'change') => {
+  proxy.bidi = (prop: keyof T, elm?: HTMLElement, attribute = 'value', event = 'change') => {
+    if (!elm) {
+      return (elm: HTMLElement, attribute = 'value', event = 'change') => proxy.bidi(prop, elm, attribute, event);
+    }
     elm.setAttribute(attribute, (proxy[prop] as string) || '');
     elm.addEventListener(event, () => {
       (proxy as T)[prop] = elm[attribute as keyof HTMLElement] as T[keyof T];
@@ -85,23 +93,20 @@ export function initState<T extends object>(initial: T): StateTemplate<T> {
 
     proxy.addListener(prop, newValue => {
       if (elm.getAttribute(attribute) !== newValue) {
-        //@ts-ignore
-        elm[attribute as keyof HTMLElement] = newValue;
+        if (elm.tagName === 'SELECT' && attribute === 'value') {
+          const selectElm = elm as HTMLSelectElement;
+          selectElm.selectedIndex = [...selectElm.options].findIndex(option => option.value === newValue);
+        } else {
+          //@ts-ignore
+          elm[attribute as keyof HTMLElement] = newValue;
+        }
       }
     });
   };
 
-  proxy.touch = <K extends keyof T>(prop: K) => {
-    notify(prop as string, proxy[prop]);
-  };
-
-  proxy.lock = (prop: string) => {
-    locked.add(prop);
-  };
-
-  proxy.unlock = (prop: string) => {
-    locked.delete(prop);
-  };
+  proxy.touch = <K extends keyof T>(prop: K) => notify(prop as string, proxy[prop]);
+  proxy.lock = (prop: string) => locked.add(prop);
+  proxy.unlock = (prop: string) => locked.delete(prop);
 
   proxy.subState = <K extends keyof T>(prop: K): StateTemplate<Extract<T[K], object>> => {
     const current = proxy[prop] as unknown;

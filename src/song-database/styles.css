@@ -89,11 +89,17 @@
   align-items: center;
   box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
+  font-size: 1.4rem;
+  gap: 0.5rem;
   padding: 0.5rem;
   position: sticky;
   left: 0;
   width: 100vw;
+
+  .selection {
+    color: var(--color-text-muted);
+    flex: auto;
+  }
 
   .pagination {
     align-items: center;
