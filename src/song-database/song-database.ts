@@ -7,9 +7,10 @@ import GroupBy from './groups/GroupBy.tsx';
 import SortBy from './sort/SortBy.tsx';
 import editId3Tags from './id3-tag-editor/id3-tag-editor.ts';
 import SongDatabaseUI from './SongDatabase.tsx';
+import SongDatabaseToolbar from './SongDatabaseToolbar.tsx';
 import SongDatabaseTableHeader from './SongDatabaseTableHeader.tsx';
 import SongDatabaseTableBody from './SongDatabaseTableBody.tsx';
-import SongDatabaseTableFooter from './SongDatabaseTableFooter.tsx';
+import StatusBar from './SongDatabaseStatusBar.tsx';
 import Groups from './groups/Groups.tsx';
 import replaceWith from '../utils/replace-with.ts';
 import { createSongDatabaseState } from './song-database-state.ts';
@@ -58,9 +59,8 @@ export default function SongDatabase(state: State, backendService: BackendServic
     return newContent;
   };
 
-  const getFooter = () =>
-    SongDatabaseTableFooter({
-      columns: getColumns(),
+  const getStatusBar = () =>
+    StatusBar({
       totalSongs: dbState.totalSongs,
       selectedSongs: selectedSongs.size,
       pageNumber: state.dbQuery.pageNumber,
@@ -75,14 +75,14 @@ export default function SongDatabase(state: State, backendService: BackendServic
     tableBody = replaceWith(tableBody, getBody()) as HTMLTableSectionElement;
   };
 
-  const refreshFooter = () => {
-    footer = replaceWith(footer, getFooter()) as HTMLTableSectionElement;
+  const refreshStatusBar = () => {
+    statusBar = replaceWith(statusBar, getStatusBar()) as HTMLDivElement;
   };
 
   const refreshTable = () => {
     refreshHeader();
     refreshBody();
-    refreshFooter();
+    refreshStatusBar();
   };
 
   const refreshDb = async () => {
@@ -178,18 +178,21 @@ export default function SongDatabase(state: State, backendService: BackendServic
       selectedSongs.delete(song);
     }
 
-    const anySongsSelected = selectedSongs.size > 0;
-    tableBody
-      .querySelectorAll('button[data-target="song"]')
-      .forEach(btn => ((btn as HTMLButtonElement).disabled = !anySongsSelected));
+    toolbar.dispatchEvent(new CustomEvent('toggle-song-actions', { detail: { enabled: selectedSongs.size > 0 } }));
 
-    refreshFooter();
+    refreshStatusBar();
   };
 
   let addToPlaylist = AddToPlaylist(state.playlists);
   let sortByDropdown = SortBy(state.dbQuery.sort);
   let groupByDropdown = GroupBy(getCurrentGroupBy());
   const columns = getColumns();
+  const toolbar = SongDatabaseToolbar({
+    addToPlaylist,
+    sortByDropdown,
+    groupByDropdown,
+  });
+  let groups = Groups(dbState.groups);
   let tableBody = SongDatabaseTableBody(
     getVisibleSongs(),
     [] as string[],
@@ -205,17 +208,14 @@ export default function SongDatabase(state: State, backendService: BackendServic
     onReorder: onColumnOrderChanged,
     onChangeSort,
   });
-  let footer = getFooter();
-  let groups = Groups(dbState.groups);
+  let statusBar = getStatusBar();
   const elm = SongDatabaseUI({
     groups,
     columns,
-    addToPlaylist,
-    sortByDropdown,
-    groupByDropdown,
+    toolbar,
     header,
     body: tableBody,
-    footer,
+    statusBar,
   });
 
   const addSongsToPlaylist = async (playlistId: string | null, songs: Song[]) => {

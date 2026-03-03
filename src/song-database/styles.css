@@ -5,23 +5,26 @@
   display: grid;
   gap: 0px 0px;
   grid-template-columns: max-content minmax(0, 1fr);
-  grid-template-rows: 5rem 1fr;
+  grid-template-rows: 5rem 1fr 4rem;
   grid-template-areas:
     'controls controls'
-    'groups songs';
+    'groups songs'
+    'status status';
 
   height: 100%;
   min-height: 0;
 
   &:has(.db-groups:empty) {
     grid-template-columns: 1fr;
+    grid-template-rows: 5rem 1fr 4rem;
     grid-template-areas:
       'controls'
-      'songs';
+      'songs'
+      'status';
   }
 }
 
-.db-controls {
+.toolbar {
   align-items: center;
   border-bottom: 0.1rem solid var(--color-border);
   grid-area: controls;
@@ -64,33 +67,6 @@
     z-index: 1;
   }
 
-  & tfoot {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-
-    td {
-      background: var(--color-surface);
-      border-top: 0.1rem solid var(--color-border);
-      border-bottom: 0;
-      padding: 0;
-    }
-
-    .table-footer {
-      align-items: center;
-      box-sizing: border-box;
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem;
-      width: 100vw;
-    }
-    .pagination {
-      align-items: center;
-      display: inline-flex;
-      gap: 0.5rem;
-    }
-  }
-
   & thead th {
     background: var(--color-surface);
 
@@ -103,6 +79,26 @@
         margin-right: 0.5rem;
       }
     }
+  }
+}
+
+.status-bar {
+  grid-area: 'status';
+  background: var(--color-surface);
+  border-top: 0.1rem solid var(--color-border);
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  position: sticky;
+  left: 0;
+  width: 100vw;
+
+  .pagination {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.5rem;
   }
 }
 
