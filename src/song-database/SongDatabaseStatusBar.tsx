@@ -15,35 +15,52 @@ export default ({ totalSongs, selectedSongs, pageNumber, pageSize, bidiPageSizeS
   const elm = (
     <div class="status-bar">
       <span class="selection">
+        <span>Showing </span>
+        <select class="page-size-select" name="page-size">
+          {[20, 50, 100, 500, 0].map(size => (
+            <option value={size} selected={+pageSize === size}>
+              {size === 0 ? 'All' : size}
+            </option>
+          ))}
+        </select>
+        <span> out of </span>
         {totalSongs} song{totalSongs === 1 ? '' : 's'}
         {selectedSongs ? ` (${selectedSongs} selected)` : ''}
       </span>
       {totalPages > 1 ? (
         <span class="pagination">
-          <button class="std-button icon-button" data-action="first-page" disabled={pageNumber === 0}>
+          <button class="std-button icon-button" value="0" data-action="change-page" disabled={pageNumber === 0}>
             |&lt;
           </button>
-          <button class="std-button icon-button" data-action="previous-page" disabled={pageNumber === 0}>
+          <button
+            class="std-button icon-button"
+            value={pageNumber - 1}
+            data-action="change-page"
+            disabled={pageNumber === 0}
+          >
             &lt;
           </button>
           {pageNumber + 1} of {totalPages} pages
-          <button class="std-button icon-button" data-action="next-page" disabled={pageNumber >= totalPages - 1}>
+          <button
+            class="std-button icon-button"
+            value={pageNumber + 1}
+            data-action="change-page"
+            disabled={pageNumber >= totalPages - 1}
+          >
             &gt;
           </button>
-          <button class="std-button icon-button" data-action="last-page" disabled={pageNumber >= totalPages - 1}>
+          <button
+            class="std-button icon-button"
+            value={totalPages - 1}
+            data-action="change-page"
+            disabled={pageNumber >= totalPages - 1}
+          >
             &gt;|
           </button>
         </span>
       ) : (
         ''
       )}
-      <select class="page-size-select" name="page-size">
-        {[20, 50, 100, 500, 0].map(size => (
-          <option value={size} selected={+pageSize === size}>
-            {size === 0 ? 'All' : `${size} per page`}
-          </option>
-        ))}
-      </select>
     </div>
   ) as HTMLDivElement;
   bidiPageSizeSelector(elm.querySelector('.page-size-select') as HTMLSelectElement);

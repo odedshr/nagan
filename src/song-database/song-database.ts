@@ -88,7 +88,6 @@ export default function SongDatabase(state: State, backendService: BackendServic
 
   const refreshDb = async () => {
     const { songs, total } = await fetchSongs(state, backendService);
-    // update totalSongs first because updating db will trigger a re-render which relies on totalSongs to determine pagination
     dbState.totalSongs = total;
     dbState.db = songs;
   };

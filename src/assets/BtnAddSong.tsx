@@ -12,11 +12,35 @@ export default () =>
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
     >
-      <circle cx="35" cy="72" r="8" fill="currentColor" />
-      <line x1="43" y1="30" x2="43" y2="72" stroke="currentColor" stroke-width="4" stroke-linecap="square" />
-      <path d="M43 32 C55 38 63 36 70 28" stroke="currentColor" stroke-width="4" stroke-linecap="square" fill="none" />
+      <g transform="translate(50 50) scale(0.8) translate(-50 -50)">
+        <g transform="translate(-2 0)">
+          {/* File (with folded corner) */}
+          <path
+            d="M24 10H60L80 30V90H24V10Z"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="square"
+            stroke-linejoin="miter"
+            fill="white"
+          />
+          <path
+            d="M60 10V30H80"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="square"
+            stroke-linejoin="miter"
+          />
 
-      <line x1="72" y1="35" x2="92" y2="35" stroke="currentColor" stroke-width="4" stroke-linecap="square" />
-      <line x1="82" y1="25" x2="82" y2="45" stroke="currentColor" stroke-width="4" stroke-linecap="square" />
+          {/* Musical note (quarter) */}
+          <circle cx="50" cy="63" r="7" fill="currentColor" />
+          <line x1="57" y1="63" x2="57" y2="35" stroke="currentColor" stroke-width="4" stroke-linecap="square" />
+        </g>
+      </g>
+
+      <g class="add-icon">
+        <circle cx="70" cy="74" r="12" stroke="currentColor" stroke-width="2" fill="white" />
+        <line x1="64" y1="74" x2="76" y2="74" stroke="currentColor" stroke-width="2" stroke-linecap="square" />
+        <line x1="70" y1="68" x2="70" y2="80" stroke="currentColor" stroke-width="2" stroke-linecap="square" />
+      </g>
     </svg>
   ) as SVGElement;

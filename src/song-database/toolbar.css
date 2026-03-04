@@ -17,6 +17,10 @@
   gap: 0.5rem;
 }
 
+.add-to-playlist-dropdown {
+  height: 3.2rem;
+}
+
 .add-to-playlist-button[data-show='true'] + .add-to-playlist-menu,
 .add-to-playlist-dropdown:focus-within .add-to-playlist-menu {
   /* :focus-within. doens't work on button, so we use a wrapper div */

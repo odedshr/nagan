@@ -1,5 +1,6 @@
 /// <reference path="../jsx.d.ts" />
 
+import BtnAddToPlaylist from '../assets/BtnAddToPlaylist.tsx';
 import jsx from '../jsx.js';
 import { Playlist } from '../types.js';
 import DropDown from '../ui-components/dropdown/Dropdown.tsx';
@@ -12,8 +13,9 @@ export default (playlists: Playlist[]) =>
     buttonDisabled: true,
     buttonAttributes: {
       'data-target': 'song',
+      class: 'std-button icon-button add-to-playlist-button',
     },
-    buttonContent: 'Add to playlist',
+    buttonContent: BtnAddToPlaylist(),
     menuClass: 'add-to-playlist-menu',
     menuContent: [
       <li class="playlist-item" data-id="queue">

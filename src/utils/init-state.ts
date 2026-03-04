@@ -88,7 +88,8 @@ export function initState<T extends object>(initial: T): StateTemplate<T> {
     }
     elm.setAttribute(attribute, (proxy[prop] as string) || '');
     elm.addEventListener(event, () => {
-      (proxy as T)[prop] = elm[attribute as keyof HTMLElement] as T[keyof T];
+      const value = elm[attribute as keyof HTMLElement] as T[keyof T];
+      (proxy as T)[prop] = (isNaN((proxy as T)[prop] as unknown as number) ? value : +value) as unknown as T[keyof T];
     });
 
     proxy.addListener(prop, newValue => {

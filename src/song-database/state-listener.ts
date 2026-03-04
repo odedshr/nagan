@@ -68,6 +68,14 @@ export function attachSongDatabaseStateListeners({
 
   state.addListener('playlists', (playlists: Playlist[]) => onPlaylistsChanged(playlists));
 
+  state.dbQuery.addListener('pageSize', () => {
+    state.dbQuery.pageNumber = 0; // reset to first page when page size changes
+  });
+
+  state.dbQuery.addListener('filters', () => {
+    state.dbQuery.pageNumber = 0; // reset to first page when filters change
+  });
+
   // Any dbQuery update should refresh the view.
   state.addListener('dbQuery', refreshDb);
 

@@ -21,9 +21,10 @@ limit who has access to DOM elements, send CustomEvents() to communicate with th
 
 Tasks
 
-- Take analayzeGenre/BPM from id3Editor
-- filter mechanism
+- create playlist from "add to playlist button"
 - show/hide columns
+- filter mechanism
+- Take analayzeGenre/BPM from id3Editor
 - handle backend errors
 - updatable notifications
 - responsiveness

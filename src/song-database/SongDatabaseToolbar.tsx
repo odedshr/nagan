@@ -1,7 +1,9 @@
 /// <reference path="../jsx.d.ts" />
 
 import BtnAddSong from '../assets/BtnAddSong.js';
+import BtnAddToQueue from '../assets/BtnAddToQueue.js';
 import BtnEditTag from '../assets/BtnEditTag.js';
+import BtnDelete from '../assets/BtnDelete.js';
 import jsx from '../jsx.js';
 
 export type SongDatabaseProps = {
@@ -26,11 +28,17 @@ export default ({ addToPlaylist, sortByDropdown, groupByDropdown }: SongDatabase
         {BtnEditTag()}
       </button>
       {addToPlaylist}
-      <button class="std-button" disabled="true" data-target="song" id="play-now-button" data-action="play-now">
-        Play now
+      <button
+        class="std-button icon-button"
+        disabled="true"
+        data-target="song"
+        id="play-now-button"
+        data-action="play-now"
+      >
+        {BtnAddToQueue()}
       </button>
-      <button class="std-button" disabled="true" data-target="song" id="delete-button" data-action="delete">
-        Delete
+      <button class="std-button icon-button" disabled="true" data-target="song" id="delete-button" data-action="delete">
+        {BtnDelete()}
       </button>
       <div class="db-dropdowns">
         {sortByDropdown}
